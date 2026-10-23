@@ -206,6 +206,13 @@
       ev.emit('history');
     };
 
+    /** Throw away the newest checkpoint and restore it (no redo entry) — used to cancel an accidental stroke. */
+    s.rollback = () => {
+      if (!s.undoStack.length) return false;
+      apply(s.undoStack.pop());
+      return true;
+    };
+
     s.undo = () => {
       if (!s.undoStack.length) return false;
       s.redoStack.push(D.snapshot(s.design, s.pristine));

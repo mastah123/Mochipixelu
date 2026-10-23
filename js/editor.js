@@ -1,4 +1,4 @@
-/* Mochipixelu — editor controller: tools, pointer input, selection/inspector, zoom, shortcuts. */
+/* Mochipixelu — editor controller: tools, pointer/touch input, selection/inspector, zoom, shortcuts. */
 (function (root) {
   'use strict';
   const M = (root.Mochi = root.Mochi || {});
@@ -16,13 +16,20 @@
       const scroller = $('canvas-scroll');
       let stroke = null; // active drag: { last, changed, markValue, tool }
       let lastDims = '';
+      const touches = new Map(); // active touch pointers (for pinch / two-finger pan)
+      let gesture = null; // { dist, cell, ax, ay }
+      let panDrag = null; // { id, x, y, sl, st }
+      app.autoFit = true; // keep the whole design in view until the user zooms by hand
 
       /* ---------- tools ---------- */
       app.setTool = (tool) => {
         settings.tool = tool;
+        document.body.dataset.tool = tool;
         document.querySelectorAll('.tool').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.tool === tool)));
-        scroller.classList.toggle('pan-mode', tool === 'pan');
-        scroller.className = scroller.className.replace(/\btool-\w+/g, '').trim() + ' tool-' + tool;
+        Array.from(scroller.classList)
+          .filter((c) => c.startsWith('tool-'))
+          .forEach((c) => scroller.classList.remove(c));
+        scroller.classList.add('tool-' + tool);
         app.ui.emit('tool', tool);
       };
 
@@ -87,13 +94,12 @@
         const sw = $('insp-swatch');
         const title = $('insp-coords');
         const detail = $('insp-detail');
-        const has = !!cell;
         ['insp-pick', 'insp-done'].forEach((id) => ($(id).disabled = !app.selected));
-        if (!has) {
+        if (!cell) {
           sw.className = 'swatch big empty';
           sw.style.background = '';
           title.textContent = 'No cell selected';
-          detail.textContent = 'Hover or tap the canvas — use the Inspect tool to lock a cell.';
+          detail.textContent = 'Tap the canvas — use the Inspect tool to lock a cell.';
           $('status-coords').textContent = '—';
           return;
         }
@@ -187,11 +193,72 @@
         app.addRecent(to);
       };
 
+      /* ---------- touch gestures: two fingers = pinch-zoom + pan ---------- */
+      const twoTouchState = () => {
+        const pts = Array.from(touches.values());
+        const a = pts[0];
+        const b = pts[1];
+        return { mid: { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }, dist: Math.hypot(a.x - b.x, a.y - b.y) || 1 };
+      };
+
+      const startGesture = () => {
+        const { mid, dist } = twoTouchState();
+        const r = canvas.getBoundingClientRect();
+        gesture = { dist, cell: renderer.cell, ax: (mid.x - r.left) / renderer.cell, ay: (mid.y - r.top) / renderer.cell };
+      };
+
+      const updateGesture = () => {
+        const { mid, dist } = twoTouchState();
+        const next = Math.round((gesture.cell * dist) / gesture.dist);
+        if (next !== renderer.cell && renderer.setCell(next)) {
+          app.autoFit = false;
+          syncZoomUi();
+        }
+        // keep the content point that started under the fingers under the fingers
+        const r = canvas.getBoundingClientRect();
+        scroller.scrollLeft += r.left + gesture.ax * renderer.cell - mid.x;
+        scroller.scrollTop += r.top + gesture.ay * renderer.cell - mid.y;
+      };
+
+      /** A second finger landed: undo whatever the first finger had just started drawing. */
+      const abortStroke = () => {
+        if (!stroke) return;
+        const s = stroke;
+        stroke = null;
+        if (s.changed) store.rollback();
+        else store.dropCheckpoint();
+      };
+
+      /** Capture can throw if the pointer already ended (fast taps, synthetic events) — never fatal. */
+      const capture = (e) => {
+        try {
+          canvas.setPointerCapture(e.pointerId);
+        } catch (err) {
+          /* ignore */
+        }
+      };
+
       /* ---------- pointer input ---------- */
       canvas.addEventListener('pointerdown', (e) => {
         if (e.pointerType === 'mouse' && e.button !== 0) return;
+        if (e.pointerType === 'touch') {
+          touches.set(e.pointerId, { x: e.clientX, y: e.clientY });
+          if (touches.size === 2) {
+            e.preventDefault();
+            abortStroke();
+            panDrag = null;
+            startGesture();
+            return;
+          }
+          if (touches.size > 2) return;
+        }
         const tool = settings.tool;
-        if (tool === 'pan') return; // let the browser scroll natively
+        if (tool === 'pan') {
+          e.preventDefault();
+          capture(e);
+          panDrag = { id: e.pointerId, x: e.clientX, y: e.clientY, sl: scroller.scrollLeft, st: scroller.scrollTop };
+          return;
+        }
         const cell = renderer.cellFromPoint(e.clientX, e.clientY);
         if (!cell) return;
         e.preventDefault();
@@ -214,7 +281,7 @@
           return;
         }
         // pencil / eraser / mark: a drag is one undo step
-        canvas.setPointerCapture(e.pointerId);
+        capture(e);
         store.checkpoint();
         const info = cellInfo(cell);
         stroke = { last: cell, changed: false, tool, markValue: info.done ? 0 : 1 };
@@ -223,6 +290,16 @@
       });
 
       canvas.addEventListener('pointermove', (e) => {
+        if (e.pointerType === 'touch' && touches.has(e.pointerId)) touches.set(e.pointerId, { x: e.clientX, y: e.clientY });
+        if (gesture && touches.size >= 2) {
+          updateGesture();
+          return;
+        }
+        if (panDrag && e.pointerId === panDrag.id) {
+          scroller.scrollLeft = panDrag.sl - (e.clientX - panDrag.x);
+          scroller.scrollTop = panDrag.st - (e.clientY - panDrag.y);
+          return;
+        }
         const cell = renderer.cellFromPoint(e.clientX, e.clientY);
         if (cell) {
           if (!app.hover || app.hover.x !== cell.x || app.hover.y !== cell.y) {
@@ -240,6 +317,11 @@
       });
 
       const endStroke = (e) => {
+        if (e && e.pointerType === 'touch') {
+          touches.delete(e.pointerId);
+          if (touches.size < 2) gesture = null;
+        }
+        if (panDrag && e && e.pointerId === panDrag.id) panDrag = null;
         if (!stroke) return;
         if (e && canvas.hasPointerCapture && canvas.hasPointerCapture(e.pointerId)) canvas.releasePointerCapture(e.pointerId);
         if (stroke.changed) {
@@ -253,8 +335,8 @@
       };
       canvas.addEventListener('pointerup', endStroke);
       canvas.addEventListener('pointercancel', endStroke);
-      canvas.addEventListener('pointerleave', () => {
-        if (stroke) return;
+      canvas.addEventListener('pointerleave', (e) => {
+        if (stroke || e.pointerType === 'touch') return;
         app.hover = null;
         renderer.setHover(null);
         updateInspector();
@@ -262,6 +344,7 @@
 
       /* ---------- zoom ---------- */
       app.setZoom = (cell) => {
+        app.autoFit = false;
         // keep the view centred on the same spot while zooming
         const before = renderer.cell;
         const cx = (scroller.scrollLeft + scroller.clientWidth / 2) / before;
@@ -273,8 +356,9 @@
         syncZoomUi();
       };
       app.fit = () => {
-        const w = Math.max(80, scroller.clientWidth - 36);
-        const h = Math.max(80, scroller.clientHeight - 36);
+        app.autoFit = true;
+        const w = Math.max(60, scroller.clientWidth - 36);
+        const h = Math.max(60, scroller.clientHeight - 36);
         renderer.setCell(renderer.fitCell(w, h));
         syncZoomUi();
       };
@@ -284,18 +368,40 @@
         range.value = String(renderer.cell);
       };
 
+      // when the stage changes size (sheet opens, phone rotates) keep an auto-fitted design fitted
+      if (typeof ResizeObserver !== 'undefined') {
+        let raf = 0;
+        new ResizeObserver(() => {
+          if (!app.autoFit || !renderer.design) return;
+          cancelAnimationFrame(raf);
+          raf = requestAnimationFrame(() => {
+            if (app.autoFit) app.fit();
+          });
+        }).observe(scroller);
+      }
+
       $('zoom-in').addEventListener('click', () => app.setZoom(renderer.cell + Math.max(1, Math.round(renderer.cell / 6))));
       $('zoom-out').addEventListener('click', () => app.setZoom(renderer.cell - Math.max(1, Math.round(renderer.cell / 6))));
       $('zoom-range').addEventListener('input', (e) => app.setZoom(Number(e.target.value)));
       $('zoom-fit').addEventListener('click', app.fit);
-      $('toggle-grid').addEventListener('change', (e) => {
-        renderer.grid = e.target.checked;
+
+      const bindToggle = (id, fn) => {
+        const b = $(id);
+        b.addEventListener('click', () => {
+          const on = b.getAttribute('aria-pressed') !== 'true';
+          b.setAttribute('aria-pressed', String(on));
+          fn(on);
+        });
+      };
+      bindToggle('toggle-grid', (on) => {
+        renderer.grid = on;
         renderer.draw();
       });
-      $('toggle-done').addEventListener('change', (e) => {
-        renderer.showDone = e.target.checked;
+      bindToggle('toggle-done', (on) => {
+        renderer.showDone = on;
         renderer.draw();
       });
+
       scroller.addEventListener(
         'wheel',
         (e) => {
@@ -305,7 +411,6 @@
         },
         { passive: false }
       );
-      root.addEventListener('resize', U.debounce(() => syncZoomUi(), 150));
 
       /* ---------- spotlight filter ---------- */
       app.setFilter = (colorOrNull) => {

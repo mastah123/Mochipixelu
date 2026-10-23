@@ -1,6 +1,6 @@
 # Project context — Mochipixelu
 
-_Last updated: 2026-10-22 · Version 1.0.0 (working tree; no git repo yet, nothing committed, pushed or published)_
+_Last updated: 2026-10-22 · Version 1.1.0 (working tree; no git repo yet, nothing committed, pushed or published) · Batch A done, Batch B queued, see "Pending changes"_
 
 ## What it is
 Browser-based pixel editor and craft-pattern maker. Vanilla HTML/CSS/JS, no build, no deps, no network. See README.md for features and usage.
@@ -27,15 +27,31 @@ All concept features are implemented and verified in headless Chromium: import/p
 ## Known issues / limitations
 - Source image is not persisted: after reload, live re-pixelation requires re-importing the image.
 - Max 256×256; legend falls back to numbers beyond ~70 colors.
-- No pinch zoom; shortcuts are ignored while a text/number field has focus (Ctrl+Z then undoes the field, use the ↶ button).
+- Touch gestures only verified with synthetic events; shortcuts are ignored while a text/number field has focus (Ctrl+Z then undoes the field, use the ↶ button).
 - Only Chromium verified. Real printer output not verified.
 - No license chosen.
 
+## Pending changes (requested by the owner)
+Owner's note ("mochipixelu changes"): queue changes, implement **in batches (my call)**, **mobile-first** with the layout adapting to desktop.
+
+1. ✅ Icons/buttons match the logo, not AI-looking — **done in 1.1.0** (custom SVG sprite in `index.html`, no emoji).
+2. ⏳ **Home page** listing saved projects; selecting one opens a **view** screen with Edit, a crafting **highlight** mode (pixel highlighting for cross-stitch/crochet/other pixel crafts), Delete and more (my call: Duplicate, Rename, Export file/PNG, Print) — **Batch B, not started**.
+3. ⏳ Home page has a **"+" button fixed bottom-right** — **Batch B, not started**.
+4. ✅/⚠ Mobile-friendly pixel area with buttons fixed at the bottom — **done in 1.1.0**, but the owner's layout screenshot ("copy the screenshot layout") was **never received**; the dock layout is my own design. If a reference screenshot arrives, compare and adjust.
+
+**Batch B plan (proposed 1.2.0):** hash routing (`#/`, `#/project/<id>`, `#/edit/<id>`), project cards from the existing library (`Storage.library`), fixed "+" (new project / import), view screen with Edit / Highlight / Delete / Duplicate / Rename / Export / Print, stitch-highlight mode building on the existing spotlight + done marks (highlight current row/column, tap to tick). Data format stays compatible. The top bar will gain a back-to-home button; the Files panel's save/open actions may fold into the home page.
+
+## Layout notes (1.1.0)
+- `.workspace` order is stage → sheet → dock (flex column on phones). ≥ 900 px it becomes a grid: dock (tool rail) | stage | sheet (permanent panel).
+- Sheet = `#sheet.open` (phones). Tabs: design, colors, craft, export, files. `app.openSheet(tab)` / `app.closeSheet()`; the nav-row buttons toggle it. On desktop `openSheet` just switches tab.
+- `app.autoFit` + ResizeObserver keep the design fitted until a manual zoom; `app.fit()` re-enables.
+- Touch: `touch-action:none` on the canvas; `editor.js` implements pinch/two-finger pan and the Move tool. Icons: `<svg class="ic"><use href="#i-name"/></svg>` from the sprite at the top of `index.html`.
+
 ## Next steps (ideas)
 - Persist a downsized source so re-pixelation survives reloads.
-- Pinch-zoom, rectangle/line/mirror tools, dithering option, thread-brand (DMC) color matching.
+- Rectangle/line/mirror tools, dithering option, thread-brand (DMC) color matching.
 - Row-by-row "current row" highlight for knitting/crochet.
 - Firefox/Safari verification; `git init` + choose a license.
 
 ## How to test
-`node tests/logic.test.js` (25 tests). Optional: `PLAYWRIGHT_MODULE=/path/to/playwright node tests/e2e.cjs` (36 checks).
+`node tests/logic.test.js` (25 tests). Optional: `PLAYWRIGHT_MODULE=/path/to/playwright node tests/e2e.cjs` (desktop + phone checks).

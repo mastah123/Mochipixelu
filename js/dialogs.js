@@ -106,7 +106,7 @@
           });
           const del = document.createElement('button');
           del.className = 'btn small';
-          del.textContent = '🗑';
+          del.innerHTML = '<svg class="ic sm" aria-hidden="true"><use href="#i-trash"/></svg>';
           del.setAttribute('aria-label', 'Delete ' + it.name);
           del.addEventListener('click', () => {
             if (!window.confirm('Delete “' + it.name + '” from this browser?')) return;
@@ -119,18 +119,22 @@
         });
       };
 
-      $('btn-library').addEventListener('click', () => {
-        renderLibrary();
-        libDlg.showModal();
-      });
+      document.querySelectorAll('[data-action="library"]').forEach((b) =>
+        b.addEventListener('click', () => {
+          renderLibrary();
+          libDlg.showModal();
+        })
+      );
       $('library-close').addEventListener('click', () => libDlg.close());
 
-      $('btn-save-lib').addEventListener('click', () => {
-        const res = M.Storage.library.save(store.design, app.libraryId);
-        if (!res.ok) return app.toast(res.error, true);
-        app.libraryId = res.id;
-        app.toast('Saved “' + store.design.name + '” to My designs');
-      });
+      document.querySelectorAll('[data-action="save"]').forEach((b) =>
+        b.addEventListener('click', () => {
+          const res = M.Storage.library.save(store.design, app.libraryId);
+          if (!res.ok) return app.toast(res.error, true);
+          app.libraryId = res.id;
+          app.toast('Saved “' + store.design.name + '” to My designs');
+        })
+      );
 
       // close dialogs when clicking the backdrop
       [previewDlg, libDlg].forEach((dlg) =>

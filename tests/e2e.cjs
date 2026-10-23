@@ -122,10 +122,11 @@ const check = (name, cond, extra) => { console.log((cond ? 'PASS ' : 'FAIL ') + 
   const [dl2] = await Promise.all([page.waitForEvent('download'), page.click('#btn-art-png')]);
   await dl2.saveAs(SP + 'art.png');
   const dims = await page.evaluate(async () => { const c = await new Promise(r => window.mochipixelu.renderer.canvas.toBlob(r)); return 0; });
+  await page.click('[data-tab=files]');
   const [dl3] = await Promise.all([page.waitForEvent('download'), page.click('#btn-save-file')]);
   await dl3.saveAs(SP + 'proj.json');
   check('project file downloads', /\.mochipixelu\.json$/.test(dl3.suggestedFilename()));
-  await page.click('#btn-preview'); await page.waitForSelector('#preview-pages img');
+  await page.click('[data-tab=export]'); await page.click('#btn-preview'); await page.waitForSelector('#preview-pages img');
   const pages = await page.locator('#preview-pages img').count();
   check('preview builds overview + 2 sections for 64 columns', pages === 3, pages);
   await page.screenshot({ path: SP + 'preview.png' });
@@ -137,7 +138,7 @@ const check = (name, cond, extra) => { console.log((cond ? 'PASS ' : 'FAIL ') + 
   s = await st(); check('autosave restores design after reload', s.w === 64 && s.h === 32 && s.done.some(v => v === 1));
   
   // 8. library save/load
-  await page.click('#btn-save-lib'); await page.click('#btn-library');
+  await page.click('[data-tab=files]'); await page.click('#btn-save-lib'); await page.click('#btn-library');
   check('library lists saved design', (await page.locator('#library-list li strong').count()) === 1);
   await page.click('#library-list .btn >> text=Open'); 
   s = await st(); check('library open works', s.w === 64);
@@ -165,17 +166,90 @@ const check = (name, cond, extra) => { console.log((cond ? 'PASS ' : 'FAIL ') + 
   check('large design splits into overview + sections', bigPages === 1 + 3 * 2, bigPages);
   await page.click('#preview-close');
 
+  /* ---------- phone: bottom dock, sheet, gestures ---------- */
   const m = await browser.newContext({ viewport: { width: 390, height: 800 }, hasTouch: true, isMobile: true });
   const mp = await m.newPage(); mp.on('pageerror', (e) => errors.push('mobile pageerror: ' + e.message));
   await mp.goto(URL); await mp.waitForFunction(() => window.mochipixelu);
   const overflow = await mp.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
   check('mobile: no horizontal overflow', overflow <= 1, overflow);
-  await mp.screenshot({ path: SP + 'mobile.png', fullPage: true });
+  check('mobile: page itself does not scroll', await mp.evaluate(() => document.documentElement.scrollHeight <= window.innerHeight + 1));
+  const dock = await mp.evaluate(() => { const r = document.querySelector('.dock').getBoundingClientRect(); return { bottom: r.bottom, top: r.top, h: window.innerHeight }; });
+  check('mobile: tool dock is fixed to the bottom edge', Math.abs(dock.bottom - dock.h) <= 1, JSON.stringify(dock));
+  const cv = await mp.evaluate(() => { const r = document.getElementById('canvas-scroll').getBoundingClientRect(); return { w: r.width, h: r.height }; });
+  check('mobile: canvas area is large (>= 300px tall)', cv.h >= 300, cv.h);
+  check('mobile: side panel hidden until opened', await mp.evaluate(() => getComputedStyle(document.getElementById('sheet')).visibility === 'hidden'));
+  check('mobile: desktop-only buttons hidden', await mp.evaluate(() => getComputedStyle(document.querySelector('.top-quick')).display === 'none'));
+  check('mobile: no emoji left in the UI', await mp.evaluate(() => !/\p{Extended_Pictographic}/u.test(document.body.innerText.replace(/[✓]/g, ''))));
+  await mp.screenshot({ path: SP + 'mobile.png' });
+
   // touch drawing
   await mp.evaluate(() => window.mochipixelu.setColor(0xff0000));
-  const box = await mp.evaluate(() => { const a = window.mochipixelu, r = a.renderer.canvas.getBoundingClientRect(), c = a.renderer.cell; return { x: r.left + 3.5 * c, y: r.top + 3.5 * c }; });
-  await mp.touchscreen.tap(box.x, box.y);
+  const cellPt = (x, y) => mp.evaluate(([x, y]) => { const a = window.mochipixelu, r = a.renderer.canvas.getBoundingClientRect(), c = a.renderer.cell; return { x: r.left + (x + .5) * c, y: r.top + (y + .5) * c }; }, [x, y]);
+  let bx = await cellPt(3, 3);
+  await mp.touchscreen.tap(bx.x, bx.y);
   check('mobile: tap draws', (await mp.evaluate(() => window.mochipixelu.store.design.pixels[3 * 32 + 3])) === 0xff0000);
+
+  // sheet open/close + live resolution preview
+  await mp.tap('[data-open-tab=design]');
+  await mp.waitForTimeout(400);
+  check('mobile: tapping Design opens the sheet', await mp.evaluate(() => getComputedStyle(document.getElementById('sheet')).visibility === 'visible'));
+  const geo = await mp.evaluate(() => { const s = document.getElementById('sheet').getBoundingClientRect(), d = document.querySelector('.dock').getBoundingClientRect(), c = document.getElementById('canvas-scroll').getBoundingClientRect(); return { sheetBottom: s.bottom, dockTop: d.top, canvasBottom: c.bottom, canvasH: c.height }; });
+  check('mobile: sheet sits right above the dock, canvas still visible', Math.abs(geo.sheetBottom - geo.dockTop) <= 1 && geo.canvasH > 150, JSON.stringify(geo));
+  const fitted = await mp.evaluate(() => { const a = window.mochipixelu, c = document.getElementById('canvas-scroll'); return a.renderer.canvas.width <= c.clientWidth && a.renderer.canvas.height <= c.clientHeight; });
+  check('mobile: auto-fit keeps the whole canvas in view when the sheet opens', fitted);
+  await mp.fill('#res-w', '16'); await mp.waitForTimeout(400);
+  check('mobile: resolution changes live from the sheet', (await mp.evaluate(() => window.mochipixelu.store.design.width)) === 16);
+  await mp.tap('[data-open-tab=design]'); await mp.waitForTimeout(400);
+  check('mobile: tapping the active tab again closes the sheet', await mp.evaluate(() => getComputedStyle(document.getElementById('sheet')).visibility === 'hidden'));
+  await mp.tap('[data-open-tab=colors]'); await mp.waitForTimeout(300);
+  await mp.tap('#palette-grid .sw >> nth=18'); // a green swatch
+  const gcol = await mp.evaluate(() => window.mochipixelu.settings.color);
+  check('mobile: picking a palette swatch sets the color', gcol === 0x9cc58d, gcol.toString(16));
+  const dotBg = await mp.evaluate(() => getComputedStyle(document.querySelector('[data-cur-color]')).backgroundColor);
+  check('mobile: dock color dot follows the current color', dotBg === 'rgb(156, 197, 141)', dotBg);
+  await mp.screenshot({ path: SP + 'mobile-sheet.png' });
+  await mp.tap('#sheet-close');
+
+  // pinch zoom + two-finger pan via synthetic touch pointer events
+  await mp.evaluate(() => window.mochipixelu.fit());
+  const cellBefore = await mp.evaluate(() => window.mochipixelu.renderer.cell);
+  const pxBefore = await mp.evaluate(() => Array.from(window.mochipixelu.store.design.pixels).join());
+  const hist = await mp.evaluate(() => window.mochipixelu.store.undoStack.length);
+  await mp.evaluate(() => {
+    const c = document.getElementById('canvas'), r = c.getBoundingClientRect();
+    const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+    const ev = (type, id, x, y) => c.dispatchEvent(new PointerEvent(type, { pointerId: id, pointerType: 'touch', clientX: x, clientY: y, bubbles: true, cancelable: true, isPrimary: id === 1 }));
+    ev('pointerdown', 1, cx - 20, cy); ev('pointerdown', 2, cx + 20, cy);
+    for (let i = 1; i <= 8; i++) { ev('pointermove', 1, cx - 20 - i * 8, cy); ev('pointermove', 2, cx + 20 + i * 8, cy); }
+    ev('pointerup', 1, cx - 84, cy); ev('pointerup', 2, cx + 84, cy);
+  });
+  const cellAfter = await mp.evaluate(() => window.mochipixelu.renderer.cell);
+  const pxAfter = await mp.evaluate(() => Array.from(window.mochipixelu.store.design.pixels).join());
+  const histAfter = await mp.evaluate(() => window.mochipixelu.store.undoStack.length);
+  check('mobile: pinch-out zooms in', cellAfter > cellBefore, cellBefore + ' -> ' + cellAfter);
+  check('mobile: pinch does not paint pixels or add history', pxBefore === pxAfter && hist === histAfter, hist + ' vs ' + histAfter);
+  check('mobile: manual zoom turns auto-fit off, Fit turns it back on', await mp.evaluate(() => { const a = window.mochipixelu; const off = a.autoFit === false; a.fit(); return off && a.autoFit === true; }));
+
+  // a second finger landing mid-stroke cancels the stray dot
+  const q0 = await cellPt(5, 5), q1 = await cellPt(8, 8);
+  await mp.evaluate(([a, b]) => {
+    const c = document.getElementById('canvas');
+    const ev = (type, id, x, y) => c.dispatchEvent(new PointerEvent(type, { pointerId: id, pointerType: 'touch', clientX: x, clientY: y, bubbles: true, cancelable: true }));
+    ev('pointerdown', 11, a.x, a.y); ev('pointerdown', 12, b.x, b.y); ev('pointerup', 11, a.x, a.y); ev('pointerup', 12, b.x, b.y);
+  }, [q0, q1]);
+  check('mobile: second finger cancels the accidental first-finger dot', (await mp.evaluate(() => window.mochipixelu.store.design.pixels[5 * 16 + 5])) === -1);
+
+  // Move tool drags the view (zoom in first so there is something to scroll)
+  await mp.evaluate(() => { window.mochipixelu.setZoom(40); window.mochipixelu.setTool('pan'); });
+  const sc0 = await mp.evaluate(() => document.getElementById('canvas-scroll').scrollLeft);
+  const mid = await cellPt(8, 8);
+  await mp.evaluate(([a]) => {
+    const c = document.getElementById('canvas');
+    const ev = (type, x, y) => c.dispatchEvent(new PointerEvent(type, { pointerId: 21, pointerType: 'touch', clientX: x, clientY: y, bubbles: true, cancelable: true }));
+    ev('pointerdown', a.x, a.y); ev('pointermove', a.x + 60, a.y); ev('pointerup', a.x + 60, a.y);
+  }, [mid]);
+  const sc1 = await mp.evaluate(() => document.getElementById('canvas-scroll').scrollLeft);
+  check('mobile: Move tool drags the view', sc1 < sc0, sc0 + ' -> ' + sc1);
 
   check('no console/page errors', errors.length === 0, errors.join(' | '));
   await browser.close();

@@ -67,7 +67,7 @@
     /* initial design: restore autosave, otherwise a blank 32×32 */
     const saved = M.Storage.loadAutosave();
     store.load(saved || M.Design.create(32, 32, U.EMPTY, 'Untitled'), { resetHistory: true });
-    if (saved) app.toast('Welcome back — your last design was restored 🍡');
+    if (saved) app.toast('Welcome back — your last design was restored');
 
     root.mochipixelu = app; // handy for debugging / tests
   });

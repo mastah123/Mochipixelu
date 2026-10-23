@@ -11,13 +11,37 @@
       const $ = app.$;
       const { store, renderer, settings } = app;
 
-      /* ---------- tabs ---------- */
+      /* ---------- tabs + bottom sheet ---------- */
       const tabs = Array.from(document.querySelectorAll('.tab'));
+      const navBtns = Array.from(document.querySelectorAll('[data-open-tab]'));
+      const sheet = $('sheet');
+      let currentTab = 'design';
+      const syncNav = () =>
+        navBtns.forEach((b) => b.setAttribute('aria-pressed', String(sheet.classList.contains('open') && b.dataset.openTab === currentTab)));
       const showTab = (name) => {
+        currentTab = name;
         tabs.forEach((t) => t.setAttribute('aria-selected', String(t.dataset.tab === name)));
         document.querySelectorAll('.tabpanel').forEach((p) => (p.hidden = p.id !== 'panel-' + name));
+        syncNav();
+      };
+      /** Phones: slide the sheet up on a tab. Desktop: the panel is always visible, this just switches tab. */
+      app.openSheet = (name) => {
+        showTab(name || currentTab);
+        sheet.classList.add('open');
+        syncNav();
+      };
+      app.closeSheet = () => {
+        sheet.classList.remove('open');
+        syncNav();
       };
       tabs.forEach((t) => t.addEventListener('click', () => showTab(t.dataset.tab)));
+      navBtns.forEach((b) =>
+        b.addEventListener('click', () => {
+          if (sheet.classList.contains('open') && currentTab === b.dataset.openTab) app.closeSheet();
+          else app.openSheet(b.dataset.openTab);
+        })
+      );
+      $('sheet-close').addEventListener('click', app.closeSheet);
       app.showTab = showTab;
 
       /* ---------- name ---------- */
@@ -200,14 +224,14 @@
           store.load(M.Pixelate.designFromSource(src, w, h, colorLimit(), name), { checkpoint: true, source: src, pristine: true });
           resizing = false;
           store.touch({ keepPristine: true });
-          app.showTab('design');
+          app.openSheet('design');
           app.toast('Pixelated to ' + w + ' × ' + h + ' — adjust the resolution live!');
         } catch (err) {
           app.toast(err.message || 'Could not import that image.', true);
         }
       };
 
-      $('btn-import').addEventListener('click', () => $('file-input').click());
+      document.querySelectorAll('[data-action="import"]').forEach((b) => b.addEventListener('click', () => $('file-input').click()));
       $('file-input').addEventListener('change', (e) => {
         const f = e.target.files[0];
         e.target.value = '';
@@ -269,6 +293,7 @@
       const refreshColors = () => {
         const cur = settings.color;
         $('cur-swatch').style.background = U.toHex(cur);
+        document.querySelectorAll('[data-cur-color]').forEach((d) => (d.style.background = U.toHex(cur)));
         if ($('color-input').value !== U.toHex(cur)) $('color-input').value = U.toHex(cur);
         if (document.activeElement !== $('color-hex')) $('color-hex').value = U.toHex(cur);
         renderSwatches($('palette-grid'), palette);

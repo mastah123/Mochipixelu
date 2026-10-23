@@ -10,6 +10,26 @@ Versions follow [Semantic Versioning](https://semver.org/): `MAJOR.MINOR.PATCH`.
 
 Examples are illustrative; the real versions are listed below. Documentation-only, test-only and refactoring changes do not automatically bump the version.
 
+## [1.1.0] — 2026-10-22 (finalized in the working tree; not tagged or published)
+
+Mobile-first rework (Batch A).
+
+### Added
+- Custom inline-SVG icon set drawn in the logo's style (cream body, brown outline, strawberry/matcha/butter pixel accents) replacing every emoji and text glyph.
+- Phone layout: canvas-first screen with a fixed bottom dock (tool row + Colors/Design/Craft/Export/Files row); panels open as a bottom sheet above the dock.
+- Touch gestures: two-finger pinch-zoom and pan on any tool; Move tool drags the view with one finger; a second finger landing mid-stroke cancels the stray dot.
+- Auto-fit: the design stays fully in view when the sheet opens or the phone rotates, until you zoom by hand (Fit turns it back on).
+- "Files" panel (import, save, saved designs, project files) and compact icon toggles for grid / done marks.
+
+### Changed
+- Desktop (≥ 900 px) is the same app widened: tool rail on the left, canvas, permanent side panel on the right; Import / Save / My designs shortcuts return to the top bar.
+- The inspector's d-pad and action buttons only show on phones while the Inspect or Mark tool is active.
+- Pan tool renamed "Move" and now drags with mouse and touch instead of relying on native scrolling.
+- Project-file buttons moved from the Export panel to the Files panel.
+
+### Fixed
+- `setPointerCapture` could throw for a pointer that had already ended.
+
 ## [1.0.0] — 2026-10-22 (finalized in the working tree; not tagged or published)
 
 First release.
