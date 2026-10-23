@@ -18,7 +18,7 @@
       const syncNav = () => {
         const open = sheet.classList.contains('open');
         $('btn-menu').setAttribute('aria-pressed', String(open && currentTab !== 'colors'));
-        $('dock-color').setAttribute('aria-pressed', String(open && currentTab === 'colors'));
+        $('dock-color').setAttribute('aria-pressed', String((open && currentTab === 'colors') || !$('color-pop').hidden));
       };
       const showTab = (name) => {
         currentTab = name;
@@ -28,11 +28,13 @@
       };
       /** Phones: slide the sheet up on a tab. Desktop: the panel is always visible, this just switches tab. */
       app.openSheet = (name) => {
+        $('color-pop').hidden = true;
         showTab(name || currentTab);
         sheet.classList.add('open');
         syncNav();
       };
       app.closeSheet = () => {
+        $('color-pop').hidden = true;
         sheet.classList.remove('open');
         syncNav();
       };
@@ -42,7 +44,57 @@
         else app.openSheet(tab);
       };
       $('btn-menu').addEventListener('click', () => toggleSheet(currentTab === 'colors' ? 'design' : currentTab, () => currentTab !== 'colors'));
-      $('dock-color').addEventListener('click', () => toggleSheet('colors', () => currentTab === 'colors'));
+      /* Colour button: on phones a quick-colour row pops up above the bottom bar; desktop uses the side panel */
+      const pop = $('color-pop');
+      const wide = () => window.matchMedia('(min-width: 900px)').matches;
+      const closePop = () => {
+        pop.hidden = true;
+        syncNav();
+      };
+      app.closePop = closePop;
+      const fillPop = () => {
+        pop.textContent = '';
+        const add = (c) => {
+          const b = document.createElement('button');
+          b.type = 'button';
+          b.className = 'sw';
+          b.style.background = U.toHex(c);
+          b.setAttribute('aria-label', U.toHex(c));
+          b.setAttribute('aria-pressed', String(c === settings.color));
+          b.addEventListener('click', () => {
+            app.setColor(c);
+            app.addRecent(c);
+            fillPop();
+          });
+          pop.appendChild(b);
+        };
+        const seen = new Set();
+        settings.recent.concat(app.getLegend().entries.map((e) => e.color), M.Palette.DEFAULT_PALETTE.map((h) => U.fromHex(h))).forEach((c) => {
+          if (!seen.has(c)) {
+            seen.add(c);
+            add(c);
+          }
+        });
+        const more = document.createElement('button');
+        more.type = 'button';
+        more.className = 'btn small more';
+        more.textContent = 'More';
+        more.addEventListener('click', () => {
+          closePop();
+          app.openSheet('colors');
+        });
+        pop.appendChild(more);
+      };
+      $('dock-color').addEventListener('click', () => {
+        if (wide()) return toggleSheet('colors', () => currentTab === 'colors');
+        if (!pop.hidden) return closePop();
+        app.closeSheet();
+        fillPop();
+        pop.hidden = false;
+        syncNav();
+      });
+      document.querySelectorAll('.tool[data-tool]').forEach((b) => b.addEventListener('click', closePop));
+      $('canvas').addEventListener('pointerdown', closePop);
       $('sheet-close').addEventListener('click', app.closeSheet);
       app.showTab = showTab;
 

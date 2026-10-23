@@ -1,6 +1,6 @@
 # Project context — Mochipixelu
 
-_Last updated: 2026-10-23 · Version 1.2.0 (working tree; no git repo yet, nothing committed, pushed or published) · Batches A and B done, see "Pending changes"_
+_Last updated: 2026-10-23 · Version 1.3.0 (working tree; no git repo yet, nothing committed, pushed or published) · Batches A and B done, see "Pending changes"_
 
 ## What it is
 Browser-based pixel editor and craft-pattern maker. Vanilla HTML/CSS/JS, no build, no deps, no network. See README.md for features and usage.
@@ -62,3 +62,7 @@ Owner's note ("mochipixelu changes"): queue changes, implement **in batches (my 
 - The library (localStorage) is the single source of projects; the editor autosaves into it (600 ms debounce, flushed on leave/hide). The old Save / My designs dialog is gone.
 - Item 4 of the owner's note: the reference screenshot was never received; layout is my own design. Compare if it arrives.
 - Verified only in headless Chromium with synthetic touch; not on a real device.
+
+## 1.3.0 notes
+- Reference screenshot for item 4 was received (MochiNote): flat icons, top bar with back/undo/redo/menu, pop-up row above a bottom bar. 1.3.0 follows it. Styling lives in the "CLEAN THEME" block at the end of css/styles.css.
+- Safe-area padding intentionally removed at the owner's request.

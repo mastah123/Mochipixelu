@@ -4,7 +4,7 @@ A cozy, browser-based **live pixel editor and craft-pattern maker**, designed ph
 
 Vanilla HTML, CSS and JavaScript. No frameworks, no build step, no backend, no accounts, no network calls. Everything stays on your device.
 
-**Version:** 1.2.0 · see [CHANGELOG.md](CHANGELOG.md)
+**Version:** 1.3.0 · see [CHANGELOG.md](CHANGELOG.md)
 
 ## Features
 
@@ -99,3 +99,10 @@ No license has been chosen yet — add one before publishing.
 - Tap a pattern to open its **project view**: Edit, Look / Guide / Tick highlight modes for stitching, color spotlight, and a ⋯ menu (rename, duplicate, print, export, delete).
 - The editor has a cleaner phone layout: tools fixed at the bottom, settings in one panel.
 - Patterns autosave into the library; there is no separate Save step.
+
+## What is new in 1.3.0
+
+- Clean flat look: line icons, borderless buttons, soft pill for the active tool.
+- Tap **Color** to pop up quick colors above the bottom bar.
+- The Move button is gone from the bar — use the pan button on the canvas next to zoom.
+- No safe-area padding.

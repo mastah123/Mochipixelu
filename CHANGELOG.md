@@ -10,6 +10,18 @@ Versions follow [Semantic Versioning](https://semver.org/): `MAJOR.MINOR.PATCH`.
 
 Examples are illustrative; the real versions are listed below. Documentation-only, test-only and refactoring changes do not automatically bump the version.
 
+## [1.3.0] — 2026-10-23 (finalized in the working tree; not tagged or published)
+
+Clean look, following the owner's reference screenshot.
+
+### Added
+- Quick-color row that pops up directly above the bottom bar when you tap Color (recent, design and palette colors, plus a More button for the full Colors panel).
+
+### Changed
+- Flat, single-color line icons (the logo mascot keeps its colors); borderless buttons; the active item is a soft pink pill instead of a boxed, shadowed button. Applies to the home page, project view, editor, panels and dialogs.
+- Removed all safe-area padding (top and bottom) and `viewport-fit=cover`; bars now sit flush with the screen edges.
+- The Move tool is removed from the bottom bar. The pan button on the canvas (next to zoom) replaces it, now on desktop too; the H shortcut still works.
+
 ## [1.2.0] — 2026-10-23 (finalized in the working tree; not tagged or published)
 
 Home page, project view and a cleaned-up editor layout (Batch B).

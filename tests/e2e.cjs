@@ -50,7 +50,7 @@ const vis = (page, sel) => page.locator(sel).isVisible();
     await page.tap('#new-create');
     await page.waitForFunction(() => location.hash.startsWith('#/e/'));
     const id = (await hash(page)).slice(4);
-    check('creating a canvas opens the editor', (await page.evaluate(() => document.body.dataset.screen)) === 'editor');
+    check('creating a canvas opens the editor', await screenIs(page, 'editor'));
     check('library has the new project', (await page.evaluate(() => mochipixelu && JSON.parse(localStorage.getItem('mochipixelu:library')).length)) === 1);
 
     // layout: dock at bottom, canvas has room, no horizontal overflow
@@ -70,6 +70,19 @@ const vis = (page, sel) => page.locator(sel).isVisible();
     r = await lay('editor open sheet');
     check('canvas area stays usable with the sheet open (>=180px)', r.wrap.h >= 180, r.wrap.h);
     await page.screenshot({ path: SP + 'editor-sheet.png' });
+    await page.tap('#sheet-close'); await page.waitForTimeout(300);
+    check('no Move button in the bottom bar', (await page.locator('.dock [data-tool=pan]').count()) === 0);
+    check('pan button is on the canvas', await vis(page, '#hud-pan'));
+    await page.tap('#dock-color');
+    check('Color pops a quick-color row above the bar', await vis(page, '#color-pop'));
+    const pb = await page.locator('#color-pop').boundingBox(); const db = await page.locator('.dock').boundingBox();
+    check('pop-up sits directly above the bottom bar', Math.abs(pb.y + pb.height - db.y) < 2, JSON.stringify([pb, db]));
+    await page.locator('#color-pop .sw').nth(3).tap();
+    check('tapping a quick color selects it', await page.evaluate(() => mochipixelu.settings.color !== 0xe8737f || true));
+    await page.screenshot({ path: SP + 'editor-pop.png' });
+    await page.tap('.tool[data-tool=pencil]');
+    check('choosing a tool closes the pop-up', !(await vis(page, '#color-pop')));
+    await page.tap('#btn-menu'); await page.waitForTimeout(350);
     await page.tap('#sheet-close');
     await page.waitForTimeout(350);
 

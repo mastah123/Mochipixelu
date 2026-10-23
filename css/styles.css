@@ -14,8 +14,8 @@
   --mat: #efe3c8;
   --radius: 14px;
   --font: "Nunito", "Quicksand", ui-rounded, "SF Pro Rounded", "Trebuchet MS", system-ui, sans-serif;
-  --safe-b: env(safe-area-inset-bottom, 0px);
-  --safe-t: env(safe-area-inset-top, 0px);
+  --safe-b: 0px; /* no safe-area padding anywhere */
+  --safe-t: 0px;
 }
 
 * { box-sizing: border-box; }
@@ -395,6 +395,98 @@ body[data-screen="home"] .toast { bottom: calc(96px + var(--safe-b)); }
 @media (max-width: 380px) {
   .hud-tl .chip { font-size: .74rem; padding: 2px 8px; }
   .tl { font-size: .64rem; }
+}
+
+
+/* ====================================================================
+   CLEAN THEME — flat line icons, borderless buttons, soft pill for the active item
+   (loaded last so it overrides the chunkier handmade borders above)
+   ==================================================================== */
+:root { --pill: #f8dfdc; --hair: #eadfc8; }
+.ic { stroke-width: 1.7; }
+.btn { border: 0; box-shadow: none; background: var(--paper-2); border-radius: 12px; font-weight: 700; }
+.btn:hover:not(:disabled), .btn:active:not(:disabled) { background: var(--pill); transform: none; box-shadow: none; }
+.btn:disabled { border: 0; box-shadow: none; opacity: .4; }
+.btn.small { box-shadow: none; }
+.btn.primary { background: var(--berry); text-shadow: none; }
+.btn.primary:hover:not(:disabled), .btn.primary:active:not(:disabled) { background: #d95f6c; }
+.btn.danger { text-shadow: none; }
+.btn.icon-btn { background: transparent; border-radius: 50%; }
+.btn.icon-btn:hover:not(:disabled), .btn[aria-pressed="true"].icon-btn { background: var(--pill); }
+.btn.primary.icon-btn { background: var(--berry); }
+.topbar { border-bottom: 1px solid var(--hair); }
+.name-field input { border: 0; background: transparent; font-weight: 800; font-size: 1.05rem; padding-left: 4px; }
+.name-field input:focus { background: var(--paper-2); }
+input[type="text"], input[type="number"], select { border: 1.5px solid var(--hair); }
+
+.canvas-scroll { border: 0; }
+.hud-tl .chip { border: 0; }
+.hud-br .btn, .hud-br .btn.icon-btn { background: rgba(255, 250, 240, .97); box-shadow: 0 1px 6px rgba(74, 59, 50, .28); border-radius: 50%; }
+.hud-br .btn[aria-pressed="true"] { background: var(--pill); }
+
+/* bottom bar */
+.dock { border-top: 1px solid var(--hair); box-shadow: none; }
+.tool { border: 0; border-radius: 14px; min-height: 52px; }
+.tool:hover { background: transparent; }
+.tool[aria-pressed="true"] { background: var(--pill); border: 0; box-shadow: none; }
+.tool[data-tool][aria-pressed="true"]::after { display: none; }
+.tool .dot { border: 0; box-shadow: inset 0 0 0 1.5px rgba(74, 59, 50, .25); width: 24px; height: 24px; }
+.tl { font-weight: 700; }
+
+/* pop-up row above the bottom bar (quick colors) */
+.pop {
+  position: absolute; left: 0; right: 0; bottom: 100%; z-index: 4; display: flex; align-items: center; gap: 8px;
+  padding: 9px 12px; overflow-x: auto; background: var(--card); border-top: 1px solid var(--hair); box-shadow: 0 -8px 18px rgba(74, 59, 50, .1);
+}
+.pop .sw { flex: none; width: 32px; height: 32px; border: 0; border-radius: 50%; box-shadow: inset 0 0 0 1.5px rgba(74, 59, 50, .25); }
+.pop .sw[aria-pressed="true"] { box-shadow: 0 0 0 2px var(--card), 0 0 0 4px var(--ink); }
+.pop .sep { flex: none; width: 1px; height: 24px; background: var(--hair); }
+.pop .more { flex: none; margin-left: auto; }
+
+/* bottom sheet */
+.sheet { border-top: 1px solid var(--hair); box-shadow: 0 -8px 18px rgba(74, 59, 50, .1); }
+.sheet-head { border-bottom: 1px solid var(--hair); padding-bottom: 6px; }
+.sheet-head .btn { margin-bottom: 0; }
+.tab { border: 0; border-radius: 999px; padding: 8px 2px; }
+.tab[aria-selected="true"] { background: var(--pill); border: 0; margin: 0; padding: 8px 2px; }
+.sw { border: 0; box-shadow: inset 0 0 0 1.5px rgba(74, 59, 50, .25); }
+.sw[aria-pressed="true"] { box-shadow: 0 0 0 2px var(--card), 0 0 0 4px var(--ink); }
+.swatch { border: 1.5px solid rgba(74, 59, 50, .35); }
+.legend button, .menu-list button { border: 0; background: var(--paper-2); }
+.legend button[aria-pressed="true"], .menu-list button:hover { background: var(--pill); }
+.progress { border: 0; height: 10px; background: var(--paper-2); }
+.sec::before, .tabpanel h2::before { display: none; }
+
+/* home + view */
+.continue-card { border: 0; box-shadow: 0 2px 10px rgba(74, 59, 50, .18); }
+.chipbtn { border: 0; background: var(--paper-2); }
+.chipbtn[aria-pressed="true"] { background: var(--pill); box-shadow: none; }
+.card { border: 0; box-shadow: 0 1px 8px rgba(74, 59, 50, .2); }
+.card:active, .continue-card:active, .fab:active { transform: scale(.985); box-shadow: 0 1px 4px rgba(74, 59, 50, .2); }
+.card .body { border-top: 1px solid var(--hair); }
+.mat img { box-shadow: 0 0 0 1px rgba(74, 59, 50, .5), 0 3px 6px rgba(74, 59, 50, .2); }
+.mini { border: 0; background: var(--paper-2); height: 7px; }
+.badge { border: 0; }
+.fab { border: 0; border-radius: 50%; box-shadow: 0 4px 14px rgba(74, 59, 50, .35); }
+.fab .ic { stroke: #fff; stroke-width: 2.4; }
+.fab[aria-expanded="true"] { background: var(--ink); }
+.view-panel { border-top: 1px solid var(--hair); }
+.seg { border: 0; background: var(--paper-2); padding: 3px; gap: 3px; border-radius: 14px; }
+.seg button { border: 0; border-radius: 11px; }
+.seg button[aria-pressed="true"] { background: #fff; box-shadow: 0 1px 4px rgba(74, 59, 50, .2); }
+.chips-scroll button { border: 0; background: var(--paper-2); }
+.chips-scroll button[aria-pressed="true"] { background: var(--pill); box-shadow: none; }
+.dialog { border: 0; box-shadow: 0 14px 44px rgba(74, 59, 50, .4); }
+#canvas, #view-canvas { box-shadow: 0 0 0 1.5px var(--ink), 0 6px 16px rgba(74, 59, 50, .25); }
+
+@media (orientation: landscape) and (max-height: 520px) and (max-width: 899px) {
+  .dock { border-right: 1px solid var(--hair); }
+  .pop { left: 100%; right: auto; bottom: auto; top: 0; max-width: 70vw; border-radius: 0 0 14px 0; border-top: 0; }
+  .sheet { border-left: 1px solid var(--hair); }
+}
+@media (min-width: 900px) {
+  .dock, .stage, .sheet, .view-stage, .view-panel { border: 1px solid var(--hair); }
+  .pop { display: none !important; }
 }
 
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
