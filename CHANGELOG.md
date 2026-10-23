@@ -10,6 +10,17 @@ Versions follow [Semantic Versioning](https://semver.org/): `MAJOR.MINOR.PATCH`.
 
 Examples are illustrative; the real versions are listed below. Documentation-only, test-only and refactoring changes do not automatically bump the version.
 
+## [1.4.0] — 2026-10-23 (finalized in the working tree; not tagged or published)
+
+### Added
+- Home settings menu (gear button): open a backup file, delete all patterns (with confirmation), and an about line with version, pattern count and storage used.
+- Long-press (touch) or right-click (mouse) on a pattern card opens an options stack in the same style as the + button: Open, Rename, Duplicate, Delete.
+- Unique pattern names: an empty or already-used name (case-insensitive) becomes Untitled, then Untitled1, Untitled2… on create, import, rename, duplicate and when leaving the name field in the editor.
+
+### Changed
+- Editing and ticking stitches are separate jobs: the editor no longer has the Mark tool (and its M shortcut), the inspector "Done" button, Enter-to-tick, "Mark all done", or done/to-do text. Ticking happens in the project view (Guide / Tick modes). "Clear progress" and the progress bar remain in the Craft panel.
+- Bottom tool bar has six tools plus Color.
+
 ## [1.3.0] — 2026-10-23 (finalized in the working tree; not tagged or published)
 
 Clean look, following the owner's reference screenshot.

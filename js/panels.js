@@ -100,8 +100,15 @@
 
       /* ---------- name ---------- */
       $('design-name').addEventListener('input', (e) => {
-        store.design.name = e.target.value.slice(0, 60) || 'Untitled';
+        store.design.name = e.target.value.slice(0, 60);
         store.emit('change');
+      });
+      // when the field loses focus: no empty names, and no two patterns share a name
+      $('design-name').addEventListener('change', (e) => {
+        store.design.name = M.Storage.library.uniqueName(e.target.value, app.projectId);
+        e.target.value = store.design.name;
+        store.emit('change');
+        app.saveNow();
       });
 
       /* ---------- DESIGN: resolution ---------- */
@@ -343,20 +350,6 @@
         $('btn-clear-filter').hidden = renderer.filter === null;
       };
 
-      $('btn-mark-all').addEventListener('click', () => {
-        const d = store.design;
-        store.checkpoint();
-        let n = 0;
-        for (let i = 0; i < d.pixels.length; i++) {
-          if (d.pixels[i] !== EMPTY && !d.done[i]) {
-            d.done[i] = 1;
-            n++;
-          }
-        }
-        if (!n) return store.dropCheckpoint();
-        renderer.draw();
-        store.touch({ keepPristine: true });
-      });
       $('btn-clear-progress').addEventListener('click', () => {
         const d = store.design;
         if (!d.done.some((v) => v)) return;

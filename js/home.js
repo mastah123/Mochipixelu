@@ -20,6 +20,73 @@
       const $ = app.$;
       let filter = 'all';
 
+      let ignoreClickUntil = 0;
+      let menuCard = null;
+
+      /* ---------- long-press options (same look as the + speed dial) ---------- */
+      const closeCardMenu = () => {
+        $('card-menu').hidden = true;
+        $('card-scrim').hidden = true;
+        if (menuCard) menuCard.classList.remove('pressed');
+        menuCard = null;
+      };
+      const openCardMenu = (entry, cardEl) => {
+        closeCardMenu();
+        const menu = $('card-menu');
+        menu.textContent = '';
+        const name = el('div', 'menu-name', entry.name);
+        menu.appendChild(name);
+        const item = (icon, label, fn, cls) => {
+          const b = el('button', 'btn fab-item' + (cls ? ' ' + cls : ''));
+          b.type = 'button';
+          b.setAttribute('role', 'menuitem');
+          b.innerHTML = '<svg class="ic sm"><use href="#' + icon + '"/></svg>';
+          b.appendChild(document.createTextNode(label));
+          b.addEventListener('click', () => {
+            closeCardMenu();
+            fn();
+          });
+          menu.appendChild(b);
+        };
+        item('i-eye', 'Open', () => M.Router.go('#/p/' + entry.id));
+        item('i-pencil', 'Rename', async () => {
+          const name = await app.askText({ title: 'Rename pattern', label: 'Name', value: entry.name });
+          if (name === null) return;
+          const r = M.Storage.library.rename(entry.id, name);
+          if (!r.ok) app.toast(r.error, true);
+          render();
+        });
+        item('i-copy', 'Duplicate', () => {
+          const r = M.Storage.library.duplicate(entry.id);
+          if (!r.ok) return app.toast(r.error, true);
+          app.toast('Duplicated — the copy starts with fresh progress');
+          render();
+        });
+        item('i-trash', 'Delete', async () => {
+          const ok = await app.confirm({ title: 'Delete “' + entry.name + '”?', text: 'This removes the pattern and its progress from this device. It cannot be undone.', okLabel: 'Delete' });
+          if (!ok) return;
+          M.Storage.library.remove(entry.id);
+          app.toast('Deleted');
+          render();
+        }, 'danger');
+
+        menuCard = cardEl;
+        cardEl.classList.add('pressed');
+        $('card-scrim').hidden = false;
+        menu.hidden = false;
+        // place it beside the pressed card, kept inside the screen
+        const r = cardEl.getBoundingClientRect();
+        const mw = menu.offsetWidth;
+        const mh = menu.offsetHeight;
+        const left = Math.max(10, Math.min(r.left + r.width / 2 - mw / 2, innerWidth - mw - 10));
+        let top = r.top + r.height * 0.5 - mh / 2;
+        top = Math.max(10, Math.min(top, innerHeight - mh - 10));
+        menu.style.left = left + 'px';
+        menu.style.top = top + 'px';
+      };
+      $('card-scrim').addEventListener('click', closeCardMenu);
+      document.addEventListener('keydown', (e) => e.key === 'Escape' && closeCardMenu());
+
       const matMini = (e) => {
         const mat = el('div', 'mat');
         if (e.thumb) {
@@ -51,7 +118,39 @@
           body.appendChild(el('span', st === 'done' ? 'badge done' : 'badge', st === 'done' ? 'Finished' : 'Not started'));
         }
         b.append(matMini(e), body);
-        b.addEventListener('click', () => M.Router.go('#/p/' + e.id));
+        b.addEventListener('click', () => {
+          if (Date.now() < ignoreClickUntil) return; // the click that ends a long press
+          M.Router.go('#/p/' + e.id);
+        });
+        // long press (touch) or right click (mouse) opens the options, like the + button does
+        let timer = 0;
+        let start = null;
+        const cancel = () => {
+          clearTimeout(timer);
+          start = null;
+        };
+        b.addEventListener('pointerdown', (ev) => {
+          if (ev.pointerType === 'mouse' && ev.button !== 0) return;
+          start = { x: ev.clientX, y: ev.clientY };
+          clearTimeout(timer);
+          timer = setTimeout(() => {
+            if (!start) return;
+            start = null;
+            ignoreClickUntil = Date.now() + 700;
+            if (navigator.vibrate) navigator.vibrate(12);
+            openCardMenu(e, b);
+          }, 480);
+        });
+        b.addEventListener('pointermove', (ev) => {
+          if (start && Math.hypot(ev.clientX - start.x, ev.clientY - start.y) > 10) cancel();
+        });
+        ['pointerup', 'pointercancel', 'pointerleave'].forEach((t) => b.addEventListener(t, cancel));
+        b.addEventListener('contextmenu', (ev) => {
+          ev.preventDefault();
+          cancel();
+          ignoreClickUntil = Date.now() + 700;
+          openCardMenu(e, b);
+        });
         li.appendChild(b);
         return li;
       };
@@ -131,7 +230,7 @@
         const h = readSize('new-h');
         if (w === null || h === null) return app.toast('Enter a width and height between 1 and ' + U.MAX_SIZE + '.', true);
         const fill = $('new-bg').value === 'white' ? 0xffffff : U.EMPTY;
-        const name = $('new-name').value.trim().slice(0, 60) || 'Untitled';
+        const name = $('new-name').value.trim().slice(0, 60);
         const r = M.Storage.library.save(D.create(w, h, fill, name));
         if (!r.ok) return app.toast(r.error, true);
         dlg.close();
@@ -184,7 +283,7 @@
           setMenu(false);
           const what = b.dataset.home;
           if (what === 'new') {
-            $('new-name').value = 'Untitled';
+            $('new-name').value = M.Storage.library.uniqueName('Untitled');
             dlg.showModal();
             $('new-name').select();
           } else if (what === 'import') $('file-home-input').click();
@@ -192,12 +291,46 @@
         })
       );
 
+      /* ---------- settings ---------- */
+      const sdlg = $('settings-dialog');
+      $('home-settings').addEventListener('click', () => {
+        const list = M.Storage.library.list();
+        let bytes = 0;
+        try {
+          for (let i = 0; i < localStorage.length; i++) {
+            const k = localStorage.key(i);
+            if (k && k.indexOf('mochipixelu:') === 0) bytes += k.length + (localStorage.getItem(k) || '').length;
+          }
+        } catch (err) {
+          /* storage blocked */
+        }
+        $('set-about').textContent =
+          'Mochipixelu v' + U.VERSION + ' · ' + list.length + (list.length === 1 ? ' pattern' : ' patterns') + ' · about ' + Math.max(1, Math.round(bytes / 1024)) + ' KB used. Everything stays on this device.';
+        sdlg.showModal();
+      });
+      $('settings-close').addEventListener('click', () => sdlg.close());
+      $('set-open').addEventListener('click', () => {
+        sdlg.close();
+        $('file-project').click();
+      });
+      $('set-clear').addEventListener('click', async () => {
+        sdlg.close();
+        const n = M.Storage.library.list().length;
+        if (!n) return app.toast('There is nothing to delete.');
+        const ok = await app.confirm({ title: 'Delete all ' + n + ' patterns?', text: 'Every pattern and its progress will be removed from this device. Save backup files first if you want to keep any. This cannot be undone.', okLabel: 'Delete all' });
+        if (!ok) return;
+        M.Storage.library.list().forEach((e) => M.Storage.library.remove(e.id));
+        app.toast('All patterns deleted');
+        render();
+      });
+
       $('home-version').textContent = 'v' + U.VERSION;
 
       M.Router.register('home', {
         el: $('screen-home'),
         enter() {
           setMenu(false);
+          closeCardMenu();
           render();
           window.scrollTo(0, 0);
         },

@@ -1,6 +1,6 @@
 # Project context — Mochipixelu
 
-_Last updated: 2026-10-23 · Version 1.3.0 (working tree; no git repo yet, nothing committed, pushed or published) · Batches A and B done, see "Pending changes"_
+_Last updated: 2026-10-23 · Version 1.4.0 (working tree; no git repo yet, nothing committed, pushed or published) · Batches A and B done, see "Pending changes"_
 
 ## What it is
 Browser-based pixel editor and craft-pattern maker. Vanilla HTML/CSS/JS, no build, no deps, no network. See README.md for features and usage.
@@ -66,3 +66,7 @@ Owner's note ("mochipixelu changes"): queue changes, implement **in batches (my 
 ## 1.3.0 notes
 - Reference screenshot for item 4 was received (MochiNote): flat icons, top bar with back/undo/redo/menu, pop-up row above a bottom bar. 1.3.0 follows it. Styling lives in the "CLEAN THEME" block at the end of css/styles.css.
 - Safe-area padding intentionally removed at the owner's request.
+
+## 1.4.0 notes
+- Name uniqueness lives in `Storage.library.uniqueName`; the editor autosave passes `keepName` so names are only fixed when the name field loses focus.
+- Long press is a 480 ms timer on card pointerdown (+ contextmenu for mouse).

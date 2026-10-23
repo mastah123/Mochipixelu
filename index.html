@@ -109,6 +109,7 @@
       <rect x="4.5" y="3.5" width="15" height="17" rx="3" fill="none"/>
       <path d="M12 8.5v7M8.5 12h7" stroke-width="2.4"/>
     </symbol>
+    <symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="6.6"/><path d="M12 2.6v2.8M12 18.6v2.8M2.6 12h2.8M18.6 12h2.8M5.4 5.4l2 2M16.6 16.6l2 2M18.6 5.4l-2 2M7.4 16.6l-2 2"/></symbol>
     <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5.5v13M5.5 12h13"/></symbol>
     <symbol id="i-minus" viewBox="0 0 24 24"><path d="M5.5 12h13"/></symbol>
     <symbol id="i-fit" viewBox="0 0 24 24"><path d="M4 9V5h4M20 9V5h-4M4 15v4h4M20 15v4h-4"/><rect x="9" y="9" width="6" height="6" fill="none"/></symbol>
@@ -141,6 +142,7 @@
       <h1>Mochipixelu</h1>
       <p class="tagline">your pixel pattern box</p>
     </div>
+    <button id="home-settings" class="btn icon-btn" aria-label="Settings"><svg class="ic"><use href="#i-gear"/></svg></button>
   </header>
 
   <main class="home-main" id="home-main">
@@ -174,6 +176,9 @@
     </section>
     <p class="home-foot">Everything stays on this device — no accounts, no uploads. <span id="home-version"></span></p>
   </main>
+
+  <div id="card-scrim" class="scrim" hidden></div>
+  <div id="card-menu" class="card-menu" role="menu" hidden></div>
 
   <div class="fab-wrap" id="fab-wrap">
     <div id="fab-menu" class="fab-menu" hidden>
@@ -295,7 +300,6 @@
             <button id="nav-right" class="btn small icon-btn dir-right" aria-label="Right"><svg class="ic sm"><use href="#i-chev"/></svg></button>
           </div>
           <button id="insp-pick" class="btn small" title="Use this cell's color (C)"><svg class="ic sm"><use href="#i-picker"/></svg>Use color</button>
-          <button id="insp-done" class="btn small" title="Toggle done (Enter)"><svg class="ic sm"><use href="#i-mark"/></svg>Done</button>
         </div>
       </div>
     </section>
@@ -375,9 +379,8 @@
           <div id="progress-bar"></div>
         </div>
         <p id="progress-text" class="hint">0 of 0 stitches done</p>
-        <p class="hint">Use the Mark tool (drag to mark many), or the Inspect tool + Enter to tick one stitch at a time. The pattern page has row and column guides for stitching.</p>
+        <p class="hint">Ticking stitches off happens on the pattern page (open a pattern from the home page): it has Guide and Tick modes for stitching.</p>
         <div class="row">
-          <button id="btn-mark-all" class="btn small">Mark all done</button>
           <button id="btn-clear-progress" class="btn small">Clear progress</button>
         </div>
         <h2>Legend</h2>
@@ -445,7 +448,6 @@
         <button class="tool" data-tool="fill" aria-pressed="false" title="Fill (G)"><svg class="ic"><use href="#i-fill"/></svg><span class="tl">Fill</span></button>
         <button class="tool" data-tool="picker" aria-pressed="false" title="Pick color (I)"><svg class="ic"><use href="#i-picker"/></svg><span class="tl">Pick</span></button>
         <button class="tool" data-tool="inspect" aria-pressed="false" title="Inspect pixels (Q)"><svg class="ic"><use href="#i-inspect"/></svg><span class="tl">Inspect</span></button>
-        <button class="tool" data-tool="mark" aria-pressed="false" title="Mark stitches done (M)"><svg class="ic"><use href="#i-mark"/></svg><span class="tl">Mark</span></button>
         <button id="dock-color" class="tool" aria-pressed="false" title="Colors"><span class="dot" data-cur-color></span><span class="tl">Color</span></button>
       </nav>
     </div>
@@ -515,6 +517,15 @@
     <li><button data-menu="file"><svg class="ic sm"><use href="#i-export"/></svg>Save a backup file</button></li>
     <li><button data-menu="delete" class="danger-text"><svg class="ic sm"><use href="#i-trash"/></svg>Delete pattern</button></li>
   </ul>
+</dialog>
+
+<dialog id="settings-dialog" class="dialog menu">
+  <div class="dialog-head"><h2>Settings</h2><button id="settings-close" class="btn small icon-btn" aria-label="Close"><svg class="ic sm"><use href="#i-close"/></svg></button></div>
+  <ul class="menu-list">
+    <li><button id="set-open"><svg class="ic sm"><use href="#i-upload"/></svg>Open a backup file</button></li>
+    <li><button id="set-clear" class="danger-text"><svg class="ic sm"><use href="#i-trash"/></svg>Delete all patterns</button></li>
+  </ul>
+  <p id="set-about" class="hint"></p>
 </dialog>
 
 <dialog id="preview-dialog" class="dialog wide">

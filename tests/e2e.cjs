@@ -71,6 +71,7 @@ const vis = (page, sel) => page.locator(sel).isVisible();
     check('canvas area stays usable with the sheet open (>=180px)', r.wrap.h >= 180, r.wrap.h);
     await page.screenshot({ path: SP + 'editor-sheet.png' });
     await page.tap('#sheet-close'); await page.waitForTimeout(300);
+    check('no Mark tool in the editor', (await page.locator('.tool[data-tool=mark]').count()) === 0 && (await page.locator('#insp-done, #btn-mark-all').count()) === 0);
     check('no Move button in the bottom bar', (await page.locator('.dock [data-tool=pan]').count()) === 0);
     check('pan button is on the canvas', await vis(page, '#hud-pan'));
     await page.tap('#dock-color');
@@ -173,6 +174,44 @@ const vis = (page, sel) => page.locator(sel).isVisible();
     await page.tap('#confirm-ok');
     await page.waitForFunction(() => location.hash === '#/' || location.hash === '');
     check('delete removes it from the library', (await page.evaluate(() => JSON.parse(localStorage.getItem('mochipixelu:library')).length)) === 1);
+
+    // long-press options, duplicate names, settings
+    await screenIs(page, 'home');
+    await page.evaluate(() => { Mochi.Storage.library.save(Mochi.Design.create(4, 4, Mochi.Utils.EMPTY, 'Zed')); mochipixelu.renderHome(); });
+    const card0 = page.locator('#home-grid .card').first();
+    const bb = await card0.boundingBox();
+    await page.evaluate(([x, y]) => {
+      const el = document.elementFromPoint(x, y);
+      const o = { bubbles: true, pointerId: 7, pointerType: 'touch', isPrimary: true, clientX: x, clientY: y, button: 0 };
+      el.dispatchEvent(new PointerEvent('pointerdown', o));
+    }, [bb.x + bb.width / 2, bb.y + bb.height / 2]);
+    await page.waitForTimeout(700);
+    check('long press opens the options menu', await vis(page, '#card-menu'));
+    check('menu has Open / Rename / Duplicate / Delete', (await page.locator('#card-menu button').allTextContents()).join('|') === 'Open|Rename|Duplicate|Delete', (await page.locator('#card-menu button').allTextContents()).join('|'));
+    await page.screenshot({ path: SP + 'home-longpress.png' });
+    await page.evaluate(() => document.getElementById('home-grid').querySelector('.card').dispatchEvent(new PointerEvent('pointerup', { bubbles: true, pointerType: 'touch', pointerId: 7 })));
+    check('releasing does not open the pattern', (await page.evaluate(() => document.body.dataset.screen)) === 'home');
+    await page.locator('#card-menu button', { hasText: 'Rename' }).tap();
+    const other = await page.evaluate(() => Mochi.Storage.library.list().map((e) => e.name));
+    await page.fill('#text-input', other[1]); // the other pattern's name
+    await page.tap('#text-ok');
+    await page.waitForTimeout(300);
+    const names = await page.evaluate(() => Mochi.Storage.library.list().map((e) => e.name));
+    check('renaming to an existing name gives Untitled1', names.includes('Untitled1') && names.length === 2, JSON.stringify(names));
+    await page.tap('#home-settings');
+    check('settings dialog opens', await vis(page, '#settings-dialog'));
+    check('settings shows the version', /v1\.\d+\.\d+/.test(await page.textContent('#set-about')), await page.textContent('#set-about'));
+    await page.tap('#settings-close');
+    // new canvas default name is unique
+    await page.tap('#fab'); await page.tap('#fab-menu [data-home=new]');
+    check('new canvas default name avoids duplicates', (await page.inputValue('#new-name')) === 'Untitled', await page.inputValue('#new-name'));
+    await page.fill('#new-name', names[0]);
+    await page.tap('#new-create');
+    await screenIs(page, 'editor');
+    check('creating with a taken name is renamed', /^Untitled\d*$/.test(await page.inputValue('#design-name')) , await page.inputValue('#design-name'));
+    await page.tap('#btn-back'); await screenIs(page, 'view');
+    await page.tap('#view-more'); await page.tap('[data-menu=delete]'); await page.tap('#confirm-ok');
+    await screenIs(page, 'home');
 
     // import from home
     await page.tap('#fab');

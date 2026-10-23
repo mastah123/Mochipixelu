@@ -319,6 +319,31 @@
     eq(S.library.list().length, 1);
     throws(() => S.library.load(id), /could not be found/);
   }));
+  test('duplicate names become Untitled1, Untitled2… (case-insensitive)', () => withStorage(() => {
+    const a = S.library.save(art('Cat')).id;
+    const b = S.library.save(art('cat')).id;
+    eq(S.library.get(b).name, 'Untitled1');
+    const c = S.library.save(art('CAT')).id;
+    eq(S.library.get(c).name, 'Untitled2');
+    eq(S.library.get(a).name, 'Cat', 'the first keeps its name');
+    eq(S.library.uniqueName('Dog'), 'Dog');
+    eq(S.library.uniqueName(''), 'Untitled');
+  }));
+  test('re-saving a pattern under its own name is not a duplicate', () => withStorage(() => {
+    const id = S.library.save(art('Cat')).id;
+    const d = S.library.load(id);
+    S.library.save(d, id);
+    eq(S.library.get(id).name, 'Cat');
+    eq(S.library.uniqueName('Cat', id), 'Cat');
+  }));
+  test('renaming onto an existing name picks the next free Untitled number', () => withStorage(() => {
+    S.library.save(art('Cat'));
+    const id = S.library.save(art('Dog')).id;
+    S.library.rename(id, 'Cat');
+    eq(S.library.get(id).name, 'Untitled1');
+    S.library.rename(id, '   ');
+    eq(S.library.get(id).name, 'Untitled');
+  }));
   test('library save reports failure when storage is full', () => withStorage(() => {
     root.localStorage.setItem = () => { throw new Error('quota'); };
     const r = S.library.save(art('X'));

@@ -172,9 +172,24 @@
       return c.toDataURL('image/png');
     },
 
-    /** Save (or overwrite when id is given). Returns {ok, id, error}. */
-    save(design, id) {
+    /**
+     * A name no other pattern uses. An empty or already-taken name becomes "Untitled", then
+     * "Untitled1", "Untitled2"… (case-insensitive; the pattern's own id is ignored).
+     */
+    uniqueName(name, excludeId) {
+      const taken = new Set(S.library.list().filter((e) => e.id !== excludeId).map((e) => String(e.name).toLowerCase()));
+      const clean = String(name || '').trim().slice(0, 60);
+      if (clean && !taken.has(clean.toLowerCase())) return clean;
+      if (!taken.has('untitled') && !clean) return 'Untitled';
+      let n = 1;
+      while (taken.has('untitled' + n)) n++;
+      return 'Untitled' + n;
+    },
+
+    /** Save (or overwrite when id is given). Returns {ok, id, error}. opts.keepName skips the unique-name rule. */
+    save(design, id, opts) {
       id = id || newId();
+      if (!(opts && opts.keepName)) design.name = S.library.uniqueName(design.name, id);
       const st = S.stats(design);
       const list = S.library.list().filter((e) => e.id !== id);
       list.unshift({
@@ -201,9 +216,8 @@
     },
 
     rename(id, name) {
-      const clean = String(name || '').trim().slice(0, 60) || 'Untitled';
       const design = S.library.load(id);
-      design.name = clean;
+      design.name = name;
       return S.library.save(design, id);
     },
 

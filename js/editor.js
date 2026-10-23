@@ -7,7 +7,7 @@
   const D = M.Design;
   const EMPTY = U.EMPTY;
 
-  const TOOL_KEYS = { b: 'pencil', e: 'eraser', g: 'fill', i: 'picker', q: 'inspect', m: 'mark', h: 'pan' };
+  const TOOL_KEYS = { b: 'pencil', e: 'eraser', g: 'fill', i: 'picker', q: 'inspect', h: 'pan' };
 
   M.Editor = {
     init(app) {
@@ -15,7 +15,7 @@
       const { store, renderer, settings } = app;
       const canvas = $('canvas');
       const scroller = $('canvas-scroll');
-      let stroke = null; // active drag: { last, changed, markValue, tool }
+      let stroke = null; // active drag: { last, changed, tool }
       let lastDims = '';
       let previousTool = 'pencil'; // for the phone "move the view" toggle
 
@@ -115,7 +115,7 @@
         const sw = $('insp-swatch');
         const title = $('insp-coords');
         const detail = $('insp-detail');
-        ['insp-pick', 'insp-done'].forEach((id) => ($(id).disabled = !app.selected));
+        $('insp-pick').disabled = !app.selected;
         if (!cell || !D.inBounds(store.design, cell.x, cell.y)) {
           sw.className = 'swatch big empty';
           sw.style.background = '';
@@ -124,7 +124,7 @@
           $('status-coords').textContent = '—';
           return;
         }
-        const { v, done } = cellInfo(cell);
+        const { v } = cellInfo(cell);
         const where = 'Column ' + (cell.x + 1) + ', Row ' + (cell.y + 1);
         $('status-coords').textContent = 'x ' + (cell.x + 1) + ' · y ' + (cell.y + 1);
         title.textContent = where + (app.selected && app.selected === cell ? ' (selected)' : '');
@@ -138,13 +138,12 @@
           const [r, g, b] = U.rgb(v);
           const e = app.getLegend().byColor.get(v);
           detail.textContent =
-            U.toHex(v) + ' · rgb(' + r + ', ' + g + ', ' + b + ')' + (e ? ' · legend #' + e.index + ' ' + e.symbol : '') + ' · ' + (done ? 'done ✓' : 'to do');
+            U.toHex(v) + ' · rgb(' + r + ', ' + g + ', ' + b + ')' + (e ? ' · legend #' + e.index + ' ' + e.symbol : '');
         }
       };
       app.updateInspector = updateInspector;
 
       $('insp-pick').addEventListener('click', () => pickFromCell(app.selected));
-      $('insp-done').addEventListener('click', () => toggleDone(app.selected));
       $('nav-up').addEventListener('click', () => moveSelection(0, -1));
       $('nav-down').addEventListener('click', () => moveSelection(0, 1));
       $('nav-left').addEventListener('click', () => moveSelection(-1, 0));
@@ -163,21 +162,6 @@
         return true;
       };
 
-      const toggleDone = (cell) => {
-        if (!cell) return;
-        const d = store.design;
-        const { v, done, i } = cellInfo(cell);
-        if (v === EMPTY) {
-          app.toast('Empty cells have no stitch to mark.');
-          return;
-        }
-        store.checkpoint();
-        d.done[i] = done ? 0 : 1;
-        renderer.drawCell(cell.x, cell.y);
-        store.touch({ keepPristine: true });
-        updateInspector();
-      };
-
       const paintCell = (x, y, tool) => {
         const d = store.design;
         if (!D.inBounds(d, x, y)) return;
@@ -189,9 +173,6 @@
           if (d.pixels[i] === EMPTY) return;
           d.pixels[i] = EMPTY;
           d.done[i] = 0;
-        } else if (tool === 'mark') {
-          if (d.pixels[i] === EMPTY || d.done[i] === stroke.markValue) return;
-          d.done[i] = stroke.markValue;
         }
         stroke.changed = true;
         renderer.drawCell(x, y);
@@ -245,11 +226,10 @@
           doFill(cell);
           return;
         }
-        // pencil / eraser / mark: a drag is one undo step
+        // pencil / eraser: a drag is one undo step
         vp.capture(e);
         store.checkpoint();
-        const info = cellInfo(cell);
-        stroke = { last: cell, changed: false, tool, markValue: info.done ? 0 : 1 };
+        stroke = { last: cell, changed: false, tool };
         paintCell(cell.x, cell.y, tool);
         app.select(cell);
       });
@@ -277,7 +257,7 @@
         if (!stroke) return;
         if (canvas.hasPointerCapture && canvas.hasPointerCapture(e.pointerId)) canvas.releasePointerCapture(e.pointerId);
         if (stroke.changed) {
-          store.touch(stroke.tool === 'mark' ? { keepPristine: true } : undefined);
+          store.touch();
           if (stroke.tool === 'pencil') app.addRecent(settings.color);
         } else {
           store.dropCheckpoint();
@@ -368,10 +348,6 @@
           return;
         }
         if (key === 'c' && app.selected) return pickFromCell(app.selected);
-        if (key === 'enter' && app.selected && t === canvas) {
-          e.preventDefault();
-          return toggleDone(app.selected);
-        }
         const dir = { arrowup: [0, -1], arrowdown: [0, 1], arrowleft: [-1, 0], arrowright: [1, 0] }[key];
         if (dir && (settings.tool === 'inspect' || app.selected) && (!t || t === document.body || t === canvas || t.tagName === 'BUTTON')) {
           e.preventDefault();
@@ -400,7 +376,7 @@
         clearTimeout(saveTimer);
         if (!dirty || !app.projectId) return;
         dirty = false;
-        const r = M.Storage.library.save(store.design, app.projectId);
+        const r = M.Storage.library.save(store.design, app.projectId, { keepName: true });
         if (!r.ok) app.toast(r.error, true);
       };
       const markDirty = () => {
