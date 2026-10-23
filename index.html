@@ -9,7 +9,7 @@
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 36'%3E%3Crect x='3' y='5' width='34' height='28' rx='12' fill='%23fff7e8' stroke='%234a3b32' stroke-width='2.5'/%3E%3Crect x='11' y='2' width='8' height='8' rx='2' fill='%23e8737f' stroke='%234a3b32' stroke-width='2'/%3E%3Crect x='19' y='2' width='8' height='8' rx='2' fill='%239cc58d' stroke='%234a3b32' stroke-width='2'/%3E%3Ccircle cx='14' cy='21' r='2.3' fill='%234a3b32'/%3E%3Ccircle cx='26' cy='21' r='2.3' fill='%234a3b32'/%3E%3C/svg%3E">
   <link rel="stylesheet" href="css/styles.css">
 </head>
-<body data-tool="pencil">
+<body data-tool="pencil" data-screen="home">
 
 <!-- Icon set: drawn to match the logo — cream body, 2px brown outline, strawberry / matcha / butter pixel accents. -->
 <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
@@ -72,6 +72,12 @@
       <circle cx="16" cy="10.2" r="1.4" fill="#9cc58d" stroke="none"/>
       <circle cx="7.8" cy="14.6" r="1.4" fill="#9fc9e6" stroke="none"/>
     </symbol>
+    <symbol id="i-sliders" viewBox="0 0 24 24">
+      <path d="M3.5 7h17M3.5 12h17M3.5 17h17"/>
+      <circle cx="8.5" cy="7" r="2.3" fill="#e8737f"/>
+      <circle cx="15.5" cy="12" r="2.3" fill="#9cc58d"/>
+      <circle cx="9.5" cy="17" r="2.3" fill="#f6d98c"/>
+    </symbol>
     <symbol id="i-design" viewBox="0 0 24 24">
       <rect x="3.5" y="3.5" width="17" height="17" rx="3.5" fill="#fff7e8"/>
       <path d="M9.2 3.5v17M14.8 3.5v17M3.5 9.2h17M3.5 14.8h17"/>
@@ -99,21 +105,23 @@
       <path d="M4 17l4.6-4.8 3.4 3.2 2.6-2.6L20 16.6" fill="#9cc58d"/>
       <circle cx="15.6" cy="9" r="1.7" fill="#f6d98c"/>
     </symbol>
-    <symbol id="i-save" viewBox="0 0 24 24">
-      <path d="M7 3.8h10a1 1 0 0 1 1 1V20l-6-4-6 4V4.8a1 1 0 0 1 1-1z" fill="#fff7e8"/>
-      <rect x="10.4" y="7" width="3.2" height="3.2" fill="#e8737f" stroke="none"/>
+    <symbol id="i-newfile" viewBox="0 0 24 24">
+      <rect x="4.5" y="3.5" width="15" height="17" rx="3" fill="#fff7e8"/>
+      <path d="M12 8.5v7M8.5 12h7" stroke="#e8737f" stroke-width="2.4"/>
     </symbol>
     <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5.5v13M5.5 12h13"/></symbol>
     <symbol id="i-minus" viewBox="0 0 24 24"><path d="M5.5 12h13"/></symbol>
     <symbol id="i-fit" viewBox="0 0 24 24"><path d="M4 9V5h4M20 9V5h-4M4 15v4h4M20 15v4h-4"/><rect x="9" y="9" width="6" height="6" fill="#fff7e8"/></symbol>
-    <symbol id="i-grid" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2.5" fill="#fff7e8"/><path d="M4 9.3h16M4 14.7h16M9.3 4v16M14.7 4v16"/></symbol>
-    <symbol id="i-done" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.2" fill="#fff7e8"/><path d="M8.2 12.3l2.6 2.7 5-5.8" stroke="#2f7a4a" stroke-width="2.4"/></symbol>
     <symbol id="i-chev" viewBox="0 0 24 24"><path d="M6.5 15l5.5-6 5.5 6"/></symbol>
+    <symbol id="i-back" viewBox="0 0 24 24"><path d="M19 12H6M11.5 6L5.5 12l6 6"/></symbol>
     <symbol id="i-close" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+    <symbol id="i-more" viewBox="0 0 24 24"><circle cx="5.5" cy="12" r="1.8" fill="#4a3b32" stroke="none"/><circle cx="12" cy="12" r="1.8" fill="#4a3b32" stroke="none"/><circle cx="18.5" cy="12" r="1.8" fill="#4a3b32" stroke="none"/></symbol>
     <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2.8 12S6.4 5.8 12 5.8 21.2 12 21.2 12 17.6 18.2 12 18.2 2.8 12 2.8 12z" fill="#fff7e8"/><circle cx="12" cy="12" r="2.8" fill="#e8737f"/></symbol>
     <symbol id="i-print" viewBox="0 0 24 24"><rect x="6.5" y="3.5" width="11" height="6" fill="#fff7e8"/><rect x="3.5" y="9.5" width="17" height="8" rx="2.5" fill="#fff7e8"/><rect x="7" y="14" width="10" height="6.5" fill="#fff7e8"/><circle cx="17" cy="12.3" r=".9" fill="#e8737f" stroke="none"/></symbol>
     <symbol id="i-redo-arrow" viewBox="0 0 24 24"><path d="M19.5 12a7.5 7.5 0 1 1-2.4-5.5"/><path d="M19.8 4.5v4.2h-4.2"/></symbol>
-    <symbol id="i-trash" viewBox="0 0 24 24"><path d="M5 7h14M10 7V4.8h4V7" /><path d="M6.8 7l.8 12.2h8.8L17.2 7" fill="#fff7e8"/><path d="M10.3 10.5v5.5M13.7 10.5v5.5"/></symbol>
+    <symbol id="i-trash" viewBox="0 0 24 24"><path d="M5 7h14M10 7V4.8h4V7"/><path d="M6.8 7l.8 12.2h8.8L17.2 7" fill="#fff7e8"/><path d="M10.3 10.5v5.5M13.7 10.5v5.5"/></symbol>
+    <symbol id="i-copy" viewBox="0 0 24 24"><rect x="8.5" y="8.5" width="11" height="11" rx="2.5" fill="#fff7e8"/><path d="M15.5 8.5v-2a2 2 0 0 0-2-2h-7a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h2"/></symbol>
+    <symbol id="i-highlight" viewBox="0 0 24 24"><path d="M14.8 4.2l5 5-7 7-5-5z" fill="#f6d98c"/><path d="M7.8 11.2l5 5-2.6.9-3.2.7.8-3.2z" fill="#fff7e8"/><path d="M4 20.5h7.5" stroke="#e8737f" stroke-width="2.6"/></symbol>
     <symbol id="i-mochi" viewBox="0 0 40 36">
       <rect x="3" y="5" width="34" height="28" rx="12" fill="#fff7e8" stroke-width="2.5"/>
       <rect x="11" y="2" width="8" height="8" rx="2" fill="#e8737f"/>
@@ -125,50 +133,159 @@
   </defs>
 </svg>
 
-<div id="app">
-  <header class="topbar">
-    <div class="brand">
-      <svg class="ic mascot" viewBox="0 0 40 36" aria-hidden="true"><use href="#i-mochi"/></svg>
+<!-- ============================ HOME ============================ -->
+<section id="screen-home" class="screen home" hidden>
+  <header class="home-top">
+    <svg class="ic mascot" viewBox="0 0 40 36" aria-hidden="true"><use href="#i-mochi"/></svg>
+    <div>
       <h1>Mochipixelu</h1>
+      <p class="tagline">your pixel pattern box</p>
     </div>
+  </header>
+
+  <main class="home-main" id="home-main">
+    <section id="home-continue" hidden>
+      <h2 class="sec">Continue stitching</h2>
+      <button id="continue-card" class="continue-card" type="button"></button>
+    </section>
+
+    <section id="home-library">
+      <div class="home-bar">
+        <h2 class="sec">My patterns</h2>
+        <span id="home-count" class="chip"></span>
+      </div>
+      <div class="filters" id="home-filters" role="group" aria-label="Filter patterns">
+        <button class="chipbtn" data-filter="all" aria-pressed="true">All</button>
+        <button class="chipbtn" data-filter="progress" aria-pressed="false">In progress</button>
+        <button class="chipbtn" data-filter="done" aria-pressed="false">Finished</button>
+        <button class="chipbtn" data-filter="new" aria-pressed="false">Not started</button>
+      </div>
+      <ul id="home-grid" class="grid"></ul>
+      <p id="home-nomatch" class="hint" hidden>No patterns in this group yet.</p>
+      <div id="home-empty" class="empty" hidden>
+        <svg class="ic mascot big" viewBox="0 0 40 36" aria-hidden="true"><use href="#i-mochi"/></svg>
+        <h2>No patterns yet</h2>
+        <p>Turn a picture into a stitch-able pixel pattern, or start from a blank grid.</p>
+        <div class="row center">
+          <button class="btn primary" data-home="import"><svg class="ic sm"><use href="#i-image"/></svg>Import an image</button>
+          <button class="btn" data-home="new"><svg class="ic sm"><use href="#i-newfile"/></svg>New canvas</button>
+        </div>
+      </div>
+    </section>
+    <p class="home-foot">Everything stays on this device — no accounts, no uploads. <span id="home-version"></span></p>
+  </main>
+
+  <div class="fab-wrap" id="fab-wrap">
+    <div id="fab-menu" class="fab-menu" hidden>
+      <button class="btn fab-item" data-home="new"><svg class="ic sm"><use href="#i-newfile"/></svg>New canvas</button>
+      <button class="btn fab-item" data-home="import"><svg class="ic sm"><use href="#i-image"/></svg>Import image</button>
+      <button class="btn fab-item" data-home="open"><svg class="ic sm"><use href="#i-upload"/></svg>Open file</button>
+    </div>
+    <button id="fab" class="fab" type="button" aria-label="Add a pattern" aria-expanded="false"><svg class="ic"><use href="#i-plus"/></svg></button>
+  </div>
+</section>
+
+<!-- ============================ PROJECT VIEW ============================ -->
+<section id="screen-view" class="screen" hidden>
+  <header class="topbar">
+    <button id="view-back" class="btn icon-btn" aria-label="Back to my patterns"><svg class="ic"><use href="#i-back"/></svg></button>
+    <h2 id="view-title" class="view-title">Pattern</h2>
+    <button id="view-edit" class="btn primary"><svg class="ic sm"><use href="#i-pencil"/></svg>Edit</button>
+    <button id="view-more" class="btn icon-btn" aria-label="More actions"><svg class="ic"><use href="#i-more"/></svg></button>
+  </header>
+  <main class="view-main">
+    <section class="view-stage">
+      <div class="canvas-wrap">
+        <div id="view-scroll" class="canvas-scroll"><canvas id="view-canvas" aria-label="Pattern"></canvas></div>
+        <div class="hud hud-tl"><span id="view-chip" class="chip">—</span></div>
+        <div class="hud hud-br">
+          <button id="view-zoom-in" class="btn small icon-btn" aria-label="Zoom in"><svg class="ic sm"><use href="#i-plus"/></svg></button>
+          <button id="view-zoom-out" class="btn small icon-btn" aria-label="Zoom out"><svg class="ic sm"><use href="#i-minus"/></svg></button>
+          <button id="view-zoom-fit" class="btn small icon-btn" aria-label="Fit to screen"><svg class="ic sm"><use href="#i-fit"/></svg></button>
+        </div>
+      </div>
+    </section>
+    <section class="view-panel">
+      <div class="view-meta">
+        <span id="view-size" class="meta-line"></span>
+        <div class="progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="view-progress"><div id="view-progress-bar"></div></div>
+        <span id="view-progress-text" class="meta-line"></span>
+      </div>
+
+      <h3 class="sub">Highlight</h3>
+      <div class="seg" id="view-modes" role="group" aria-label="Tap mode">
+        <button data-mode="look" aria-pressed="true"><svg class="ic sm"><use href="#i-eye"/></svg>Look</button>
+        <button data-mode="guide" aria-pressed="false"><svg class="ic sm"><use href="#i-highlight"/></svg>Guide</button>
+        <button data-mode="tick" aria-pressed="false"><svg class="ic sm"><use href="#i-mark"/></svg>Tick</button>
+      </div>
+      <p id="mode-hint" class="hint">Tap a stitch to see its color and position.</p>
+
+      <div id="guide-controls" hidden>
+        <div class="seg" id="view-guides" role="group" aria-label="Guide style">
+          <button data-guide="row" aria-pressed="true">Row</button>
+          <button data-guide="col" aria-pressed="false">Column</button>
+          <button data-guide="cross" aria-pressed="false">Both</button>
+        </div>
+        <div class="stepper">
+          <button id="guide-prev" class="btn small icon-btn" aria-label="Previous"><svg class="ic sm"><use href="#i-chev"/></svg></button>
+          <strong id="guide-label">Row 1</strong>
+          <button id="guide-next" class="btn small icon-btn" aria-label="Next"><svg class="ic sm"><use href="#i-chev"/></svg></button>
+          <button id="guide-done" class="btn small"><svg class="ic sm"><use href="#i-mark"/></svg><span id="guide-done-label">Mark row done</span></button>
+        </div>
+      </div>
+
+      <div class="cell-info" id="view-info" aria-live="polite">
+        <span id="view-info-swatch" class="swatch empty"></span>
+        <span id="view-info-text">No stitch selected</span>
+      </div>
+
+      <h3 class="sub">Colors <span class="hint inline">tap to spotlight</span></h3>
+      <div id="view-legend" class="chips-scroll"></div>
+    </section>
+  </main>
+</section>
+
+<!-- ============================ EDITOR ============================ -->
+<section id="screen-editor" class="screen" hidden>
+  <header class="topbar">
+    <button id="btn-back" class="btn icon-btn" aria-label="Back to the pattern"><svg class="ic"><use href="#i-back"/></svg></button>
+    <svg class="ic mascot desk-only" viewBox="0 0 40 36" aria-hidden="true"><use href="#i-mochi"/></svg>
     <label class="name-field">
-      <span class="sr-only">Design name</span>
+      <span class="sr-only">Pattern name</span>
       <input id="design-name" type="text" maxlength="60" value="Untitled" autocomplete="off">
     </label>
     <div class="top-actions">
       <button id="btn-undo" class="btn icon-btn" title="Undo (Ctrl+Z)" aria-label="Undo" disabled><svg class="ic"><use href="#i-undo"/></svg></button>
       <button id="btn-redo" class="btn icon-btn" title="Redo (Ctrl+Y)" aria-label="Redo" disabled><svg class="ic"><use href="#i-redo"/></svg></button>
-      <span class="desk-only top-quick">
-        <button class="btn" data-action="import"><svg class="ic sm"><use href="#i-image"/></svg>Import image</button>
-        <button class="btn" data-action="save"><svg class="ic sm"><use href="#i-save"/></svg>Save</button>
-        <button class="btn" data-action="library"><svg class="ic sm"><use href="#i-files"/></svg>My designs</button>
-      </span>
+      <button id="btn-menu" class="btn icon-btn phone-only" aria-label="Pattern settings" aria-pressed="false"><svg class="ic"><use href="#i-sliders"/></svg></button>
     </div>
   </header>
 
   <main class="workspace">
     <section class="stage" aria-label="Canvas">
-      <div class="stagebar">
-        <span id="status-size" class="chip" title="Design size">32 × 32</span>
-        <span id="status-coords" class="chip" title="Cell under the pointer">—</span>
-        <span class="spacer"></span>
-        <button id="zoom-out" class="btn small icon-btn" aria-label="Zoom out" title="Zoom out (−)"><svg class="ic sm"><use href="#i-minus"/></svg></button>
-        <input id="zoom-range" class="zoom-range" type="range" min="2" max="64" value="16" aria-label="Zoom">
-        <button id="zoom-in" class="btn small icon-btn" aria-label="Zoom in" title="Zoom in (+)"><svg class="ic sm"><use href="#i-plus"/></svg></button>
-        <button id="zoom-fit" class="btn small icon-btn" aria-label="Fit to screen" title="Fit to screen (0)"><svg class="ic sm"><use href="#i-fit"/></svg></button>
-        <button id="toggle-grid" class="btn small icon-btn toggle" aria-pressed="true" aria-label="Show grid" title="Grid"><svg class="ic sm"><use href="#i-grid"/></svg></button>
-        <button id="toggle-done" class="btn small icon-btn toggle" aria-pressed="true" aria-label="Show done marks" title="Done marks"><svg class="ic sm"><use href="#i-done"/></svg></button>
+      <div class="canvas-wrap">
+        <div id="canvas-scroll" class="canvas-scroll">
+          <canvas id="canvas" tabindex="0" aria-label="Pixel canvas. Use arrow keys to move between cells."></canvas>
+        </div>
+        <div class="hud hud-tl">
+          <span id="status-size" class="chip" title="Design size">32 × 32</span>
+          <span id="status-coords" class="chip" title="Cell under the pointer">—</span>
+        </div>
+        <div class="hud hud-br">
+          <button id="hud-pan" class="btn small icon-btn phone-only" aria-pressed="false" aria-label="Move the view" title="Move the view"><svg class="ic sm"><use href="#i-pan"/></svg></button>
+          <button id="zoom-in" class="btn small icon-btn" aria-label="Zoom in" title="Zoom in (+)"><svg class="ic sm"><use href="#i-plus"/></svg></button>
+          <button id="zoom-out" class="btn small icon-btn" aria-label="Zoom out" title="Zoom out (−)"><svg class="ic sm"><use href="#i-minus"/></svg></button>
+          <button id="zoom-fit" class="btn small icon-btn" aria-label="Fit to screen" title="Fit to screen (0)"><svg class="ic sm"><use href="#i-fit"/></svg></button>
+        </div>
+        <input id="zoom-range" class="zoom-range" type="range" min="2" max="64" value="16" aria-label="Zoom" hidden>
+        <div id="drop-hint" class="drop-hint" hidden>Drop an image to pixelate it</div>
       </div>
-      <div id="canvas-scroll" class="canvas-scroll">
-        <canvas id="canvas" tabindex="0" aria-label="Pixel canvas. Use arrow keys to move between cells."></canvas>
-      </div>
-      <div id="drop-hint" class="drop-hint" hidden>Drop an image to pixelate it</div>
 
       <div class="inspector" id="inspector" aria-live="polite">
         <span id="insp-swatch" class="swatch big empty" aria-hidden="true"></span>
         <div class="insp-text">
           <strong id="insp-coords">No cell selected</strong>
-          <span id="insp-detail">Hover or tap the canvas — use the Inspect tool to lock a cell.</span>
+          <span id="insp-detail">Tap the canvas — use the Inspect tool to lock a cell.</span>
         </div>
         <div class="insp-actions">
           <div class="dpad" role="group" aria-label="Move selected cell">
@@ -183,8 +300,8 @@
       </div>
     </section>
 
-    <!-- Bottom sheet on phones, permanent side panel on desktop -->
-    <aside class="panel sheet" id="sheet" aria-label="Settings">
+    <!-- Bottom sheet on phones, permanent side panel on desktop / landscape tablets -->
+    <aside class="panel sheet" id="sheet" aria-label="Pattern settings">
       <div class="sheet-head">
         <div class="tabs" role="tablist">
           <button role="tab" class="tab" data-tab="design" aria-selected="true">Design</button>
@@ -229,19 +346,9 @@
         <p class="hint">0 keeps every color. On an untouched imported image the limit applies live.</p>
         <button id="btn-repixel" class="btn block-btn" disabled><svg class="ic sm"><use href="#i-redo-arrow"/></svg>Re-pixelate from image (discard edits)</button>
 
-        <h2>New blank canvas</h2>
-        <div class="row">
-          <label>Width <input id="new-w" type="number" min="1" max="256" value="32" inputmode="numeric"></label>
-          <label>Height <input id="new-h" type="number" min="1" max="256" value="32" inputmode="numeric"></label>
-        </div>
-        <label class="block">Background
-          <select id="new-bg">
-            <option value="empty">Empty (no stitch)</option>
-            <option value="white">White</option>
-            <option value="current">Current color</option>
-          </select>
-        </label>
-        <button id="btn-create" class="btn primary block-btn">Create blank canvas</button>
+        <h2>View</h2>
+        <label class="check"><input id="toggle-grid" type="checkbox" checked> Show grid lines</label>
+        <label class="check"><input id="toggle-done" type="checkbox" checked> Show done marks</label>
       </section>
 
       <!-- COLORS -->
@@ -268,7 +375,7 @@
           <div id="progress-bar"></div>
         </div>
         <p id="progress-text" class="hint">0 of 0 stitches done</p>
-        <p class="hint">Use the Mark tool (drag to mark many), or the Inspect tool + Enter to tick one stitch at a time.</p>
+        <p class="hint">Use the Mark tool (drag to mark many), or the Inspect tool + Enter to tick one stitch at a time. The pattern page has row and column guides for stitching.</p>
         <div class="row">
           <button id="btn-mark-all" class="btn small">Mark all done</button>
           <button id="btn-clear-progress" class="btn small">Clear progress</button>
@@ -318,25 +425,18 @@
 
       <!-- FILES -->
       <section class="tabpanel" id="panel-files" role="tabpanel" hidden>
-        <h2>Start something</h2>
-        <button id="btn-import" class="btn primary block-btn" data-action="import"><svg class="ic sm"><use href="#i-image"/></svg>Import an image</button>
-        <p class="hint">PNG, JPG, GIF, WebP… You can also drop an image onto the page.</p>
-        <h2>My designs</h2>
-        <div class="row">
-          <button id="btn-save-lib" class="btn" data-action="save"><svg class="ic sm"><use href="#i-save"/></svg>Save</button>
-          <button id="btn-library" class="btn" data-action="library"><svg class="ic sm"><use href="#i-files"/></svg>Open saved…</button>
-        </div>
-        <p class="hint">Saved in this browser only. Nothing is uploaded.</p>
+        <h2>Saved automatically</h2>
+        <p class="hint">Every change is saved to “My patterns” on this device as you work.</p>
+        <h2>Replace with an image</h2>
+        <button id="btn-import" class="btn block-btn" data-action="import"><svg class="ic sm"><use href="#i-image"/></svg>Pixelate an image into this pattern</button>
+        <p class="hint">Replaces the artwork (you can undo). To start a separate pattern, use + on the home page.</p>
         <h2>Project file</h2>
-        <div class="row">
-          <button id="btn-save-file" class="btn"><svg class="ic sm"><use href="#i-export"/></svg>Save file</button>
-          <button id="btn-open-file" class="btn"><svg class="ic sm"><use href="#i-upload"/></svg>Open file</button>
-        </div>
-        <p class="hint">Files keep colors and progress and stay on your device.</p>
+        <button id="btn-save-file" class="btn block-btn"><svg class="ic sm"><use href="#i-export"/></svg>Save a backup file</button>
+        <p class="hint">Keeps colors and progress. Open it later from the home page.</p>
       </section>
     </aside>
 
-    <!-- Fixed bottom dock on phones; vertical tool rail on desktop -->
+    <!-- Fixed bottom bar on phones; vertical tool rail on desktop -->
     <div class="dock">
       <nav class="tools" id="tools" aria-label="Tools">
         <button class="tool" data-tool="pencil" aria-pressed="true" title="Draw (B)"><svg class="ic"><use href="#i-pencil"/></svg><span class="tl">Draw</span></button>
@@ -345,21 +445,77 @@
         <button class="tool" data-tool="picker" aria-pressed="false" title="Pick color (I)"><svg class="ic"><use href="#i-picker"/></svg><span class="tl">Pick</span></button>
         <button class="tool" data-tool="inspect" aria-pressed="false" title="Inspect pixels (Q)"><svg class="ic"><use href="#i-inspect"/></svg><span class="tl">Inspect</span></button>
         <button class="tool" data-tool="mark" aria-pressed="false" title="Mark stitches done (M)"><svg class="ic"><use href="#i-mark"/></svg><span class="tl">Mark</span></button>
-        <button class="tool" data-tool="pan" aria-pressed="false" title="Move the view (H)"><svg class="ic"><use href="#i-pan"/></svg><span class="tl">Move</span></button>
-      </nav>
-      <nav class="navrow" aria-label="Panels">
-        <button class="navbtn" data-open-tab="colors" aria-pressed="false"><span class="dot" data-cur-color></span><span class="tl">Colors</span></button>
-        <button class="navbtn" data-open-tab="design" aria-pressed="false"><svg class="ic"><use href="#i-design"/></svg><span class="tl">Design</span></button>
-        <button class="navbtn" data-open-tab="craft" aria-pressed="false"><svg class="ic"><use href="#i-craft"/></svg><span class="tl">Craft</span></button>
-        <button class="navbtn" data-open-tab="export" aria-pressed="false"><svg class="ic"><use href="#i-export"/></svg><span class="tl">Export</span></button>
-        <button class="navbtn" data-open-tab="files" aria-pressed="false"><svg class="ic"><use href="#i-files"/></svg><span class="tl">Files</span></button>
+        <button class="tool desk-tool" data-tool="pan" aria-pressed="false" title="Move the view (H)"><svg class="ic"><use href="#i-pan"/></svg><span class="tl">Move</span></button>
+        <button id="dock-color" class="tool" aria-pressed="false" title="Colors"><span class="dot" data-cur-color></span><span class="tl">Color</span></button>
       </nav>
     </div>
   </main>
-</div>
+</section>
 
 <input id="file-input" type="file" accept="image/*" hidden>
+<input id="file-home-input" type="file" accept="image/*" hidden>
 <input id="file-project" type="file" accept=".json,.mochi,application/json" hidden>
+
+<!-- ===== dialogs ===== -->
+<dialog id="new-dialog" class="dialog">
+  <form method="dialog" id="new-form">
+    <div class="dialog-head"><h2>New canvas</h2></div>
+    <label class="block">Name <input id="new-name" type="text" maxlength="60" value="Untitled" autocomplete="off"></label>
+    <div class="row">
+      <label>Width <input id="new-w" type="number" min="1" max="256" value="32" inputmode="numeric"></label>
+      <label>Height <input id="new-h" type="number" min="1" max="256" value="32" inputmode="numeric"></label>
+    </div>
+    <div class="row presets" id="new-presets">
+      <button type="button" class="btn small" data-size="16">16</button>
+      <button type="button" class="btn small" data-size="32">32</button>
+      <button type="button" class="btn small" data-size="48">48</button>
+      <button type="button" class="btn small" data-size="64">64</button>
+    </div>
+    <label class="block">Background
+      <select id="new-bg">
+        <option value="empty">Empty (no stitch)</option>
+        <option value="white">White</option>
+      </select>
+    </label>
+    <div class="row end">
+      <button type="button" id="new-cancel" class="btn">Cancel</button>
+      <button type="submit" id="new-create" class="btn primary">Create</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="text-dialog" class="dialog">
+  <form method="dialog" id="text-form">
+    <div class="dialog-head"><h2 id="text-title">Rename</h2></div>
+    <label class="block"><span id="text-label">Name</span> <input id="text-input" type="text" maxlength="60" autocomplete="off"></label>
+    <div class="row end">
+      <button type="button" id="text-cancel" class="btn">Cancel</button>
+      <button type="submit" id="text-ok" class="btn primary">Save</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="confirm-dialog" class="dialog">
+  <div class="dialog-head"><h2 id="confirm-title">Are you sure?</h2></div>
+  <p id="confirm-text" class="hint"></p>
+  <div class="row end">
+    <button id="confirm-cancel" class="btn">Cancel</button>
+    <button id="confirm-ok" class="btn danger">Delete</button>
+  </div>
+</dialog>
+
+<dialog id="menu-dialog" class="dialog menu">
+  <div class="dialog-head"><h2 id="menu-title">Pattern</h2><button id="menu-close" class="btn small icon-btn" aria-label="Close"><svg class="ic sm"><use href="#i-close"/></svg></button></div>
+  <ul class="menu-list">
+    <li><button data-menu="rename"><svg class="ic sm"><use href="#i-pencil"/></svg>Rename</button></li>
+    <li><button data-menu="duplicate"><svg class="ic sm"><use href="#i-copy"/></svg>Duplicate (fresh progress)</button></li>
+    <li><button data-menu="preview"><svg class="ic sm"><use href="#i-print"/></svg>Preview &amp; print pattern</button></li>
+    <li><button data-menu="pattern-png"><svg class="ic sm"><use href="#i-export"/></svg>Download pattern PNG</button></li>
+    <li><button data-menu="art-png"><svg class="ic sm"><use href="#i-image"/></svg>Download artwork PNG</button></li>
+    <li><button data-menu="file"><svg class="ic sm"><use href="#i-export"/></svg>Save a backup file</button></li>
+    <li><button data-menu="delete" class="danger-text"><svg class="ic sm"><use href="#i-trash"/></svg>Delete pattern</button></li>
+  </ul>
+</dialog>
 
 <dialog id="preview-dialog" class="dialog wide">
   <div class="dialog-head">
@@ -372,15 +528,6 @@
   <div id="preview-pages" class="preview-pages"></div>
 </dialog>
 
-<dialog id="library-dialog" class="dialog">
-  <div class="dialog-head">
-    <h2>My designs</h2>
-    <button id="library-close" class="btn">Close</button>
-  </div>
-  <p class="hint">Saved in this browser only. Nothing is uploaded.</p>
-  <ul id="library-list" class="library"></ul>
-</dialog>
-
 <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
 <div id="print-area" aria-hidden="true"></div>
 
@@ -391,9 +538,15 @@
 <script src="js/renderer.js"></script>
 <script src="js/storage.js"></script>
 <script src="js/exporter.js"></script>
+<script src="js/images.js"></script>
+<script src="js/viewport.js"></script>
+<script src="js/router.js"></script>
+<script src="js/dialogs.js"></script>
+<script src="js/actions.js"></script>
 <script src="js/editor.js"></script>
 <script src="js/panels.js"></script>
-<script src="js/dialogs.js"></script>
+<script src="js/home.js"></script>
+<script src="js/view.js"></script>
 <script src="js/main.js"></script>
 </body>
 </html>

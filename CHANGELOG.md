@@ -10,6 +10,26 @@ Versions follow [Semantic Versioning](https://semver.org/): `MAJOR.MINOR.PATCH`.
 
 Examples are illustrative; the real versions are listed below. Documentation-only, test-only and refactoring changes do not automatically bump the version.
 
+## [1.2.0] — 2026-10-23 (finalized in the working tree; not tagged or published)
+
+Home page, project view and a cleaned-up editor layout (Batch B).
+
+### Added
+- Home page "pattern box": saved patterns as cards (thumbnail, size, colors, progress), a "Keep stitching" card, filters (All / In progress / Finished / Not started), an empty state, and a fixed bottom-right "+" speed dial (New canvas, Import image, Open file).
+- Project view: tap a pattern to look at it, with an Edit button, a ⋯ menu (Rename, Duplicate with fresh progress, Preview & print, Pattern PNG, Artwork PNG, Backup file, Delete with confirmation) and color spotlight chips.
+- Stitch highlight modes for crochet, cross-stitch and other pixel crafts: Look (inspect a stitch), Guide (highlight a row, a column or both; step with arrows; "Row done" ticks the row and moves on) and Tick (tap stitches off).
+- Hash routes (#/, #/p/<id>, #/e/<id>) so the back button and reloads land on the right screen.
+- Shared viewport module (pinch-zoom, two-finger pan, drag-to-pan) used by the editor and the project view.
+
+### Changed
+- Every pattern now lives in the library and is autosaved there while you edit; the single "autosave" slot and the manual Save / My designs dialog are gone. A 1.1.0 autosave is moved into the library on first launch.
+- Editor layout: one back button, a single fixed bottom tool row with a Color button, settings behind one sliders button, zoom/move buttons floating on the canvas, grid and done-mark toggles moved into the Design panel. The canvas keeps its size when the panel opens.
+- Desktop (≥ 900 px) shows a tool rail, canvas and permanent side panel; short landscape phones get a side panel instead of a sheet.
+- Importing an image from the home page creates a new pattern and opens it with the resolution controls ready.
+
+### Fixed
+- Panel and dock stacking shrank the canvas to a sliver on small phones and clipped the last tab.
+
 ## [1.1.0] — 2026-10-22 (finalized in the working tree; not tagged or published)
 
 Mobile-first rework (Batch A).

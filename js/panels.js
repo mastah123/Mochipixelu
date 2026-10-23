@@ -1,4 +1,4 @@
-/* Mochipixelu — side panels: design/resolution/import, colors, craft progress, export. */
+/* Mochipixelu — editor settings sheet: design/resolution, colors, craft progress, export, files. */
 (function (root) {
   'use strict';
   const M = (root.Mochi = root.Mochi || {});
@@ -13,11 +13,13 @@
 
       /* ---------- tabs + bottom sheet ---------- */
       const tabs = Array.from(document.querySelectorAll('.tab'));
-      const navBtns = Array.from(document.querySelectorAll('[data-open-tab]'));
       const sheet = $('sheet');
       let currentTab = 'design';
-      const syncNav = () =>
-        navBtns.forEach((b) => b.setAttribute('aria-pressed', String(sheet.classList.contains('open') && b.dataset.openTab === currentTab)));
+      const syncNav = () => {
+        const open = sheet.classList.contains('open');
+        $('btn-menu').setAttribute('aria-pressed', String(open && currentTab !== 'colors'));
+        $('dock-color').setAttribute('aria-pressed', String(open && currentTab === 'colors'));
+      };
       const showTab = (name) => {
         currentTab = name;
         tabs.forEach((t) => t.setAttribute('aria-selected', String(t.dataset.tab === name)));
@@ -35,12 +37,12 @@
         syncNav();
       };
       tabs.forEach((t) => t.addEventListener('click', () => showTab(t.dataset.tab)));
-      navBtns.forEach((b) =>
-        b.addEventListener('click', () => {
-          if (sheet.classList.contains('open') && currentTab === b.dataset.openTab) app.closeSheet();
-          else app.openSheet(b.dataset.openTab);
-        })
-      );
+      const toggleSheet = (tab, isOpenFor) => {
+        if (sheet.classList.contains('open') && isOpenFor()) app.closeSheet();
+        else app.openSheet(tab);
+      };
+      $('btn-menu').addEventListener('click', () => toggleSheet(currentTab === 'colors' ? 'design' : currentTab, () => currentTab !== 'colors'));
+      $('dock-color').addEventListener('click', () => toggleSheet('colors', () => currentTab === 'colors'));
       $('sheet-close').addEventListener('click', app.closeSheet);
       app.showTab = showTab;
 
@@ -174,52 +176,13 @@
       };
       $('btn-repixel').addEventListener('click', () => applyRepixel(false));
 
-      /* ---------- DESIGN: new canvas ---------- */
-      $('btn-create').addEventListener('click', () => {
-        const w = readSize($('new-w'));
-        const h = readSize($('new-h'));
-        if (w === null || h === null) return app.toast('Enter a width and height between 1 and ' + U.MAX_SIZE + '.', true);
-        const bg = $('new-bg').value;
-        const fill = bg === 'white' ? 0xffffff : bg === 'current' ? settings.color : EMPTY;
-        store.load(D.create(w, h, fill, 'Untitled'), { checkpoint: true, source: null, pristine: false });
-        app.toast('New ' + w + ' × ' + h + ' canvas');
-      });
-
-      /* ---------- import image ---------- */
-      const loadBitmap = (file) =>
-        new Promise((resolve, reject) => {
-          const url = URL.createObjectURL(file);
-          const img = new Image();
-          img.onload = () => {
-            URL.revokeObjectURL(url);
-            resolve(img);
-          };
-          img.onerror = () => {
-            URL.revokeObjectURL(url);
-            reject(new Error('That file could not be read as an image.'));
-          };
-          img.src = url;
-        });
-
-      app.importImageFile = async (file) => {
-        if (!file || !/^image\//.test(file.type)) return app.toast('Please choose an image file (PNG, JPG, GIF, WebP…).', true);
+      /* ---------- replace the artwork with an image (undoable) ---------- */
+      app.importIntoEditor = async (file) => {
         try {
-          const img = await loadBitmap(file);
-          const nw = img.naturalWidth || img.width;
-          const nh = img.naturalHeight || img.height;
-          if (!nw || !nh) throw new Error('That image has no size.');
-          const k = Math.min(1, M.Pixelate.SOURCE_MAX / Math.max(nw, nh));
-          const sw = Math.max(1, Math.round(nw * k));
-          const sh = Math.max(1, Math.round(nh * k));
-          const c = document.createElement('canvas');
-          c.width = sw;
-          c.height = sh;
-          const ctx = c.getContext('2d', { willReadFrequently: true });
-          ctx.drawImage(img, 0, 0, sw, sh);
-          const src = { data: ctx.getImageData(0, 0, sw, sh).data, width: sw, height: sh, name: file.name };
+          const src = await M.Images.readFile(file);
           const longest = Math.max(store.design.width, store.design.height, 8);
-          const { w, h } = M.Pixelate.fitSize(sw, sh, longest > 64 ? 64 : longest);
-          const name = file.name.replace(/\.[^.]+$/, '').slice(0, 60) || 'Imported image';
+          const { w, h } = M.Pixelate.fitSize(src.width, src.height, longest > 64 ? 64 : longest);
+          const name = M.Images.baseName(file) || 'Imported image';
           resizing = true;
           store.load(M.Pixelate.designFromSource(src, w, h, colorLimit(), name), { checkpoint: true, source: src, pristine: true });
           resizing = false;
@@ -227,43 +190,15 @@
           app.openSheet('design');
           app.toast('Pixelated to ' + w + ' × ' + h + ' — adjust the resolution live!');
         } catch (err) {
+          resizing = false;
           app.toast(err.message || 'Could not import that image.', true);
         }
       };
-
-      document.querySelectorAll('[data-action="import"]').forEach((b) => b.addEventListener('click', () => $('file-input').click()));
+      $('btn-import').addEventListener('click', () => $('file-input').click());
       $('file-input').addEventListener('change', (e) => {
         const f = e.target.files[0];
         e.target.value = '';
-        if (f) app.importImageFile(f);
-      });
-
-      // drag & drop (images or project files)
-      const hint = $('drop-hint');
-      let dragDepth = 0;
-      const hasFiles = (e) => e.dataTransfer && Array.from(e.dataTransfer.types || []).includes('Files');
-      document.addEventListener('dragenter', (e) => {
-        if (!hasFiles(e)) return;
-        dragDepth++;
-        hint.hidden = false;
-      });
-      document.addEventListener('dragleave', (e) => {
-        if (!hasFiles(e)) return;
-        dragDepth = Math.max(0, dragDepth - 1);
-        if (!dragDepth) hint.hidden = true;
-      });
-      document.addEventListener('dragover', (e) => {
-        if (hasFiles(e)) e.preventDefault();
-      });
-      document.addEventListener('drop', (e) => {
-        if (!hasFiles(e)) return;
-        e.preventDefault();
-        dragDepth = 0;
-        hint.hidden = true;
-        const f = e.dataTransfer.files[0];
-        if (!f) return;
-        if (/\.(json|mochi)$/i.test(f.name)) app.openProjectFile(f);
-        else app.importImageFile(f);
+        if (f) app.importIntoEditor(f);
       });
 
       /* ---------- COLORS ---------- */
@@ -389,58 +324,10 @@
         marks: $('ex-marks').checked,
         grid: true,
       });
-      const guardEmpty = () => {
-        if (!app.getLegend().filled) {
-          app.toast('The design is empty — draw something first.', true);
-          return true;
-        }
-        return false;
-      };
-      const fileBase = () => U.safeFilename(store.design.name);
-
-      $('btn-pattern-png').addEventListener('click', async () => {
-        if (guardEmpty()) return;
-        const o = app.exportOptions();
-        if (!o.colors && !o.symbols) return app.toast('Turn on colors or symbols so the pattern shows something.', true);
-        try {
-          await M.Exporter.downloadCanvas(M.Exporter.renderFullPattern(store.design, o), fileBase() + '-pattern.png');
-          app.toast('Pattern PNG saved');
-        } catch (err) {
-          app.toast(err.message, true);
-        }
-      });
-      $('btn-art-png').addEventListener('click', async () => {
-        if (guardEmpty()) return;
-        try {
-          await M.Exporter.downloadCanvas(
-            M.Exporter.renderArt(store.design, Number($('art-scale').value) || 16, $('art-transparent').checked),
-            fileBase() + '.png'
-          );
-          app.toast('Artwork PNG saved');
-        } catch (err) {
-          app.toast(err.message, true);
-        }
-      });
-      $('btn-save-file').addEventListener('click', () => {
-        M.Exporter.downloadBlob(new Blob([M.Storage.toFileText(store.design)], { type: 'application/json' }), fileBase() + '.mochipixelu.json');
-        app.toast('Project file saved');
-      });
-      $('btn-open-file').addEventListener('click', () => $('file-project').click());
-      $('file-project').addEventListener('change', (e) => {
-        const f = e.target.files[0];
-        e.target.value = '';
-        if (f) app.openProjectFile(f);
-      });
-      app.openProjectFile = async (file) => {
-        try {
-          if (file.size > 25 * 1024 * 1024) throw new Error('That file is too large to be a Mochipixelu project.');
-          const d = M.Storage.fromFileText(await file.text());
-          store.load(d, { checkpoint: true, source: null, pristine: false });
-          app.toast('Opened “' + d.name + '”');
-        } catch (err) {
-          app.toast(err.message || 'Could not open that file.', true);
-        }
-      };
+      $('btn-preview').addEventListener('click', () => app.act.preview(store.design));
+      $('btn-pattern-png').addEventListener('click', () => app.act.patternPng(store.design));
+      $('btn-art-png').addEventListener('click', () => app.act.artPng(store.design));
+      $('btn-save-file').addEventListener('click', () => app.act.saveFile(store.design));
 
       /* ---------- refresh wiring ---------- */
       const refreshAll = U.debounce(() => {
@@ -467,7 +354,6 @@
         app.savePrefs();
       });
       app.ui.on('filter', refreshCraft);
-      app.ui.on('tool', () => {});
       showTab('design');
       refreshColors();
     },

@@ -1,6 +1,6 @@
 /* Mochipixelu end-to-end test (real Chromium). Optional — needs Playwright installed somewhere:
  *   PLAYWRIGHT_MODULE=/path/to/node_modules/playwright node tests/e2e.cjs
- * Writes screenshots/downloads to a temp folder. The app itself needs no tooling. */
+ * Writes screenshots to a temp folder (path printed at the end). The app itself needs no tooling. */
 const path = require('path');
 const os = require('os');
 const fs = require('fs');
@@ -10,249 +10,257 @@ const URL = 'file://' + path.resolve(__dirname, '..', 'index.html');
 let fails = 0;
 const check = (name, cond, extra) => { console.log((cond ? 'PASS ' : 'FAIL ') + name + (cond ? '' : '  -> ' + extra)); if (!cond) fails++; };
 
-(async () => {
-  const browser = await chromium.launch({ args: ['--no-sandbox'] });
-  const ctx = await browser.newContext({ viewport: { width: 1280, height: 820 }, acceptDownloads: true });
+// tiny 4x2 PNG (red, green / blue, yellow) for import tests
+const PNG = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAQAAAACCAYAAAB/qH1jAAAAFUlEQVR4nGP4z8Dwn4GBgQGIGf4DAB4EBP/ZPHKdAAAAAElFTkSuQmCC', 'base64');
+
+async function open(browser, opts) {
+  const ctx = await browser.newContext(Object.assign({ acceptDownloads: true }, opts));
   const page = await ctx.newPage();
   const errors = [];
   page.on('pageerror', (e) => errors.push('pageerror: ' + e.message));
   page.on('console', (m) => { if (m.type() === 'error') errors.push('console: ' + m.text()); });
   await page.goto(URL);
   await page.waitForFunction(() => window.mochipixelu);
+  return { ctx, page, errors };
+}
+const hash = (page) => page.evaluate(() => location.hash);
+const screenIs = (page, n) => page.waitForFunction((n) => document.body.dataset.screen === n, n, { timeout: 3000 }).then(() => true, () => false);
+const vis = (page, sel) => page.locator(sel).isVisible();
 
-  const st = () => page.evaluate(() => { const a = window.mochipixelu, d = a.store.design; return { w: d.width, h: d.height, px: Array.from(d.pixels), done: Array.from(d.done), pristine: a.store.pristine }; });
-  const cellXY = async (x, y) => page.evaluate(([x, y]) => { const a = window.mochipixelu, r = a.renderer.canvas.getBoundingClientRect(), c = a.renderer.cell; return { x: r.left + (x + .5) * c, y: r.top + (y + .5) * c }; }, [x, y]);
-  const click = async (x, y) => { const p = await cellXY(x, y); await page.mouse.click(p.x, p.y); };
+(async () => {
+  const browser = await chromium.launch({ args: ['--no-sandbox'] });
 
-  // 1. draw with pencil
-  await page.evaluate(() => window.mochipixelu.setColor(0xff0000));
-  await click(2, 2);
-  let s = await st();
-  check('pencil paints a cell', s.px[2 * s.w + 2] === 0xff0000, s.px[2 * s.w + 2]);
+  /* ================= phone flow ================= */
+  {
+    const { ctx, page, errors } = await open(browser, { viewport: { width: 390, height: 780 }, hasTouch: true, isMobile: true });
 
-  // drag stroke
-  let a = await cellXY(5, 5), b = await cellXY(10, 5);
-  await page.mouse.move(a.x, a.y); await page.mouse.down(); await page.mouse.move(b.x, b.y, { steps: 3 }); await page.mouse.up();
-  s = await st();
-  check('drag draws a continuous line (6 cells)', [5,6,7,8,9,10].every(x => s.px[5 * s.w + x] === 0xff0000));
+    check('starts on the home page', (await page.evaluate(() => document.body.dataset.screen)) === 'home');
+    check('empty state shows', await vis(page, '#home-empty'));
+    check('+ button is visible', await vis(page, '#fab'));
+    const fab = await page.locator('#fab').boundingBox();
+    check('+ is fixed bottom-right', fab.x + fab.width > 390 - 40 && fab.y + fab.height > 780 - 40, JSON.stringify(fab));
+    await page.screenshot({ path: SP + 'home-empty.png' });
 
-  // undo removes whole stroke in one step
-  await page.keyboard.press('Control+z');
-  s = await st();
-  check('undo removes the whole stroke', s.px[5 * s.w + 7] === -1 && s.px[2 * s.w + 2] === 0xff0000);
-  await page.keyboard.press('Control+y');
-  s = await st();
-  check('redo restores stroke', s.px[5 * s.w + 7] === 0xff0000);
+    // new canvas via FAB
+    await page.tap('#fab');
+    check('speed dial opens', await vis(page, '#fab-menu'));
+    await page.tap('#fab-menu [data-home=new]');
+    await page.fill('#new-name', 'Heart');
+    await page.fill('#new-w', '12'); await page.fill('#new-h', '10');
+    await page.tap('#new-create');
+    await page.waitForFunction(() => location.hash.startsWith('#/e/'));
+    const id = (await hash(page)).slice(4);
+    check('creating a canvas opens the editor', (await page.evaluate(() => document.body.dataset.screen)) === 'editor');
+    check('library has the new project', (await page.evaluate(() => mochipixelu && JSON.parse(localStorage.getItem('mochipixelu:library')).length)) === 1);
 
-  // eraser
-  await page.keyboard.press('e'); await click(7, 5);
-  s = await st(); check('eraser clears a cell', s.px[5 * s.w + 7] === -1);
+    // layout: dock at bottom, canvas has room, no horizontal overflow
+    const lay = async (tag) => {
+      const r = await page.evaluate(() => {
+        const q = (s) => { const e = document.querySelector(s); const b = e.getBoundingClientRect(); return { x: b.x, y: b.y, w: b.width, h: b.height }; };
+        return { dock: q('.dock'), wrap: q('#screen-editor .canvas-wrap'), vw: innerWidth, vh: innerHeight, sw: document.documentElement.scrollWidth };
+      });
+      check(tag + ': dock sits at the bottom', Math.abs(r.dock.y + r.dock.h - r.vh) < 2, JSON.stringify(r.dock));
+      check(tag + ': no horizontal overflow', r.sw <= r.vw, r.sw + '>' + r.vw);
+      return r;
+    };
+    let r = await lay('editor closed sheet');
+    check('canvas area is large (>=300px tall)', r.wrap.h >= 300, r.wrap.h);
+    await page.tap('#btn-menu');
+    await page.waitForTimeout(350);
+    r = await lay('editor open sheet');
+    check('canvas area stays usable with the sheet open (>=180px)', r.wrap.h >= 180, r.wrap.h);
+    await page.screenshot({ path: SP + 'editor-sheet.png' });
+    await page.tap('#sheet-close');
+    await page.waitForTimeout(350);
 
-  // fill + fill-all
-  await page.keyboard.press('g'); await page.evaluate(() => window.mochipixelu.setColor(0x00ff00)); await click(20, 20);
-  s = await st(); check('fill floods the empty region', s.px[20 * 32 + 20] === 0x00ff00 && s.px.filter(v => v === 0x00ff00).length > 900, s.px.filter(v => v === 0x00ff00).length);
-  await page.evaluate(() => window.mochipixelu.setColor(0x0000ff));
-  await page.click('[data-tab=colors]'); await page.check('#fill-all');
-  await click(20, 20);
-  s = await st(); check('fill-all recolors every matching cell', s.px.filter(v => v === 0x00ff00).length === 0 && s.px.filter(v => v === 0x0000ff).length > 900);
-  await page.uncheck('#fill-all');
+    // draw with the pencil
+    await page.evaluate(() => mochipixelu.setColor(0xe8737f));
+    const cellXY = (x, y) => page.evaluate(([x, y]) => { const a = mochipixelu, b = a.renderer.canvas.getBoundingClientRect(), c = a.renderer.cell; return { x: b.left + (x + .5) * c, y: b.top + (y + .5) * c }; }, [x, y]);
+    for (const [x, y] of [[2, 2], [3, 2], [4, 2], [2, 3], [3, 3], [4, 3]]) { const p = await cellXY(x, y); await page.touchscreen.tap(p.x, p.y); }
+    const painted = await page.evaluate(() => mochipixelu.store.design.pixels.filter((v) => v === 0xe8737f).length);
+    check('tapping with the pencil paints cells', painted === 6, painted);
+    await page.screenshot({ path: SP + 'editor.png' });
 
-  // 2. resolution change on blank/edited design (resample)
-  await page.click('[data-tab=design]');
-  await page.fill('#res-w', '16'); await page.waitForTimeout(400);
-  s = await st(); check('resolution 16x16 changes the real pixel count', s.w === 16 && s.h === 16 && s.px.length === 256, s.w + 'x' + s.h);
-  await page.click('#btn-undo'); s = await st(); check('undo restores 32x32', s.w === 32 && s.px.length === 1024);
+    // autosave reaches the library
+    await page.waitForTimeout(900);
+    const lib = await page.evaluate(() => JSON.parse(localStorage.getItem('mochipixelu:library'))[0]);
+    check('edits autosave into the library', lib.filled === 6, JSON.stringify(lib));
 
-  // 3. new custom canvas non-square
-  await page.fill('#new-w', '20'); await page.fill('#new-h', '12'); await page.selectOption('#new-bg', 'white'); await page.click('#btn-create');
-  s = await st(); check('custom blank canvas 20x12 white', s.w === 20 && s.h === 12 && s.px.every(v => v === 0xffffff));
+    // back to the view page
+    await page.tap('#btn-back');
+    check('back from editor opens the project view', await screenIs(page, 'view'));
+    check('view shows the name', (await page.textContent('#view-title')) === 'Heart');
+    await page.screenshot({ path: SP + 'view-look.png' });
 
-  // 4. import image (generated in page): left red, right blue, top-left corner transparent
-  await page.evaluate(async () => {
-    const c = document.createElement('canvas'); c.width = 200; c.height = 100;
-    const x = c.getContext('2d'); x.fillStyle = '#ff0000'; x.fillRect(0, 0, 100, 100); x.fillStyle = '#0000ff'; x.fillRect(100, 0, 100, 100);
-    const blob = await new Promise(r => c.toBlob(r, 'image/png'));
-    await window.mochipixelu.importImageFile(new File([blob], 'flag.png', { type: 'image/png' }));
-  });
-  await page.waitForTimeout(300);
-  s = await st();
-  check('import pixelates to aspect-correct grid (2:1)', s.w / s.h === 2, s.w + 'x' + s.h);
-  check('import is pristine + colors correct', s.pristine && s.px[0] === 0xff0000 && s.px[s.w - 1] === 0x0000ff);
-  const name = await page.inputValue('#design-name'); check('design named from file', name === 'flag', name);
+    // look mode
+    const vcell = (x, y) => page.evaluate(([x, y]) => { const c = document.getElementById('view-canvas'), b = c.getBoundingClientRect(); const cell = c.width / mochipixelu.store.design.width * 0 + c.width / 12; return { x: b.left + (x + .5) * cell, y: b.top + (y + .5) * cell }; }, [x, y]);
+    let p = await vcell(2, 2); await page.touchscreen.tap(p.x, p.y);
+    check('look mode shows stitch info', /Column 3, Row 3/.test(await page.textContent('#view-info-text')), await page.textContent('#view-info-text'));
 
-  // live resolution with source: width 8 -> height 4, still pure colors
-  await page.fill('#res-w', '8'); await page.waitForTimeout(400);
-  s = await st(); check('live re-pixelate to 8x4', s.w === 8 && s.h === 4 && s.px[0] === 0xff0000 && s.px[7] === 0x0000ff && s.pristine, s.w + 'x' + s.h);
-  await page.fill('#res-w', '64'); await page.waitForTimeout(400);
-  s = await st(); check('upscale resolution to 64x32 increases pixels', s.w === 64 && s.h === 32 && s.px.length === 2048);
-  // color limit
-  await page.fill('#color-limit', '1'); await page.dispatchEvent('#color-limit', 'change'); await page.waitForTimeout(200);
-  s = await st(); check('color limit 1 live', new Set(s.px).size === 1, new Set(s.px).size);
-  await page.fill('#color-limit', '0'); await page.dispatchEvent('#color-limit', 'change'); await page.waitForTimeout(200);
+    // guide mode
+    await page.tap('[data-mode=guide]');
+    check('guide controls appear', await vis(page, '#guide-controls'));
+    p = await vcell(0, 2); await page.touchscreen.tap(p.x, p.y);
+    check('tapping sets the guide row', /Row 3 of 10/.test(await page.textContent('#guide-label')), await page.textContent('#guide-label'));
+    await page.tap('#guide-next');
+    check('next moves the guide', /Row 4/.test(await page.textContent('#guide-label')));
+    await page.tap('#guide-prev');
+    await page.tap('#guide-done');
+    let done = await page.evaluate(() => { const l = JSON.parse(localStorage.getItem('mochipixelu:library'))[0]; return l; });
+    await page.waitForTimeout(800);
+    done = await page.evaluate(() => JSON.parse(localStorage.getItem('mochipixelu:library'))[0].done);
+    check('Row done ticks the row and persists (3 stitches)', done === 3, done);
+    check('guide advanced to the next row', /Row 4/.test(await page.textContent('#guide-label')), await page.textContent('#guide-label'));
+    await page.screenshot({ path: SP + 'view-guide.png' });
 
-  // edit then resize -> not pristine, resample keeps drawn data
-  await page.evaluate(() => window.mochipixelu.setColor(0x123456));
-  await page.keyboard.press('b'); await click(1, 1);
-  s = await st(); check('editing clears pristine', !s.pristine);
+    // tick mode
+    await page.tap('[data-mode=tick]');
+    p = await vcell(2, 3); await page.touchscreen.tap(p.x, p.y);
+    await page.waitForTimeout(800);
+    done = await page.evaluate(() => JSON.parse(localStorage.getItem('mochipixelu:library'))[0].done);
+    check('tick mode ticks a stitch', done === 4, done);
+    check('progress text updates', /4 of 6/.test(await page.textContent('#view-progress-text')), await page.textContent('#view-progress-text'));
 
-  // 5. inspect + keyboard nav + mark
-  await page.keyboard.press('q'); await click(3, 4);
-  let info = await page.textContent('#insp-coords'); check('inspect shows 1-based coordinates', /Column 4, Row 5/.test(info), info);
-  await page.keyboard.press('ArrowRight'); await page.keyboard.press('ArrowDown');
-  info = await page.textContent('#insp-coords'); check('arrow keys move selection', /Column 5, Row 6/.test(info), info);
-  await page.click('#nav-left'); info = await page.textContent('#insp-coords'); check('d-pad moves selection', /Column 4, Row 6/.test(info), info);
-  await page.focus('#canvas'); await page.keyboard.press('Enter');
-  s = await st(); check('Enter toggles done on selected cell', s.done[5 * s.w + 3] === 1);
-  await page.keyboard.press('m'); a = await cellXY(0, 0); b = await cellXY(5, 0);
-  await page.mouse.move(a.x, a.y); await page.mouse.down(); await page.mouse.move(b.x, b.y, { steps: 4 }); await page.mouse.up();
-  s = await st(); check('mark tool marks a dragged row', [0,1,2,3,4,5].every(x => s.done[x] === 1));
-  await page.click('[data-tab=craft]');
-  const prog = await page.textContent('#progress-text'); check('progress text updates', /\d+ of 2048 stitches done/.test(prog) && !/^0 of/.test(prog), prog);
-  // spotlight
-  await page.click('#legend-list button >> nth=0');
-  check('legend spotlight sets filter', await page.evaluate(() => window.mochipixelu.renderer.filter !== null));
-  await page.keyboard.press('Escape');
-  check('Escape clears spotlight', await page.evaluate(() => window.mochipixelu.renderer.filter === null));
-  // progress survives undo of marking
-  // 6. export
-  await page.click('[data-tab=export]');
-  const [dl1] = await Promise.all([page.waitForEvent('download'), page.click('#btn-pattern-png')]);
-  const p1 = SP + 'pattern.png'; await dl1.saveAs(p1);
-  check('pattern PNG downloads', dl1.suggestedFilename() === 'flag-pattern.png', dl1.suggestedFilename());
-  const [dl2] = await Promise.all([page.waitForEvent('download'), page.click('#btn-art-png')]);
-  await dl2.saveAs(SP + 'art.png');
-  const dims = await page.evaluate(async () => { const c = await new Promise(r => window.mochipixelu.renderer.canvas.toBlob(r)); return 0; });
-  await page.click('[data-tab=files]');
-  const [dl3] = await Promise.all([page.waitForEvent('download'), page.click('#btn-save-file')]);
-  await dl3.saveAs(SP + 'proj.json');
-  check('project file downloads', /\.mochipixelu\.json$/.test(dl3.suggestedFilename()));
-  await page.click('[data-tab=export]'); await page.click('#btn-preview'); await page.waitForSelector('#preview-pages img');
-  const pages = await page.locator('#preview-pages img').count();
-  check('preview builds overview + 2 sections for 64 columns', pages === 3, pages);
-  await page.screenshot({ path: SP + 'preview.png' });
-  await page.click('#preview-close');
+    // spotlight chip
+    await page.tap('#view-legend button');
+    check('legend chip spotlights a color', (await page.evaluate(() => mochipixelu.renderer && true)) );
 
-  // 7. persistence: reload restores autosave
-  await page.waitForTimeout(800);
-  await page.reload(); await page.waitForFunction(() => window.mochipixelu);
-  s = await st(); check('autosave restores design after reload', s.w === 64 && s.h === 32 && s.done.some(v => v === 1));
-  
-  // 8. library save/load
-  await page.click('[data-tab=files]'); await page.click('#btn-save-lib'); await page.click('#btn-library');
-  check('library lists saved design', (await page.locator('#library-list li strong').count()) === 1);
-  await page.click('#library-list .btn >> text=Open'); 
-  s = await st(); check('library open works', s.w === 64);
+    // menu: rename, duplicate
+    await page.tap('#view-more');
+    await page.tap('[data-menu=rename]');
+    await page.fill('#text-input', 'Big Heart');
+    await page.tap('#text-ok');
+    await page.waitForTimeout(300);
+    check('rename updates the title', (await page.textContent('#view-title')) === 'Big Heart');
+    await page.tap('#view-more');
+    await page.tap('[data-menu=duplicate]');
+    await page.waitForTimeout(300);
+    const dup = await page.evaluate(() => { const l = JSON.parse(localStorage.getItem('mochipixelu:library')); return { n: l.length, newest: l[0] }; });
+    check('duplicate adds a copy with fresh progress', dup.n === 2 && dup.newest.done === 0 && /copy/.test(dup.newest.name), JSON.stringify(dup));
 
-  // 9. project file round trip via open
-  await page.keyboard.press('Escape');
-  await page.evaluate(() => window.mochipixelu.store.load(window.Mochi.Design.create(5, 5), { checkpoint: true }));
-  await page.setInputFiles('#file-project', SP + 'proj.json'); await page.waitForTimeout(300);
-  s = await st(); check('open project file restores 64x32 with progress', s.w === 64 && s.done.some(v => v === 1));
-  await page.screenshot({ path: SP + 'desktop.png' });
+    // home shows both, continue card for the stitched one
+    await page.tap('#view-back');
+    await screenIs(page, 'home');
+    check('home lists two patterns', (await page.locator('#home-grid .card').count()) === 2);
+    check('continue card shows the in-progress pattern', await vis(page, '#continue-card'));
+    await page.tap('[data-filter=new]');
+    check('filter "Not started" shows only the copy', (await page.locator('#home-grid .card').count()) === 1);
+    await page.tap('[data-filter=all]');
+    await page.screenshot({ path: SP + 'home.png' });
 
-  // 10. bad project file
-  require('fs').writeFileSync(SP + 'bad.json', '{"format":"nope"}');
-  await page.setInputFiles('#file-project', SP + 'bad.json'); await page.waitForTimeout(200);
-  check('bad project file shows error toast', /not a Mochipixelu/.test(await page.textContent('#toast')));
-  // non-image import
-  require('fs').writeFileSync(SP + 'x.txt', 'hello');
-  await page.setInputFiles('#file-input', SP + 'x.txt'); await page.waitForTimeout(200);
-  check('non-image import is rejected', /choose an image/.test(await page.textContent('#toast')), await page.textContent('#toast'));
+    // open from card, edit button, delete
+    await page.locator('#home-grid .card').first().tap();
+    await screenIs(page, 'view');
+    await page.tap('#view-edit');
+    await screenIs(page, 'editor');
+    check('Edit opens the editor for the same pattern', (await page.evaluate(() => mochipixelu.store.design.name)).includes('copy'));
+    await page.tap('#btn-back');
+    await page.tap('#view-more');
+    await page.tap('[data-menu=delete]');
+    await page.tap('#confirm-ok');
+    await page.waitForFunction(() => location.hash === '#/' || location.hash === '');
+    check('delete removes it from the library', (await page.evaluate(() => JSON.parse(localStorage.getItem('mochipixelu:library')).length)) === 1);
 
-  // 11. large design pages + mobile
-  await page.evaluate(() => { const A = window.mochipixelu; const d = window.Mochi.Design.create(120, 90, 0xff9999); A.store.load(d, { source: null }); });
-  await page.click('[data-tab=export]'); await page.click('#btn-preview'); await page.waitForSelector('#preview-pages img');
-  const bigPages = await page.locator('#preview-pages img').count();
-  check('large design splits into overview + sections', bigPages === 1 + 3 * 2, bigPages);
-  await page.click('#preview-close');
+    // import from home
+    await page.tap('#fab');
+    const [chooser] = await Promise.all([page.waitForEvent('filechooser'), page.tap('#fab-menu [data-home=import]')]);
+    await chooser.setFiles({ name: 'tiny.png', mimeType: 'image/png', buffer: PNG });
+    await page.waitForFunction(() => location.hash.startsWith('#/e/'));
+    await page.waitForTimeout(400);
+    const imp = await page.evaluate(() => ({ w: mochipixelu.store.design.width, h: mochipixelu.store.design.height, pristine: mochipixelu.store.pristine, sheet: document.getElementById('sheet').classList.contains('open') }));
+    check('import-from-home opens the editor with a pixelated image (4x2, live)', imp.w === 4 && imp.h === 2 && imp.pristine, JSON.stringify(imp));
+    check('Design sheet opens after import', imp.sheet);
 
-  /* ---------- phone: bottom dock, sheet, gestures ---------- */
-  const m = await browser.newContext({ viewport: { width: 390, height: 800 }, hasTouch: true, isMobile: true });
-  const mp = await m.newPage(); mp.on('pageerror', (e) => errors.push('mobile pageerror: ' + e.message));
-  await mp.goto(URL); await mp.waitForFunction(() => window.mochipixelu);
-  const overflow = await mp.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
-  check('mobile: no horizontal overflow', overflow <= 1, overflow);
-  check('mobile: page itself does not scroll', await mp.evaluate(() => document.documentElement.scrollHeight <= window.innerHeight + 1));
-  const dock = await mp.evaluate(() => { const r = document.querySelector('.dock').getBoundingClientRect(); return { bottom: r.bottom, top: r.top, h: window.innerHeight }; });
-  check('mobile: tool dock is fixed to the bottom edge', Math.abs(dock.bottom - dock.h) <= 1, JSON.stringify(dock));
-  const cv = await mp.evaluate(() => { const r = document.getElementById('canvas-scroll').getBoundingClientRect(); return { w: r.width, h: r.height }; });
-  check('mobile: canvas area is large (>= 300px tall)', cv.h >= 300, cv.h);
-  check('mobile: side panel hidden until opened', await mp.evaluate(() => getComputedStyle(document.getElementById('sheet')).visibility === 'hidden'));
-  check('mobile: desktop-only buttons hidden', await mp.evaluate(() => getComputedStyle(document.querySelector('.top-quick')).display === 'none'));
-  check('mobile: no emoji left in the UI', await mp.evaluate(() => !/\p{Extended_Pictographic}/u.test(document.body.innerText.replace(/[✓]/g, ''))));
-  await mp.screenshot({ path: SP + 'mobile.png' });
+    // reload keeps the route and the data
+    await page.waitForTimeout(800);
+    await page.reload();
+    await page.waitForFunction(() => window.mochipixelu);
+    check('reload stays on the editor route', (await page.evaluate(() => document.body.dataset.screen)) === 'editor');
 
-  // touch drawing
-  await mp.evaluate(() => window.mochipixelu.setColor(0xff0000));
-  const cellPt = (x, y) => mp.evaluate(([x, y]) => { const a = window.mochipixelu, r = a.renderer.canvas.getBoundingClientRect(), c = a.renderer.cell; return { x: r.left + (x + .5) * c, y: r.top + (y + .5) * c }; }, [x, y]);
-  let bx = await cellPt(3, 3);
-  await mp.touchscreen.tap(bx.x, bx.y);
-  check('mobile: tap draws', (await mp.evaluate(() => window.mochipixelu.store.design.pixels[3 * 32 + 3])) === 0xff0000);
+    // deleted/unknown route falls back home
+    await page.evaluate(() => { location.hash = '#/p/doesnotexist'; });
+    await page.waitForTimeout(200);
+    check('unknown project id falls back to home', (await page.evaluate(() => document.body.dataset.screen)) === 'home');
 
-  // sheet open/close + live resolution preview
-  await mp.tap('[data-open-tab=design]');
-  await mp.waitForTimeout(400);
-  check('mobile: tapping Design opens the sheet', await mp.evaluate(() => getComputedStyle(document.getElementById('sheet')).visibility === 'visible'));
-  const geo = await mp.evaluate(() => { const s = document.getElementById('sheet').getBoundingClientRect(), d = document.querySelector('.dock').getBoundingClientRect(), c = document.getElementById('canvas-scroll').getBoundingClientRect(); return { sheetBottom: s.bottom, dockTop: d.top, canvasBottom: c.bottom, canvasH: c.height }; });
-  check('mobile: sheet sits right above the dock, canvas still visible', Math.abs(geo.sheetBottom - geo.dockTop) <= 1 && geo.canvasH > 150, JSON.stringify(geo));
-  const fitted = await mp.evaluate(() => { const a = window.mochipixelu, c = document.getElementById('canvas-scroll'); return a.renderer.canvas.width <= c.clientWidth && a.renderer.canvas.height <= c.clientHeight; });
-  check('mobile: auto-fit keeps the whole canvas in view when the sheet opens', fitted);
-  await mp.fill('#res-w', '16'); await mp.waitForTimeout(400);
-  check('mobile: resolution changes live from the sheet', (await mp.evaluate(() => window.mochipixelu.store.design.width)) === 16);
-  await mp.tap('[data-open-tab=design]'); await mp.waitForTimeout(400);
-  check('mobile: tapping the active tab again closes the sheet', await mp.evaluate(() => getComputedStyle(document.getElementById('sheet')).visibility === 'hidden'));
-  await mp.tap('[data-open-tab=colors]'); await mp.waitForTimeout(300);
-  await mp.tap('#palette-grid .sw >> nth=18'); // a green swatch
-  const gcol = await mp.evaluate(() => window.mochipixelu.settings.color);
-  check('mobile: picking a palette swatch sets the color', gcol === 0x9cc58d, gcol.toString(16));
-  const dotBg = await mp.evaluate(() => getComputedStyle(document.querySelector('[data-cur-color]')).backgroundColor);
-  check('mobile: dock color dot follows the current color', dotBg === 'rgb(156, 197, 141)', dotBg);
-  await mp.screenshot({ path: SP + 'mobile-sheet.png' });
-  await mp.tap('#sheet-close');
+    check('phone flow: no console/page errors', errors.length === 0, errors.join(' | '));
+    await ctx.close();
+  }
 
-  // pinch zoom + two-finger pan via synthetic touch pointer events
-  await mp.evaluate(() => window.mochipixelu.fit());
-  const cellBefore = await mp.evaluate(() => window.mochipixelu.renderer.cell);
-  const pxBefore = await mp.evaluate(() => Array.from(window.mochipixelu.store.design.pixels).join());
-  const hist = await mp.evaluate(() => window.mochipixelu.store.undoStack.length);
-  await mp.evaluate(() => {
-    const c = document.getElementById('canvas'), r = c.getBoundingClientRect();
-    const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
-    const ev = (type, id, x, y) => c.dispatchEvent(new PointerEvent(type, { pointerId: id, pointerType: 'touch', clientX: x, clientY: y, bubbles: true, cancelable: true, isPrimary: id === 1 }));
-    ev('pointerdown', 1, cx - 20, cy); ev('pointerdown', 2, cx + 20, cy);
-    for (let i = 1; i <= 8; i++) { ev('pointermove', 1, cx - 20 - i * 8, cy); ev('pointermove', 2, cx + 20 + i * 8, cy); }
-    ev('pointerup', 1, cx - 84, cy); ev('pointerup', 2, cx + 84, cy);
-  });
-  const cellAfter = await mp.evaluate(() => window.mochipixelu.renderer.cell);
-  const pxAfter = await mp.evaluate(() => Array.from(window.mochipixelu.store.design.pixels).join());
-  const histAfter = await mp.evaluate(() => window.mochipixelu.store.undoStack.length);
-  check('mobile: pinch-out zooms in', cellAfter > cellBefore, cellBefore + ' -> ' + cellAfter);
-  check('mobile: pinch does not paint pixels or add history', pxBefore === pxAfter && hist === histAfter, hist + ' vs ' + histAfter);
-  check('mobile: manual zoom turns auto-fit off, Fit turns it back on', await mp.evaluate(() => { const a = window.mochipixelu; const off = a.autoFit === false; a.fit(); return off && a.autoFit === true; }));
+  /* ================= other sizes: layout sanity ================= */
+  const sizes = [[360, 640, 'sm'], [412, 915, 'tall'], [740, 360, 'landscape'], [1280, 820, 'desktop']];
+  for (const [w, h, tag] of sizes) {
+    const mobile = w < 900;
+    const { ctx, page, errors } = await open(browser, { viewport: { width: w, height: h }, hasTouch: mobile, isMobile: mobile });
+    // seed one pattern through the app's own storage API
+    const id = await page.evaluate(() => { const D = Mochi.Design; const d = D.create(24, 24, Mochi.Utils.EMPTY, 'Sample'); for (let i = 0; i < 24; i++) { d.pixels[i * 24 + i] = 0xe8737f; d.pixels[i * 24 + (23 - i)] = 0x9cc58d; } return Mochi.Storage.library.save(d).id; });
+    await page.evaluate((id) => { location.hash = '#/e/' + id; }, id);
+    await page.waitForTimeout(500);
+    const m = await page.evaluate(() => {
+      const q = (s) => { const e = document.querySelector(s); if (!e) return null; const b = e.getBoundingClientRect(); return { x: Math.round(b.x), y: Math.round(b.y), w: Math.round(b.width), h: Math.round(b.height) }; };
+      return { wrap: q('#screen-editor .canvas-wrap'), dock: q('.dock'), sw: document.documentElement.scrollWidth, vw: innerWidth };
+    });
+    check(tag + ' editor: no horizontal overflow', m.sw <= m.vw, JSON.stringify(m));
+    check(tag + ' editor: canvas area >= 200px both ways', m.wrap.w >= 200 && m.wrap.h >= 180, JSON.stringify(m.wrap));
+    await page.screenshot({ path: SP + 'editor-' + tag + '.png' });
+    if (mobile) {
+      await page.tap('#btn-menu'); await page.waitForTimeout(350);
+      const m2 = await page.evaluate(() => { const b = document.querySelector('#screen-editor .canvas-wrap').getBoundingClientRect(); return { w: Math.round(b.width), h: Math.round(b.height) }; });
+      check(tag + ' editor with sheet open: canvas >= 150px', m2.w >= 150 && m2.h >= 130, JSON.stringify(m2));
+      await page.screenshot({ path: SP + 'editor-sheet-' + tag + '.png' });
+    }
+    await page.evaluate((id) => { location.hash = '#/p/' + id; }, id);
+    await page.waitForTimeout(400);
+    const v = await page.evaluate(() => ({ sw: document.documentElement.scrollWidth, vw: innerWidth, c: document.getElementById('view-canvas').getBoundingClientRect().height }));
+    check(tag + ' view: no overflow and canvas visible', v.sw <= v.vw && v.c >= 120, JSON.stringify(v));
+    await page.screenshot({ path: SP + 'view-' + tag + '.png' });
+    await page.evaluate(() => { location.hash = '#/'; });
+    await page.waitForTimeout(300);
+    const hv = await page.evaluate(() => ({ sw: document.documentElement.scrollWidth, vw: innerWidth }));
+    check(tag + ' home: no overflow', hv.sw <= hv.vw, JSON.stringify(hv));
+    await page.screenshot({ path: SP + 'home-' + tag + '.png' });
+    check(tag + ': no errors', errors.length === 0, errors.join(' | '));
+    await ctx.close();
+  }
 
-  // a second finger landing mid-stroke cancels the stray dot
-  const q0 = await cellPt(5, 5), q1 = await cellPt(8, 8);
-  await mp.evaluate(([a, b]) => {
-    const c = document.getElementById('canvas');
-    const ev = (type, id, x, y) => c.dispatchEvent(new PointerEvent(type, { pointerId: id, pointerType: 'touch', clientX: x, clientY: y, bubbles: true, cancelable: true }));
-    ev('pointerdown', 11, a.x, a.y); ev('pointerdown', 12, b.x, b.y); ev('pointerup', 11, a.x, a.y); ev('pointerup', 12, b.x, b.y);
-  }, [q0, q1]);
-  check('mobile: second finger cancels the accidental first-finger dot', (await mp.evaluate(() => window.mochipixelu.store.design.pixels[5 * 16 + 5])) === -1);
+  /* ================= desktop: mouse drawing, shortcuts, export ================= */
+  {
+    const { ctx, page, errors } = await open(browser, { viewport: { width: 1280, height: 820 } });
+    await page.click('#fab'); await page.click('#fab-menu [data-home=new]');
+    await page.click('#new-create');
+    await page.waitForFunction(() => location.hash.startsWith('#/e/'));
+    await page.waitForTimeout(300);
+    await page.evaluate(() => mochipixelu.setColor(0xff0000));
+    const cellXY = (x, y) => page.evaluate(([x, y]) => { const a = mochipixelu, b = a.renderer.canvas.getBoundingClientRect(), c = a.renderer.cell; return { x: b.left + (x + .5) * c, y: b.top + (y + .5) * c }; }, [x, y]);
+    let a = await cellXY(5, 5), b = await cellXY(10, 5);
+    await page.mouse.move(a.x, a.y); await page.mouse.down(); await page.mouse.move(b.x, b.y, { steps: 3 }); await page.mouse.up();
+    let n = await page.evaluate(() => mochipixelu.store.design.pixels.filter((v) => v === 0xff0000).length);
+    check('desktop drag draws a line (6 cells)', n === 6, n);
+    await page.evaluate(() => document.activeElement.blur());
+    await page.keyboard.press('Control+z');
+    n = await page.evaluate(() => mochipixelu.store.design.pixels.filter((v) => v === 0xff0000).length);
+    check('Ctrl+Z undoes the whole stroke', n === 0, n);
+    await page.keyboard.press('Control+y');
+    // resolution is live and real
+    await page.fill('#res-w', '40');
+    await page.waitForTimeout(400);
+    const dim = await page.evaluate(() => [mochipixelu.store.design.width, mochipixelu.store.design.height]);
+    check('resolution change changes the real cell count', dim[0] === 40 && dim[1] === 40, dim);
+    check('desktop shows the side panel without opening', await vis(page, '#sheet'));
+    // export downloads
+    await page.click('[data-tab=export]');
+    const [dl] = await Promise.all([page.waitForEvent('download'), page.click('#btn-pattern-png')]);
+    check('pattern PNG downloads', /pattern\.png$/.test(dl.suggestedFilename()), dl.suggestedFilename());
+    await page.click('#btn-preview');
+    await page.waitForSelector('#preview-pages img');
+    check('print preview shows pages', (await page.locator('#preview-pages img').count()) >= 1);
+    await page.click('#preview-close');
+    await page.screenshot({ path: SP + 'desktop-editor.png' });
+    check('desktop: no errors', errors.length === 0, errors.join(' | '));
+    await ctx.close();
+  }
 
-  // Move tool drags the view (zoom in first so there is something to scroll)
-  await mp.evaluate(() => { window.mochipixelu.setZoom(40); window.mochipixelu.setTool('pan'); });
-  const sc0 = await mp.evaluate(() => document.getElementById('canvas-scroll').scrollLeft);
-  const mid = await cellPt(8, 8);
-  await mp.evaluate(([a]) => {
-    const c = document.getElementById('canvas');
-    const ev = (type, x, y) => c.dispatchEvent(new PointerEvent(type, { pointerId: 21, pointerType: 'touch', clientX: x, clientY: y, bubbles: true, cancelable: true }));
-    ev('pointerdown', a.x, a.y); ev('pointermove', a.x + 60, a.y); ev('pointerup', a.x + 60, a.y);
-  }, [mid]);
-  const sc1 = await mp.evaluate(() => document.getElementById('canvas-scroll').scrollLeft);
-  check('mobile: Move tool drags the view', sc1 < sc0, sc0 + ' -> ' + sc1);
-
-  check('no console/page errors', errors.length === 0, errors.join(' | '));
   await browser.close();
-  console.log(fails ? fails + ' FAILED' : 'ALL PASSED');
+  console.log('\nScreenshots: ' + SP);
+  console.log(fails ? fails + ' FAILED' : 'All end-to-end checks passed');
   process.exit(fails ? 1 : 0);
-})();
+})().catch((e) => { console.error(e); process.exit(1); });

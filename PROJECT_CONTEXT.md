@@ -1,6 +1,6 @@
 # Project context — Mochipixelu
 
-_Last updated: 2026-10-22 · Version 1.1.0 (working tree; no git repo yet, nothing committed, pushed or published) · Batch A done, Batch B queued, see "Pending changes"_
+_Last updated: 2026-10-23 · Version 1.2.0 (working tree; no git repo yet, nothing committed, pushed or published) · Batches A and B done, see "Pending changes"_
 
 ## What it is
 Browser-based pixel editor and craft-pattern maker. Vanilla HTML/CSS/JS, no build, no deps, no network. See README.md for features and usage.
@@ -55,3 +55,10 @@ Owner's note ("mochipixelu changes"): queue changes, implement **in batches (my 
 
 ## How to test
 `node tests/logic.test.js` (25 tests). Optional: `PLAYWRIGHT_MODULE=/path/to/playwright node tests/e2e.cjs` (desktop + phone checks).
+
+
+## 1.2.0 notes
+- Screens: home (`js/home.js`), project view (`js/view.js`), editor (`js/editor.js` + `js/panels.js`); routing in `js/router.js`; shared pan/zoom in `js/viewport.js`.
+- The library (localStorage) is the single source of projects; the editor autosaves into it (600 ms debounce, flushed on leave/hide). The old Save / My designs dialog is gone.
+- Item 4 of the owner's note: the reference screenshot was never received; layout is my own design. Compare if it arrives.
+- Verified only in headless Chromium with synthetic touch; not on a real device.

@@ -1,4 +1,5 @@
-/* Mochipixelu — editor controller: tools, pointer/touch input, selection/inspector, zoom, shortcuts. */
+/* Mochipixelu — editor screen: tools, pointer/touch input, selection/inspector, zoom, shortcuts,
+ * and autosave of the open pattern into the library. */
 (function (root) {
   'use strict';
   const M = (root.Mochi = root.Mochi || {});
@@ -16,16 +17,35 @@
       const scroller = $('canvas-scroll');
       let stroke = null; // active drag: { last, changed, markValue, tool }
       let lastDims = '';
-      const touches = new Map(); // active touch pointers (for pinch / two-finger pan)
-      let gesture = null; // { dist, cell, ax, ay }
-      let panDrag = null; // { id, x, y, sl, st }
-      app.autoFit = true; // keep the whole design in view until the user zooms by hand
+      let previousTool = 'pencil'; // for the phone "move the view" toggle
+
+      /** A second finger landing mid-stroke: undo whatever the first finger had just started drawing. */
+      const abortStroke = () => {
+        if (!stroke) return;
+        const s = stroke;
+        stroke = null;
+        if (s.changed) store.rollback();
+        else store.dropCheckpoint();
+      };
+
+      const syncZoomUi = () => {
+        const range = $('zoom-range');
+        range.max = String(renderer.maxCell());
+        range.value = String(renderer.cell);
+      };
+
+      const vp = M.Viewport.create({ canvas, scroller, renderer, onZoom: syncZoomUi, onGestureStart: abortStroke });
+      app.setZoom = vp.setZoom;
+      app.fit = vp.fit;
+      Object.defineProperty(app, 'autoFit', { get: () => vp.autoFit });
 
       /* ---------- tools ---------- */
       app.setTool = (tool) => {
+        if (tool !== 'pan') previousTool = tool;
         settings.tool = tool;
         document.body.dataset.tool = tool;
-        document.querySelectorAll('.tool').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.tool === tool)));
+        document.querySelectorAll('.tool[data-tool]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.tool === tool)));
+        $('hud-pan').setAttribute('aria-pressed', String(tool === 'pan'));
         Array.from(scroller.classList)
           .filter((c) => c.startsWith('tool-'))
           .forEach((c) => scroller.classList.remove(c));
@@ -33,7 +53,8 @@
         app.ui.emit('tool', tool);
       };
 
-      document.querySelectorAll('.tool').forEach((b) => b.addEventListener('click', () => app.setTool(b.dataset.tool)));
+      document.querySelectorAll('.tool[data-tool]').forEach((b) => b.addEventListener('click', () => app.setTool(b.dataset.tool)));
+      $('hud-pan').addEventListener('click', () => app.setTool(settings.tool === 'pan' ? previousTool : 'pan'));
 
       /* ---------- color ---------- */
       app.setColor = (color) => {
@@ -95,7 +116,7 @@
         const title = $('insp-coords');
         const detail = $('insp-detail');
         ['insp-pick', 'insp-done'].forEach((id) => ($(id).disabled = !app.selected));
-        if (!cell) {
+        if (!cell || !D.inBounds(store.design, cell.x, cell.y)) {
           sw.className = 'swatch big empty';
           sw.style.background = '';
           title.textContent = 'No cell selected';
@@ -193,70 +214,14 @@
         app.addRecent(to);
       };
 
-      /* ---------- touch gestures: two fingers = pinch-zoom + pan ---------- */
-      const twoTouchState = () => {
-        const pts = Array.from(touches.values());
-        const a = pts[0];
-        const b = pts[1];
-        return { mid: { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }, dist: Math.hypot(a.x - b.x, a.y - b.y) || 1 };
-      };
-
-      const startGesture = () => {
-        const { mid, dist } = twoTouchState();
-        const r = canvas.getBoundingClientRect();
-        gesture = { dist, cell: renderer.cell, ax: (mid.x - r.left) / renderer.cell, ay: (mid.y - r.top) / renderer.cell };
-      };
-
-      const updateGesture = () => {
-        const { mid, dist } = twoTouchState();
-        const next = Math.round((gesture.cell * dist) / gesture.dist);
-        if (next !== renderer.cell && renderer.setCell(next)) {
-          app.autoFit = false;
-          syncZoomUi();
-        }
-        // keep the content point that started under the fingers under the fingers
-        const r = canvas.getBoundingClientRect();
-        scroller.scrollLeft += r.left + gesture.ax * renderer.cell - mid.x;
-        scroller.scrollTop += r.top + gesture.ay * renderer.cell - mid.y;
-      };
-
-      /** A second finger landed: undo whatever the first finger had just started drawing. */
-      const abortStroke = () => {
-        if (!stroke) return;
-        const s = stroke;
-        stroke = null;
-        if (s.changed) store.rollback();
-        else store.dropCheckpoint();
-      };
-
-      /** Capture can throw if the pointer already ended (fast taps, synthetic events) — never fatal. */
-      const capture = (e) => {
-        try {
-          canvas.setPointerCapture(e.pointerId);
-        } catch (err) {
-          /* ignore */
-        }
-      };
-
       /* ---------- pointer input ---------- */
       canvas.addEventListener('pointerdown', (e) => {
         if (e.pointerType === 'mouse' && e.button !== 0) return;
-        if (e.pointerType === 'touch') {
-          touches.set(e.pointerId, { x: e.clientX, y: e.clientY });
-          if (touches.size === 2) {
-            e.preventDefault();
-            abortStroke();
-            panDrag = null;
-            startGesture();
-            return;
-          }
-          if (touches.size > 2) return;
-        }
+        if (vp.down(e)) return; // second finger: pinch / two-finger pan
         const tool = settings.tool;
         if (tool === 'pan') {
           e.preventDefault();
-          capture(e);
-          panDrag = { id: e.pointerId, x: e.clientX, y: e.clientY, sl: scroller.scrollLeft, st: scroller.scrollTop };
+          vp.startPan(e);
           return;
         }
         const cell = renderer.cellFromPoint(e.clientX, e.clientY);
@@ -281,7 +246,7 @@
           return;
         }
         // pencil / eraser / mark: a drag is one undo step
-        capture(e);
+        vp.capture(e);
         store.checkpoint();
         const info = cellInfo(cell);
         stroke = { last: cell, changed: false, tool, markValue: info.done ? 0 : 1 };
@@ -290,16 +255,7 @@
       });
 
       canvas.addEventListener('pointermove', (e) => {
-        if (e.pointerType === 'touch' && touches.has(e.pointerId)) touches.set(e.pointerId, { x: e.clientX, y: e.clientY });
-        if (gesture && touches.size >= 2) {
-          updateGesture();
-          return;
-        }
-        if (panDrag && e.pointerId === panDrag.id) {
-          scroller.scrollLeft = panDrag.sl - (e.clientX - panDrag.x);
-          scroller.scrollTop = panDrag.st - (e.clientY - panDrag.y);
-          return;
-        }
+        if (vp.move(e)) return;
         const cell = renderer.cellFromPoint(e.clientX, e.clientY);
         if (cell) {
           if (!app.hover || app.hover.x !== cell.x || app.hover.y !== cell.y) {
@@ -317,13 +273,9 @@
       });
 
       const endStroke = (e) => {
-        if (e && e.pointerType === 'touch') {
-          touches.delete(e.pointerId);
-          if (touches.size < 2) gesture = null;
-        }
-        if (panDrag && e && e.pointerId === panDrag.id) panDrag = null;
+        vp.up(e);
         if (!stroke) return;
-        if (e && canvas.hasPointerCapture && canvas.hasPointerCapture(e.pointerId)) canvas.releasePointerCapture(e.pointerId);
+        if (canvas.hasPointerCapture && canvas.hasPointerCapture(e.pointerId)) canvas.releasePointerCapture(e.pointerId);
         if (stroke.changed) {
           store.touch(stroke.tool === 'mark' ? { keepPristine: true } : undefined);
           if (stroke.tool === 'pencil') app.addRecent(settings.color);
@@ -342,75 +294,19 @@
         updateInspector();
       });
 
-      /* ---------- zoom ---------- */
-      app.setZoom = (cell) => {
-        app.autoFit = false;
-        // keep the view centred on the same spot while zooming
-        const before = renderer.cell;
-        const cx = (scroller.scrollLeft + scroller.clientWidth / 2) / before;
-        const cy = (scroller.scrollTop + scroller.clientHeight / 2) / before;
-        renderer.setCell(cell);
-        const after = renderer.cell;
-        scroller.scrollLeft = cx * after - scroller.clientWidth / 2;
-        scroller.scrollTop = cy * after - scroller.clientHeight / 2;
-        syncZoomUi();
-      };
-      app.fit = () => {
-        app.autoFit = true;
-        const w = Math.max(60, scroller.clientWidth - 36);
-        const h = Math.max(60, scroller.clientHeight - 36);
-        renderer.setCell(renderer.fitCell(w, h));
-        syncZoomUi();
-      };
-      const syncZoomUi = () => {
-        const range = $('zoom-range');
-        range.max = String(renderer.maxCell());
-        range.value = String(renderer.cell);
-      };
-
-      // when the stage changes size (sheet opens, phone rotates) keep an auto-fitted design fitted
-      if (typeof ResizeObserver !== 'undefined') {
-        let raf = 0;
-        new ResizeObserver(() => {
-          if (!app.autoFit || !renderer.design) return;
-          cancelAnimationFrame(raf);
-          raf = requestAnimationFrame(() => {
-            if (app.autoFit) app.fit();
-          });
-        }).observe(scroller);
-      }
-
-      $('zoom-in').addEventListener('click', () => app.setZoom(renderer.cell + Math.max(1, Math.round(renderer.cell / 6))));
-      $('zoom-out').addEventListener('click', () => app.setZoom(renderer.cell - Math.max(1, Math.round(renderer.cell / 6))));
-      $('zoom-range').addEventListener('input', (e) => app.setZoom(Number(e.target.value)));
-      $('zoom-fit').addEventListener('click', app.fit);
-
-      const bindToggle = (id, fn) => {
-        const b = $(id);
-        b.addEventListener('click', () => {
-          const on = b.getAttribute('aria-pressed') !== 'true';
-          b.setAttribute('aria-pressed', String(on));
-          fn(on);
-        });
-      };
-      bindToggle('toggle-grid', (on) => {
-        renderer.grid = on;
+      /* ---------- zoom + view toggles ---------- */
+      $('zoom-in').addEventListener('click', () => vp.zoomBy(1));
+      $('zoom-out').addEventListener('click', () => vp.zoomBy(-1));
+      $('zoom-range').addEventListener('input', (e) => vp.setZoom(Number(e.target.value)));
+      $('zoom-fit').addEventListener('click', vp.fit);
+      $('toggle-grid').addEventListener('change', (e) => {
+        renderer.grid = e.target.checked;
         renderer.draw();
       });
-      bindToggle('toggle-done', (on) => {
-        renderer.showDone = on;
+      $('toggle-done').addEventListener('change', (e) => {
+        renderer.showDone = e.target.checked;
         renderer.draw();
       });
-
-      scroller.addEventListener(
-        'wheel',
-        (e) => {
-          if (!e.ctrlKey && !e.metaKey) return;
-          e.preventDefault();
-          app.setZoom(renderer.cell + (e.deltaY < 0 ? 1 : -1) * Math.max(1, Math.round(renderer.cell / 8)));
-        },
-        { passive: false }
-      );
 
       /* ---------- spotlight filter ---------- */
       app.setFilter = (colorOrNull) => {
@@ -426,7 +322,7 @@
         const dims = d.width + 'x' + d.height;
         if (dims !== lastDims) {
           lastDims = dims;
-          app.fit();
+          vp.fit();
         }
         syncZoomUi();
         if (renderer.filter !== null && !app.getLegend().byColor.has(renderer.filter)) app.setFilter(null);
@@ -441,6 +337,7 @@
 
       /* ---------- keyboard ---------- */
       document.addEventListener('keydown', (e) => {
+        if (!app.route || app.route.name !== 'editor') return;
         const t = e.target;
         if (t && /^(INPUT|SELECT|TEXTAREA)$/.test(t.tagName) && t.type !== 'checkbox' && t.type !== 'button') return;
         if (document.querySelector('dialog[open]')) return;
@@ -462,9 +359,9 @@
           app.setTool(TOOL_KEYS[key]);
           return;
         }
-        if (key === '+' || key === '=') return app.setZoom(renderer.cell + 2);
-        if (key === '-' || key === '_') return app.setZoom(renderer.cell - 2);
-        if (key === '0') return app.fit();
+        if (key === '+' || key === '=') return vp.setZoom(renderer.cell + 2);
+        if (key === '-' || key === '_') return vp.setZoom(renderer.cell - 2);
+        if (key === '0') return vp.fit();
         if (key === 'escape') {
           if (renderer.filter !== null) app.setFilter(null);
           else app.select(null);
@@ -494,6 +391,68 @@
       store.on('history', () => {
         $('btn-undo').disabled = !store.canUndo();
         $('btn-redo').disabled = !store.canRedo();
+      });
+
+      /* ---------- autosave into the library ---------- */
+      let dirty = false;
+      let saveTimer = 0;
+      const saveNow = () => {
+        clearTimeout(saveTimer);
+        if (!dirty || !app.projectId) return;
+        dirty = false;
+        const r = M.Storage.library.save(store.design, app.projectId);
+        if (!r.ok) app.toast(r.error, true);
+      };
+      const markDirty = () => {
+        if (app.loading || !app.route || app.route.name !== 'editor') return;
+        dirty = true;
+        clearTimeout(saveTimer);
+        saveTimer = setTimeout(saveNow, 600);
+      };
+      store.on('change', markDirty);
+      store.on('replace', markDirty);
+      document.addEventListener('visibilitychange', () => document.hidden && saveNow());
+      root.addEventListener('pagehide', saveNow);
+      app.saveNow = saveNow;
+
+      $('btn-back').addEventListener('click', () => {
+        saveNow();
+        M.Router.go('#/p/' + app.projectId);
+      });
+
+      /* ---------- screen lifecycle ---------- */
+      M.Router.register('editor', {
+        el: $('screen-editor'),
+        enter(route) {
+          let design;
+          try {
+            design = M.Storage.library.load(route.id);
+          } catch (err) {
+            app.toast(err.message, true);
+            M.Router.redirect('#/');
+            return;
+          }
+          const pend = app.pendingSource && app.pendingSource.id === route.id ? app.pendingSource : null;
+          app.pendingSource = null;
+          app.loading = true;
+          app.projectId = route.id;
+          store.load(design, { resetHistory: true, source: pend ? pend.source : null, pristine: !!pend });
+          app.loading = false;
+          dirty = false;
+          app.selected = null;
+          app.hover = null;
+          if (renderer.filter !== null) app.setFilter(null);
+          app.closeSheet();
+          if (pend) app.openSheet('design'); // fresh import: let them tune the resolution right away
+          requestAnimationFrame(() => {
+            vp.fit();
+            updateInspector();
+          });
+        },
+        leave() {
+          saveNow();
+          app.closeSheet();
+        },
       });
 
       app.setTool(settings.tool);

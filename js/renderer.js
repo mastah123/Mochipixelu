@@ -19,6 +19,7 @@
       this.filter = null; // color int to spotlight, or null
       this.selected = null; // {x,y}
       this.hover = null; // {x,y}
+      this.guide = null; // {row, col} (either may be null) — highlights a stitching row / column
     }
 
     maxCell(design) {
@@ -109,6 +110,26 @@
         }
       }
 
+      const g = this.guide;
+      if (g) {
+        const inRow = g.row !== null && g.row === y;
+        const inCol = g.col !== null && g.col === x;
+        if (inRow || inCol) {
+          ctx.fillStyle = 'rgba(246,217,140,.55)';
+          ctx.fillRect(px, py, c, c);
+          const t = Math.max(2, Math.round(c / 8));
+          ctx.fillStyle = '#e8737f';
+          if (inRow) {
+            ctx.fillRect(px, py, c, t);
+            ctx.fillRect(px, py + c - t, c, t);
+          }
+          if (inCol) {
+            ctx.fillRect(px, py, t, c);
+            ctx.fillRect(px + c - t, py, t, c);
+          }
+        }
+      }
+
       if (this.grid && c >= 4) {
         ctx.fillStyle = x % MAJOR === 0 ? 'rgba(60,40,30,.55)' : 'rgba(60,40,30,.18)';
         ctx.fillRect(px, py, 1, c);
@@ -132,6 +153,20 @@
       ctx.strokeRect(px + t * 1.5, py + t * 1.5, c - t * 3, c - t * 3);
       ctx.strokeStyle = dark;
       ctx.strokeRect(px + t / 2, py + t / 2, c - t, c - t);
+    }
+
+    /** Show a stitching guide: a row and/or a column (null = off). Redraws only the affected lines. */
+    setGuide(g) {
+      const d = this.design;
+      const old = this.guide;
+      this.guide = g && (g.row !== null || g.col !== null) ? { row: g.row, col: g.col } : null;
+      const redraw = (gd) => {
+        if (!gd) return;
+        if (gd.row !== null && gd.row >= 0 && gd.row < d.height) for (let x = 0; x < d.width; x++) this.drawCell(x, gd.row);
+        if (gd.col !== null && gd.col >= 0 && gd.col < d.width) for (let y = 0; y < d.height; y++) this.drawCell(gd.col, y);
+      };
+      redraw(old);
+      redraw(this.guide);
     }
 
     setSelected(cellOrNull) {

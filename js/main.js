@@ -1,4 +1,4 @@
-/* Mochipixelu — app bootstrap: shared app object, autosave, initial design. */
+/* Mochipixelu — app bootstrap: shared app object, screens, routing, drag-and-drop. */
 (function (root) {
   'use strict';
   const M = root.Mochi;
@@ -8,7 +8,7 @@
     const $ = (id) => document.getElementById(id);
     const prefs = M.Storage.loadPrefs();
 
-    const store = M.createStore();
+    const store = M.createStore(); // the pattern open in the editor
     const renderer = new M.Renderer($('canvas'));
     const ui = U.emitter();
 
@@ -25,10 +25,13 @@
       },
       selected: null,
       hover: null,
-      libraryId: null,
+      route: null,
+      projectId: null, // library id of the pattern open in the editor
+      pendingSource: null, // {id, source}: an image imported from the home page, handed to the editor
+      loading: false,
     };
 
-    /* legend cache — recomputed only after the grid changes */
+    /* legend cache for the editor — recomputed only after the grid changes */
     let legend = null;
     store.on('change', () => (legend = null));
     store.on('replace', () => (legend = null));
@@ -49,25 +52,49 @@
     app.savePrefs = () => M.Storage.savePrefs({ color: app.settings.color, recent: app.settings.recent });
     ui.on('color', U.debounce(app.savePrefs, 400));
 
-    /* autosave (design + progress) */
-    let warned = false;
-    const autosave = U.debounce(() => {
-      if (!M.Storage.saveAutosave(store.design) && !warned) {
-        warned = true;
-        app.toast('Autosave is unavailable (browser storage blocked or full). Use “Save file” to keep your work.', true);
-      }
-    }, 500);
-    store.on('change', autosave);
-    store.on('replace', autosave);
+    // the editor needs a design object before its first route
+    store.load(M.Design.create(32, 32, U.EMPTY, 'Untitled'), { resetHistory: true });
 
+    M.Actions.init(app);
+    M.Dialogs.init(app);
     M.Editor.init(app);
     M.Panels.init(app);
-    M.Dialogs.init(app);
+    M.Home.init(app);
+    M.View.init(app);
 
-    /* initial design: restore autosave, otherwise a blank 32×32 */
-    const saved = M.Storage.loadAutosave();
-    store.load(saved || M.Design.create(32, 32, U.EMPTY, 'Untitled'), { resetHistory: true });
-    if (saved) app.toast('Welcome back — your last design was restored');
+    /* drag & drop: images become a new pattern (or replace the artwork inside the editor); project files open */
+    const hint = $('drop-hint');
+    let depth = 0;
+    const hasFiles = (e) => e.dataTransfer && Array.from(e.dataTransfer.types || []).includes('Files');
+    const inEditor = () => app.route && app.route.name === 'editor';
+    document.addEventListener('dragenter', (e) => {
+      if (!hasFiles(e)) return;
+      depth++;
+      if (inEditor()) hint.hidden = false;
+    });
+    document.addEventListener('dragleave', (e) => {
+      if (!hasFiles(e)) return;
+      depth = Math.max(0, depth - 1);
+      if (!depth) hint.hidden = true;
+    });
+    document.addEventListener('dragover', (e) => hasFiles(e) && e.preventDefault());
+    document.addEventListener('drop', (e) => {
+      if (!hasFiles(e)) return;
+      e.preventDefault();
+      depth = 0;
+      hint.hidden = true;
+      const f = e.dataTransfer.files[0];
+      if (!f) return;
+      if (/\.(json|mochi)$/i.test(f.name)) app.openProjectFile(f);
+      else if (inEditor()) app.importIntoEditor(f);
+      else app.importAsProject(f);
+    });
+
+    // 1.1.0 kept a single autosaved design — carry it into the new library once
+    const migrated = M.Storage.migrateAutosave();
+
+    M.Router.start(app);
+    if (migrated) app.toast('Your last design was moved into My patterns');
 
     root.mochipixelu = app; // handy for debugging / tests
   });

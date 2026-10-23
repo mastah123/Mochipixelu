@@ -109,8 +109,6 @@
     }
   };
 
-  S.saveAutosave = (design) => write(KEY_AUTOSAVE, S.serialize(design));
-
   S.loadAutosave = () => {
     const obj = read(KEY_AUTOSAVE);
     if (!obj) return null;
@@ -124,18 +122,40 @@
   S.savePrefs = (prefs) => write(KEY_PREFS, prefs);
   S.loadPrefs = () => read(KEY_PREFS) || {};
 
-  /* ---------- library ---------- */
+  /* ---------- library (every project lives here) ---------- */
+
+  /** Progress numbers shown on home-page cards. */
+  S.stats = (design) => {
+    let filled = 0;
+    let done = 0;
+    const colors = new Set();
+    for (let i = 0; i < design.pixels.length; i++) {
+      const c = design.pixels[i];
+      if (c === U.EMPTY) continue;
+      filled++;
+      colors.add(c);
+      if (design.done[i]) done++;
+    }
+    return { filled, done, colors: colors.size };
+  };
+
+  const newId = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
 
   S.library = {
+    /** Newest first. */
     list() {
       const l = read(KEY_LIBRARY);
-      return Array.isArray(l) ? l : [];
+      return Array.isArray(l) ? l.slice().sort((a, b) => b.updated - a.updated) : [];
+    },
+
+    get(id) {
+      return S.library.list().find((e) => e.id === id) || null;
     },
 
     /** Small PNG data URL of the design (browser only). */
     thumb(design) {
       if (typeof document === 'undefined') return '';
-      const side = 56;
+      const side = 120;
       const scale = Math.max(1, Math.floor(side / Math.max(design.width, design.height)));
       const c = document.createElement('canvas');
       c.width = design.width * scale;
@@ -154,7 +174,8 @@
 
     /** Save (or overwrite when id is given). Returns {ok, id, error}. */
     save(design, id) {
-      id = id || Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+      id = id || newId();
+      const st = S.stats(design);
       const list = S.library.list().filter((e) => e.id !== id);
       list.unshift({
         id,
@@ -163,9 +184,11 @@
         height: design.height,
         updated: Date.now(),
         thumb: S.library.thumb(design),
+        filled: st.filled,
+        done: st.done,
+        colors: st.colors,
       });
       if (!write(KEY_PROJECT + id, S.serialize(design)) || !write(KEY_LIBRARY, list)) {
-        remove(KEY_PROJECT + id);
         return { ok: false, error: 'Browser storage is full or unavailable. Use “Save file” to keep a copy instead.' };
       }
       return { ok: true, id };
@@ -173,8 +196,23 @@
 
     load(id) {
       const obj = read(KEY_PROJECT + id);
-      if (!obj) throw new Error('That saved design could not be found.');
+      if (!obj) throw new Error('That pattern could not be found.');
       return S.deserialize(obj);
+    },
+
+    rename(id, name) {
+      const clean = String(name || '').trim().slice(0, 60) || 'Untitled';
+      const design = S.library.load(id);
+      design.name = clean;
+      return S.library.save(design, id);
+    },
+
+    /** Copy of a pattern with progress reset (a fresh start on the same art). */
+    duplicate(id) {
+      const design = S.library.load(id);
+      design.name = (design.name + ' copy').slice(0, 60);
+      design.done.fill(0);
+      return S.library.save(design);
     },
 
     remove(id) {
@@ -184,6 +222,22 @@
         S.library.list().filter((e) => e.id !== id)
       );
     },
+  };
+
+  /** 1.1.0 kept one autosaved design; move it into the library the first time 1.2.0 runs. */
+  S.migrateAutosave = () => {
+    const old = S.loadAutosave();
+    if (!old) return null;
+    if (S.library.list().length === 0 && S.stats(old).filled > 0) {
+      const res = S.library.save(old);
+      if (res.ok) {
+        remove(KEY_AUTOSAVE);
+        return res.id;
+      }
+      return null;
+    }
+    remove(KEY_AUTOSAVE);
+    return null;
   };
 
   /* ---------- project files ---------- */

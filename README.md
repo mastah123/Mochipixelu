@@ -4,7 +4,7 @@ A cozy, browser-based **live pixel editor and craft-pattern maker**, designed ph
 
 Vanilla HTML, CSS and JavaScript. No frameworks, no build step, no backend, no accounts, no network calls. Everything stays on your device.
 
-**Version:** 1.1.0 · see [CHANGELOG.md](CHANGELOG.md)
+**Version:** 1.2.0 · see [CHANGELOG.md](CHANGELOG.md)
 
 ## Features
 
@@ -91,3 +91,11 @@ PLAYWRIGHT_MODULE=/path/to/node_modules/playwright node tests/e2e.cjs
 ## License
 
 No license has been chosen yet — add one before publishing.
+
+
+## What is new in 1.2.0
+
+- **Home page** lists your saved patterns; the **+** button (bottom-right) starts a new canvas, imports an image, or opens a backup file.
+- Tap a pattern to open its **project view**: Edit, Look / Guide / Tick highlight modes for stitching, color spotlight, and a ⋯ menu (rename, duplicate, print, export, delete).
+- The editor has a cleaner phone layout: tools fixed at the bottom, settings in one panel.
+- Patterns autosave into the library; there is no separate Save step.

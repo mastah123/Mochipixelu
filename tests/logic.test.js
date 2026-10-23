@@ -260,6 +260,85 @@
     });
   }
 
+
+  /* ----- library (needs a localStorage; Node gets an in-memory stub) ----- */
+  const withStorage = (fn) => {
+    const mem = {};
+    const stub = {
+      getItem: (k) => (k in mem ? mem[k] : null),
+      setItem: (k, v) => { mem[k] = String(v); },
+      removeItem: (k) => { delete mem[k]; },
+    };
+    const prev = root.localStorage;
+    try { Object.defineProperty(root, 'localStorage', { value: stub, configurable: true, writable: true }); } catch (e) { root.localStorage = stub; }
+    try { fn(mem); } finally {
+      try { Object.defineProperty(root, 'localStorage', { value: prev, configurable: true, writable: true }); } catch (e) { root.localStorage = prev; }
+    }
+  };
+  const art = (name) => {
+    const d = D.create(4, 2, U.EMPTY, name);
+    d.pixels.set([1, 1, 2, U.EMPTY, 3, 3, 3, 2]);
+    d.done.set([1, 0, 0, 0, 1, 1, 0, 0]);
+    return d;
+  };
+  test('library save/list/load round-trips with progress stats', () => withStorage(() => {
+    const r = S.library.save(art('Cat'));
+    ok(r.ok && r.id);
+    const [e] = S.library.list();
+    eq(e.name, 'Cat'); eq(e.width, 4); eq(e.filled, 7); eq(e.done, 3); eq(e.colors, 3);
+    const back = S.library.load(r.id);
+    eq(Array.from(back.pixels).join(), Array.from(art('x').pixels).join());
+    eq(Array.from(back.done).join(), '1,0,0,0,1,1,0,0');
+  }));
+  test('library saves update in place and list newest first', () => withStorage(() => {
+    const a = S.library.save(art('A')).id;
+    const b = S.library.save(art('B')).id;
+    const l0 = S.library.list();
+    eq(l0.length, 2);
+    const again = art('A2'); again.done.fill(0);
+    S.library.save(again, a);
+    const l1 = S.library.list();
+    eq(l1.length, 2, 'same id must not add an entry');
+    ok(l1.some((e) => e.id === a && e.name === 'A2' && e.done === 0));
+    ok(l1[0].updated >= l1[1].updated, 'sorted newest first');
+    ok(b);
+  }));
+  test('library rename, duplicate (progress reset) and remove', () => withStorage(() => {
+    const id = S.library.save(art('Cat')).id;
+    S.library.rename(id, '  Kitty  ');
+    eq(S.library.get(id).name, 'Kitty');
+    S.library.rename(id, '   ');
+    eq(S.library.get(id).name, 'Untitled');
+    const copy = S.library.duplicate(id);
+    ok(copy.ok && copy.id !== id);
+    eq(S.library.list().length, 2);
+    const c = S.library.get(copy.id);
+    eq(c.done, 0); eq(c.filled, 7); eq(c.name, 'Untitled copy');
+    eq(S.library.get(id).done, 3, 'original keeps its progress');
+    S.library.remove(id);
+    eq(S.library.list().length, 1);
+    throws(() => S.library.load(id), /could not be found/);
+  }));
+  test('library save reports failure when storage is full', () => withStorage(() => {
+    root.localStorage.setItem = () => { throw new Error('quota'); };
+    const r = S.library.save(art('X'));
+    ok(!r.ok && /storage/i.test(r.error));
+  }));
+  test('1.1.0 autosave migrates into the library once', () => withStorage((mem) => {
+    mem['mochipixelu:autosave'] = JSON.stringify(S.serialize(art('Old work')));
+    const id = S.migrateAutosave();
+    ok(id);
+    eq(S.library.list().length, 1);
+    eq(S.library.get(id).name, 'Old work');
+    ok(!('mochipixelu:autosave' in mem), 'autosave cleared after migration');
+    eq(S.migrateAutosave(), null);
+  }));
+  test('migration ignores an empty autosave', () => withStorage((mem) => {
+    mem['mochipixelu:autosave'] = JSON.stringify(S.serialize(D.create(8, 8)));
+    eq(S.migrateAutosave(), null);
+    eq(S.library.list().length, 0);
+  }));
+
   /* ----- report ----- */
   const failed = results.filter((r) => !r.ok);
   if (isNode) {

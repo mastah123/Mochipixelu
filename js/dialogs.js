@@ -1,36 +1,15 @@
-/* Mochipixelu — pattern preview/print dialog and the saved-designs library dialog. */
+/* Mochipixelu — shared dialogs: pattern preview/print, confirm, and a one-line text prompt. */
 (function (root) {
   'use strict';
   const M = (root.Mochi = root.Mochi || {});
-  const U = M.Utils;
 
   M.Dialogs = {
     init(app) {
       const $ = app.$;
-      const { store } = app;
 
       /* ---------- preview & print ---------- */
       const previewDlg = $('preview-dialog');
       let pages = [];
-
-      const buildPages = () => {
-        if (!app.getLegend().filled) {
-          app.toast('The design is empty — draw something first.', true);
-          return false;
-        }
-        const o = app.exportOptions();
-        if (!o.colors && !o.symbols) {
-          app.toast('Turn on colors or symbols so the pattern shows something.', true);
-          return false;
-        }
-        try {
-          pages = M.Exporter.buildPages(store.design, o).map((p) => ({ title: p.title, url: p.canvas.toDataURL('image/png') }));
-        } catch (err) {
-          app.toast('Could not build the pattern: ' + err.message, true);
-          return false;
-        }
-        return true;
-      };
 
       const fill = (host, className) => {
         host.textContent = '';
@@ -45,11 +24,20 @@
         });
       };
 
-      $('btn-preview').addEventListener('click', () => {
-        if (!buildPages()) return;
+      /** Build the printable pages for any design and show the preview dialog. */
+      app.openPreview = (design) => {
+        if (!M.Palette.legend(design).filled) return app.toast('The pattern is empty — draw something first.', true);
+        const o = app.exportOptions();
+        if (!o.colors && !o.symbols) return app.toast('Turn on colors or symbols so the pattern shows something.', true);
+        try {
+          pages = M.Exporter.buildPages(design, o).map((p) => ({ title: p.title, url: p.canvas.toDataURL('image/png') }));
+        } catch (err) {
+          return app.toast('Could not build the pattern: ' + err.message, true);
+        }
         fill($('preview-pages'));
         previewDlg.showModal();
-      });
+      };
+
       $('preview-close').addEventListener('click', () => previewDlg.close());
       $('preview-print').addEventListener('click', () => {
         fill($('print-area'), 'print-page');
@@ -64,80 +52,47 @@
         Promise.all(imgs.map((i) => (i.decode ? i.decode().catch(() => {}) : Promise.resolve()))).then(() => window.print());
       });
 
-      /* ---------- library ---------- */
-      const libDlg = $('library-dialog');
-
-      const renderLibrary = () => {
-        const list = $('library-list');
-        list.textContent = '';
-        const items = M.Storage.library.list();
-        if (!items.length) {
-          const li = document.createElement('li');
-          li.className = 'hint';
-          li.textContent = 'Nothing saved yet. Use “Save” in the top bar.';
-          list.appendChild(li);
-          return;
-        }
-        items.forEach((it) => {
-          const li = document.createElement('li');
-          const img = document.createElement('img');
-          img.alt = '';
-          if (it.thumb) img.src = it.thumb;
-          const text = document.createElement('div');
-          text.className = 'li-text';
-          const name = document.createElement('strong');
-          name.textContent = it.name;
-          const meta = document.createElement('span');
-          meta.textContent = it.width + ' × ' + it.height + ' · ' + new Date(it.updated).toLocaleString();
-          text.append(name, meta);
-          const open = document.createElement('button');
-          open.className = 'btn small';
-          open.textContent = 'Open';
-          open.addEventListener('click', () => {
-            try {
-              const d = M.Storage.library.load(it.id);
-              store.load(d, { checkpoint: true, source: null, pristine: false });
-              app.libraryId = it.id;
-              libDlg.close();
-              app.toast('Opened “' + d.name + '”');
-            } catch (err) {
-              app.toast(err.message, true);
-            }
-          });
-          const del = document.createElement('button');
-          del.className = 'btn small';
-          del.innerHTML = '<svg class="ic sm" aria-hidden="true"><use href="#i-trash"/></svg>';
-          del.setAttribute('aria-label', 'Delete ' + it.name);
-          del.addEventListener('click', () => {
-            if (!window.confirm('Delete “' + it.name + '” from this browser?')) return;
-            M.Storage.library.remove(it.id);
-            if (app.libraryId === it.id) app.libraryId = null;
-            renderLibrary();
-          });
-          li.append(img, text, open, del);
-          list.appendChild(li);
+      /* ---------- confirm ---------- */
+      const confirmDlg = $('confirm-dialog');
+      app.confirm = (o) =>
+        new Promise((resolve) => {
+          $('confirm-title').textContent = o.title || 'Are you sure?';
+          $('confirm-text').textContent = o.text || '';
+          $('confirm-ok').textContent = o.okLabel || 'OK';
+          let result = false;
+          $('confirm-ok').onclick = () => {
+            result = true;
+            confirmDlg.close();
+          };
+          $('confirm-cancel').onclick = () => confirmDlg.close();
+          confirmDlg.onclose = () => resolve(result);
+          confirmDlg.showModal();
         });
-      };
 
-      document.querySelectorAll('[data-action="library"]').forEach((b) =>
-        b.addEventListener('click', () => {
-          renderLibrary();
-          libDlg.showModal();
-        })
-      );
-      $('library-close').addEventListener('click', () => libDlg.close());
-
-      document.querySelectorAll('[data-action="save"]').forEach((b) =>
-        b.addEventListener('click', () => {
-          const res = M.Storage.library.save(store.design, app.libraryId);
-          if (!res.ok) return app.toast(res.error, true);
-          app.libraryId = res.id;
-          app.toast('Saved “' + store.design.name + '” to My designs');
-        })
-      );
+      /* ---------- one-line text prompt (rename) ---------- */
+      const textDlg = $('text-dialog');
+      app.askText = (o) =>
+        new Promise((resolve) => {
+          $('text-title').textContent = o.title || 'Name';
+          $('text-label').textContent = o.label || 'Name';
+          $('text-ok').textContent = o.okLabel || 'Save';
+          const input = $('text-input');
+          input.value = o.value || '';
+          let result = null;
+          $('text-form').onsubmit = (e) => {
+            e.preventDefault();
+            result = input.value;
+            textDlg.close();
+          };
+          $('text-cancel').onclick = () => textDlg.close();
+          textDlg.onclose = () => resolve(result);
+          textDlg.showModal();
+          input.focus();
+          input.select();
+        });
 
       // close dialogs when clicking the backdrop
-      [previewDlg, libDlg].forEach((dlg) =>
+      document.querySelectorAll('dialog').forEach((dlg) =>
         dlg.addEventListener('click', (e) => {
           if (e.target === dlg) dlg.close();
         })

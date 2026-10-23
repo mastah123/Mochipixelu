@@ -4,7 +4,7 @@
   const M = (root.Mochi = root.Mochi || {});
   const U = {};
 
-  U.VERSION = '1.1.0';
+  U.VERSION = '1.2.0';
 
   /** Marker for "no color / no stitch" in a pixel grid. */
   U.EMPTY = -1;
