@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Mochipixelu — pixel editor &amp; craft pattern maker</title>
+  <meta name="description" content="A cozy, local-first pixel editor that turns images into crochet, cross-stitch, knitting and bead patterns.">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='3' y='5' width='26' height='23' rx='9' fill='%23fff7e8' stroke='%234a3b32' stroke-width='2'/%3E%3Ccircle cx='11.5' cy='17' r='2' fill='%234a3b32'/%3E%3Ccircle cx='20.5' cy='17' r='2' fill='%234a3b32'/%3E%3Cpath d='M14 21q2 2 4 0' stroke='%234a3b32' stroke-width='1.6' fill='none' stroke-linecap='round'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+<div id="app">
+  <header class="topbar">
+    <div class="brand">
+      <svg class="mochi" viewBox="0 0 40 36" aria-hidden="true">
+        <rect x="3" y="5" width="34" height="28" rx="12" fill="#fff7e8" stroke="#4a3b32" stroke-width="2.5"/>
+        <rect x="11" y="2" width="8" height="8" rx="2" fill="#e8737f" stroke="#4a3b32" stroke-width="2"/>
+        <rect x="19" y="2" width="8" height="8" rx="2" fill="#9cc58d" stroke="#4a3b32" stroke-width="2"/>
+        <circle cx="14" cy="21" r="2.3" fill="#4a3b32"/><circle cx="26" cy="21" r="2.3" fill="#4a3b32"/>
+        <ellipse cx="9.5" cy="25" rx="2.6" ry="1.6" fill="#f4a6a0"/><ellipse cx="30.5" cy="25" rx="2.6" ry="1.6" fill="#f4a6a0"/>
+        <path d="M17.5 25q2.5 2.6 5 0" stroke="#4a3b32" stroke-width="2" fill="none" stroke-linecap="round"/>
+      </svg>
+      <h1>Mochipixelu</h1>
+    </div>
+    <label class="name-field">
+      <span class="sr-only">Design name</span>
+      <input id="design-name" type="text" maxlength="60" value="Untitled" autocomplete="off">
+    </label>
+    <div class="top-actions">
+      <button id="btn-undo" class="btn icon-btn" title="Undo (Ctrl+Z)" aria-label="Undo" disabled>↶</button>
+      <button id="btn-redo" class="btn icon-btn" title="Redo (Ctrl+Y)" aria-label="Redo" disabled>↷</button>
+      <button id="btn-import" class="btn">🖼️ <span class="hide-sm">Import image</span></button>
+      <button id="btn-save-lib" class="btn">💾 <span class="hide-sm">Save</span></button>
+      <button id="btn-library" class="btn">📚 <span class="hide-sm">My designs</span></button>
+    </div>
+  </header>
+
+  <main class="workspace">
+    <nav class="tools" id="tools" aria-label="Tools">
+      <button class="tool" data-tool="pencil" aria-pressed="true" title="Draw (B)"><span class="ti">✏️</span><span class="tl">Draw</span></button>
+      <button class="tool" data-tool="eraser" aria-pressed="false" title="Erase (E)"><span class="ti">🧽</span><span class="tl">Erase</span></button>
+      <button class="tool" data-tool="fill" aria-pressed="false" title="Fill (G)"><span class="ti">🪣</span><span class="tl">Fill</span></button>
+      <button class="tool" data-tool="picker" aria-pressed="false" title="Pick color (I)"><span class="ti">💧</span><span class="tl">Pick</span></button>
+      <button class="tool" data-tool="inspect" aria-pressed="false" title="Inspect pixels (Q)"><span class="ti">🔍</span><span class="tl">Inspect</span></button>
+      <button class="tool" data-tool="mark" aria-pressed="false" title="Mark stitches done (M)"><span class="ti">✅</span><span class="tl">Mark</span></button>
+      <button class="tool" data-tool="pan" aria-pressed="false" title="Pan / scroll (H)"><span class="ti">✋</span><span class="tl">Pan</span></button>
+    </nav>
+
+    <section class="stage" aria-label="Canvas">
+      <div class="stagebar">
+        <span id="status-size" class="chip" title="Design size">32 × 32</span>
+        <span id="status-coords" class="chip" title="Cell under the pointer">—</span>
+        <span class="spacer"></span>
+        <button id="zoom-out" class="btn small" aria-label="Zoom out" title="Zoom out (−)">−</button>
+        <input id="zoom-range" type="range" min="2" max="64" value="16" aria-label="Zoom">
+        <button id="zoom-in" class="btn small" aria-label="Zoom in" title="Zoom in (+)">+</button>
+        <button id="zoom-fit" class="btn small" title="Fit to screen (0)">Fit</button>
+        <label class="check"><input id="toggle-grid" type="checkbox" checked> Grid</label>
+        <label class="check"><input id="toggle-done" type="checkbox" checked> Done marks</label>
+      </div>
+      <div id="canvas-scroll" class="canvas-scroll">
+        <canvas id="canvas" tabindex="0" aria-label="Pixel canvas. Use arrow keys to move between cells."></canvas>
+      </div>
+      <div id="drop-hint" class="drop-hint" hidden>Drop an image to pixelate it 🍡</div>
+
+      <div class="inspector" id="inspector" aria-live="polite">
+        <span id="insp-swatch" class="swatch big empty" aria-hidden="true"></span>
+        <div class="insp-text">
+          <strong id="insp-coords">No cell selected</strong>
+          <span id="insp-detail">Hover or tap the canvas — use the Inspect tool to lock a cell.</span>
+        </div>
+        <div class="insp-actions">
+          <div class="dpad" role="group" aria-label="Move selected cell">
+            <button id="nav-up" class="btn small" aria-label="Up">▲</button>
+            <button id="nav-left" class="btn small" aria-label="Left">◀</button>
+            <button id="nav-down" class="btn small" aria-label="Down">▼</button>
+            <button id="nav-right" class="btn small" aria-label="Right">▶</button>
+          </div>
+          <button id="insp-pick" class="btn small" title="Use this cell's color (C)">💧 Use color</button>
+          <button id="insp-done" class="btn small" title="Toggle done (Enter)">✅ Done</button>
+        </div>
+      </div>
+    </section>
+
+    <aside class="panel" aria-label="Settings">
+      <div class="tabs" role="tablist">
+        <button role="tab" class="tab" data-tab="design" aria-selected="true">Design</button>
+        <button role="tab" class="tab" data-tab="colors" aria-selected="false">Colors</button>
+        <button role="tab" class="tab" data-tab="craft" aria-selected="false">Craft</button>
+        <button role="tab" class="tab" data-tab="export" aria-selected="false">Export</button>
+      </div>
+
+      <!-- DESIGN -->
+      <section class="tabpanel" id="panel-design" role="tabpanel">
+        <h2>Resolution</h2>
+        <p class="hint" id="img-info">Changing these numbers changes how many pixels the design really has.</p>
+        <div class="row">
+          <label>Width <input id="res-w" type="number" min="1" max="256" value="32" inputmode="numeric"></label>
+          <label>Height <input id="res-h" type="number" min="1" max="256" value="32" inputmode="numeric"></label>
+        </div>
+        <label class="check"><input id="res-lock" type="checkbox" checked> Keep proportions</label>
+        <div class="row presets" id="res-presets">
+          <button class="btn small" data-size="16">16</button>
+          <button class="btn small" data-size="32">32</button>
+          <button class="btn small" data-size="48">48</button>
+          <button class="btn small" data-size="64">64</button>
+          <button class="btn small" data-size="100">100</button>
+        </div>
+        <label class="block">When resizing edited art
+          <select id="res-mode">
+            <option value="scale">Scale (resample cells)</option>
+            <option value="crop-tl">Crop / pad from top-left</option>
+            <option value="crop-c">Crop / pad from center</option>
+          </select>
+        </label>
+        <p class="hint" id="res-hint"></p>
+
+        <h2>Colors</h2>
+        <div class="row">
+          <label>Limit to <input id="color-limit" type="number" min="0" max="64" value="0" inputmode="numeric"> colors</label>
+          <button id="btn-reduce" class="btn small">Reduce now</button>
+        </div>
+        <p class="hint">0 keeps every color. On an untouched imported image the limit applies live.</p>
+        <button id="btn-repixel" class="btn block-btn" disabled>↻ Re-pixelate from image (discard edits)</button>
+
+        <h2>New blank canvas</h2>
+        <div class="row">
+          <label>Width <input id="new-w" type="number" min="1" max="256" value="32" inputmode="numeric"></label>
+          <label>Height <input id="new-h" type="number" min="1" max="256" value="32" inputmode="numeric"></label>
+        </div>
+        <label class="block">Background
+          <select id="new-bg">
+            <option value="empty">Empty (no stitch)</option>
+            <option value="white">White</option>
+            <option value="current">Current color</option>
+          </select>
+        </label>
+        <button id="btn-create" class="btn primary block-btn">Create blank canvas</button>
+      </section>
+
+      <!-- COLORS -->
+      <section class="tabpanel" id="panel-colors" role="tabpanel" hidden>
+        <h2>Current color</h2>
+        <div class="row center">
+          <span id="cur-swatch" class="swatch big"></span>
+          <input id="color-input" type="color" value="#e8737f" aria-label="Pick a color">
+          <input id="color-hex" type="text" value="#e8737f" maxlength="7" spellcheck="false" aria-label="Hex color">
+        </div>
+        <label class="check"><input id="fill-all" type="checkbox"> Fill tool recolors <em>every</em> matching cell</label>
+        <h2>Palette</h2>
+        <div id="palette-grid" class="swatches"></div>
+        <h2>Recent</h2>
+        <div id="recent-grid" class="swatches"></div>
+        <h2>Colors in this design</h2>
+        <div id="design-colors" class="swatches"></div>
+      </section>
+
+      <!-- CRAFT -->
+      <section class="tabpanel" id="panel-craft" role="tabpanel" hidden>
+        <h2>Progress</h2>
+        <div class="progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="progress">
+          <div id="progress-bar"></div>
+        </div>
+        <p id="progress-text" class="hint">0 of 0 stitches done</p>
+        <p class="hint">Use the ✅ Mark tool (drag to mark many), or the Inspect tool + Enter to tick one stitch at a time.</p>
+        <div class="row">
+          <button id="btn-mark-all" class="btn small">Mark all done</button>
+          <button id="btn-clear-progress" class="btn small">Clear progress</button>
+        </div>
+        <h2>Legend</h2>
+        <p class="hint">Tap a color to spotlight just those stitches.</p>
+        <ul id="legend-list" class="legend"></ul>
+        <button id="btn-clear-filter" class="btn small" hidden>Show all colors</button>
+      </section>
+
+      <!-- EXPORT -->
+      <section class="tabpanel" id="panel-export" role="tabpanel" hidden>
+        <h2>Printable pattern</h2>
+        <div class="row">
+          <label>Cell size
+            <select id="ex-cell">
+              <option value="16">Small (16 px)</option>
+              <option value="24" selected>Medium (24 px)</option>
+              <option value="32">Large (32 px)</option>
+            </select>
+          </label>
+        </div>
+        <label class="check"><input id="ex-colors" type="checkbox" checked> Fill cells with color</label>
+        <label class="check"><input id="ex-symbols" type="checkbox" checked> Symbols in cells</label>
+        <label class="check"><input id="ex-coords" type="checkbox" checked> Row &amp; column numbers</label>
+        <label class="check"><input id="ex-marks" type="checkbox"> Show completed ticks</label>
+        <div class="row">
+          <button id="btn-preview" class="btn primary">👀 Preview &amp; print</button>
+          <button id="btn-pattern-png" class="btn">Pattern PNG</button>
+        </div>
+        <p class="hint">Tip: turn off “Fill cells with color” for a black-and-white, ink-friendly chart that relies on symbols.</p>
+
+        <h2>Artwork image</h2>
+        <div class="row">
+          <label>Pixel size
+            <select id="art-scale">
+              <option value="1">1× (exact pixels)</option>
+              <option value="8">8×</option>
+              <option value="16" selected>16×</option>
+              <option value="32">32×</option>
+            </select>
+          </label>
+        </div>
+        <label class="check"><input id="art-transparent" type="checkbox" checked> Transparent empty cells</label>
+        <button id="btn-art-png" class="btn block-btn">Download artwork PNG</button>
+
+        <h2>Project file</h2>
+        <div class="row">
+          <button id="btn-save-file" class="btn">⬇ Save file</button>
+          <button id="btn-open-file" class="btn">⬆ Open file</button>
+        </div>
+        <p class="hint">Files keep colors and progress and stay on your device.</p>
+      </section>
+    </aside>
+  </main>
+</div>
+
+<input id="file-input" type="file" accept="image/*" hidden>
+<input id="file-project" type="file" accept=".json,.mochi,application/json" hidden>
+
+<dialog id="preview-dialog" class="dialog wide">
+  <div class="dialog-head">
+    <h2>Pattern preview</h2>
+    <div class="row">
+      <button id="preview-print" class="btn primary">🖨 Print</button>
+      <button id="preview-close" class="btn">Close</button>
+    </div>
+  </div>
+  <div id="preview-pages" class="preview-pages"></div>
+</dialog>
+
+<dialog id="library-dialog" class="dialog">
+  <div class="dialog-head">
+    <h2>My designs</h2>
+    <button id="library-close" class="btn">Close</button>
+  </div>
+  <p class="hint">Saved in this browser only. Nothing is uploaded.</p>
+  <ul id="library-list" class="library"></ul>
+</dialog>
+
+<div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+<div id="print-area" aria-hidden="true"></div>
+
+<script src="js/utils.js"></script>
+<script src="js/state.js"></script>
+<script src="js/palette.js"></script>
+<script src="js/pixelate.js"></script>
+<script src="js/renderer.js"></script>
+<script src="js/storage.js"></script>
+<script src="js/exporter.js"></script>
+<script src="js/editor.js"></script>
+<script src="js/panels.js"></script>
+<script src="js/dialogs.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>
