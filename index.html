@@ -265,7 +265,7 @@
     <div class="top-actions">
       <button id="btn-undo" class="btn icon-btn" title="Undo (Ctrl+Z)" aria-label="Undo" disabled><svg class="ic"><use href="#i-undo"/></svg></button>
       <button id="btn-redo" class="btn icon-btn" title="Redo (Ctrl+Y)" aria-label="Redo" disabled><svg class="ic"><use href="#i-redo"/></svg></button>
-      <button id="btn-menu" class="btn icon-btn phone-only" aria-label="Pattern settings" aria-pressed="false"><svg class="ic"><use href="#i-sliders"/></svg></button>
+      <button id="btn-menu" class="btn icon-btn" aria-label="Pattern options" aria-haspopup="menu" aria-pressed="false"><svg class="ic"><use href="#i-more"/></svg></button>
     </div>
   </header>
 
@@ -310,16 +310,7 @@
 
     <!-- Bottom sheet on phones, permanent side panel on desktop / landscape tablets -->
     <aside class="panel sheet" id="sheet" aria-label="Pattern settings">
-      <div class="sheet-head">
-        <div class="tabs" role="tablist">
-          <button role="tab" class="tab" data-tab="design" aria-selected="true">Design</button>
-          <button role="tab" class="tab" data-tab="colors" aria-selected="false">Colors</button>
-          <button role="tab" class="tab" data-tab="craft" aria-selected="false">Craft</button>
-          <button role="tab" class="tab" data-tab="export" aria-selected="false">Export</button>
-          <button role="tab" class="tab" data-tab="files" aria-selected="false">Files</button>
-        </div>
-        <button id="sheet-close" class="btn small icon-btn" aria-label="Close panel"><svg class="ic sm"><use href="#i-close"/></svg></button>
-      </div>
+      <div class="sheet-head"><h2 id="sheet-title">Design</h2></div>
 
       <!-- DESIGN -->
       <section class="tabpanel" id="panel-design" role="tabpanel">
@@ -346,7 +337,7 @@
         </label>
         <p class="hint" id="res-hint"></p>
 
-        <h2>Colors</h2>
+        <h2>Color limit</h2>
         <div class="row">
           <label>Limit to <input id="color-limit" type="number" min="0" max="64" value="0" inputmode="numeric"> colors</label>
           <button id="btn-reduce" class="btn small">Reduce now</button>
@@ -354,26 +345,12 @@
         <p class="hint">0 keeps every color. On an untouched imported image the limit applies live.</p>
         <button id="btn-repixel" class="btn block-btn" disabled><svg class="ic sm"><use href="#i-redo-arrow"/></svg>Re-pixelate from image (discard edits)</button>
 
+        <h2>Fill tool</h2>
+        <label class="check"><input id="fill-all" type="checkbox"> Recolor <em>every</em> matching cell, not just the connected area</label>
+
         <h2>View</h2>
         <label class="check"><input id="toggle-grid" type="checkbox" checked> Show grid lines</label>
         <label class="check"><input id="toggle-done" type="checkbox" checked> Show done marks</label>
-      </section>
-
-      <!-- COLORS -->
-      <section class="tabpanel" id="panel-colors" role="tabpanel" hidden>
-        <h2>Current color</h2>
-        <div class="row center">
-          <span id="cur-swatch" class="swatch big"></span>
-          <input id="color-input" type="color" value="#e8737f" aria-label="Pick a color">
-          <input id="color-hex" type="text" value="#e8737f" maxlength="7" spellcheck="false" aria-label="Hex color">
-        </div>
-        <label class="check"><input id="fill-all" type="checkbox"> Fill tool recolors <em>every</em> matching cell</label>
-        <h2>Palette</h2>
-        <div id="palette-grid" class="swatches"></div>
-        <h2>Recent</h2>
-        <div id="recent-grid" class="swatches"></div>
-        <h2>Colors in this design</h2>
-        <div id="design-colors" class="swatches"></div>
       </section>
 
       <!-- CRAFT -->
@@ -441,7 +418,15 @@
         <button id="btn-save-file" class="btn block-btn"><svg class="ic sm"><use href="#i-export"/></svg>Save a backup file</button>
         <p class="hint">Keeps colors and progress. Open it later from the home page.</p>
       </section>
+      <div class="sheet-foot"><button id="sheet-done" class="btn primary">Done</button></div>
     </aside>
+    <div id="sheet-scrim" class="scrim light" hidden></div>
+    <div id="opt-menu" class="ctx-menu opt-menu" role="menu" hidden>
+      <button data-open="design"><svg class="ic"><use href="#i-design"/></svg>Size &amp; detail</button>
+      <button data-open="craft"><svg class="ic"><use href="#i-craft"/></svg>Progress &amp; legend</button>
+      <button data-open="export"><svg class="ic"><use href="#i-export"/></svg>Export &amp; print</button>
+      <button data-open="files"><svg class="ic"><use href="#i-files"/></svg>Image &amp; files</button>
+    </div>
 
     <!-- Fixed bottom bar on phones; vertical tool rail on desktop -->
     <div class="dock">

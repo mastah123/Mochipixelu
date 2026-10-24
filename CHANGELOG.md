@@ -10,6 +10,16 @@ Versions follow [Semantic Versioning](https://semver.org/): `MAJOR.MINOR.PATCH`.
 
 Examples are illustrative; the real versions are listed below. Documentation-only, test-only and refactoring changes do not automatically bump the version.
 
+## [1.6.0] — 2026-10-24 (finalized in the working tree; not tagged or published)
+
+### Changed
+- Editor top-right is now a three-dots button. It opens a small menu with a button for each section — Size & detail, Progress & legend, Export & print, Image & files — and each opens as its own popup with a Done button fixed under the scrolling content (bottom card on phones, centered on wider screens). On desktop the permanent side panel is replaced by the same popups.
+- Color button row: the first swatch is the RGB picker (the phone's own color dialog), then the most recently used colors (newest first), then the default palette. On desktop the row opens beside the tool rail.
+
+### Removed
+- The Colors section of the settings (current color, hex field, palette, recent and design colors). The Fill tool's "recolor every matching cell" option moved into Size & detail.
+- The "More" button in the color row.
+
 ## [1.5.1] — 2026-10-24 (finalized in the working tree; not tagged or published)
 
 ### Fixed

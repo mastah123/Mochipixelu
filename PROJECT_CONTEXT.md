@@ -1,6 +1,6 @@
 # Project context — Mochipixelu
 
-_Last updated: 2026-10-23 · Version 1.5.1 (working tree; no git repo yet, nothing committed, pushed or published) · Batches A and B done, see "Pending changes"_
+_Last updated: 2026-10-23 · Version 1.6.0 (working tree; no git repo yet, nothing committed, pushed or published) · Batches A and B done, see "Pending changes"_
 
 ## What it is
 Browser-based pixel editor and craft-pattern maker. Vanilla HTML/CSS/JS, no build, no deps, no network. See README.md for features and usage.
@@ -74,3 +74,7 @@ Owner's note ("mochipixelu changes"): queue changes, implement **in batches (my 
 ## 1.5.0 notes
 - Theme: CSS variables in `:root` (light) and `:root[data-theme="dark"]`; `app.applyTheme()` in main.js; an inline script in index.html sets the theme before paint.
 - `#color-pop` is a pop-up row above the bottom bar (phones). On phones the sheet and inspector are overlays; `--dock-h` is set by a ResizeObserver so the sheet rests on the bar.
+
+## 1.6.0 notes
+- `#sheet` is now a modal-style popup (fixed, bottom card on phones, centered ≥600 px) with `#sheet-done`; opened from `#opt-menu` via `app.openSheet(name)`. No tabs; no Colors panel.
+- `#color-pop` is built in `fillPop()` in panels.js: picker → `settings.recent` → default palette.

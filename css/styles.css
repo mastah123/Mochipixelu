@@ -544,7 +544,6 @@ input[type="text"], input[type="number"], select { border: 1.5px solid var(--hai
 }
 @media (min-width: 900px) {
   .dock, .stage, .sheet, .view-stage, .view-panel { border: 1px solid var(--hair); }
-  .pop { display: none !important; }
 }
 
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
@@ -576,4 +575,39 @@ input[type="text"], input[type="number"], select { border: 1.5px solid var(--hai
   .workspace { grid-template-columns: 62px minmax(0, 1fr); grid-template-areas: "dock stage"; }
   .sheet { grid-area: auto; left: auto; top: 0; bottom: 0; right: 0; height: auto; width: 0; z-index: 6; }
   .sheet.open { height: auto; width: min(340px, 52vw); }
+}
+
+/* ====================================================================
+   SETTINGS POPUPS — the ⋯ menu lists sections; each opens as its own popup (bottom card on phones,
+   centered on wider screens) with a Done button that stays fixed under the scrolling content.
+   They float over the canvas, so nothing underneath resizes or moves.
+   ==================================================================== */
+.workspace { grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 900px) { .workspace { grid-template-columns: 84px minmax(0, 1fr); grid-template-areas: "dock stage"; } }
+@media (orientation: landscape) and (max-height: 520px) and (max-width: 899px) { .workspace { grid-template-columns: 62px minmax(0, 1fr); grid-template-areas: "dock stage"; } }
+.sheet, .sheet.open {
+  position: fixed; left: 12px; right: 12px; bottom: 12px; top: auto; width: auto; height: auto; max-height: min(72dvh, 620px);
+  z-index: 30; display: none; flex-direction: column; visibility: visible; grid-area: auto; transform: none;
+  border: 0; border-radius: 24px; background: var(--card); box-shadow: 0 14px 44px rgb(var(--shadow) / .4); overflow: hidden; transition: none;
+}
+.sheet.open { display: flex; }
+@media (min-width: 600px), (orientation: landscape) and (max-height: 520px) {
+  .sheet, .sheet.open { left: 50%; right: auto; top: 50%; bottom: auto; transform: translate(-50%, -50%); width: min(520px, 92vw); max-height: 88dvh; }
+}
+.sheet-head { display: block; border: 0; padding: 18px 22px 6px; }
+.sheet-head h2 { font-size: 1.2rem; }
+.sheet .tabpanel { flex: 1 1 auto; min-height: 0; padding: 0 22px 10px; overflow-y: auto; }
+.sheet .tabpanel h2 { margin-top: 18px; }
+.sheet-foot { flex: none; padding: 10px 16px 16px; border-top: 1px solid var(--hair); background: var(--card); }
+.sheet-foot .btn { width: 100%; min-height: 50px; font-size: 1rem; }
+.scrim.light { z-index: 29; background: rgb(var(--shadow) / .2); }
+.opt-menu { top: 52px; right: 10px; left: auto; width: min(280px, 86vw); z-index: 31; padding: 6px 0; }
+.opt-menu button { min-height: 52px; }
+
+/* quick-colour row: the RGB picker is always the first swatch */
+.pop .sw { display: block; }
+.pop .sw.picker { position: relative; overflow: hidden; cursor: pointer; background: conic-gradient(#ef4444, #f59e0b, #eab308, #22c55e, #06b6d4, #3b82f6, #a855f7, #ef4444); }
+.pop .sw.picker input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; border: 0; padding: 0; }
+@media (min-width: 900px) {
+  .pop { flex-wrap: wrap; left: calc(100% + 10px); right: auto; bottom: 0; width: 300px; border: 0; border-radius: 18px; padding: 12px; z-index: 31; box-shadow: 0 10px 30px rgb(var(--shadow) / .35); }
 }

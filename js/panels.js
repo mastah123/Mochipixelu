@@ -18,82 +18,105 @@
         new ResizeObserver(() => ws.style.setProperty('--dock-h', dock.offsetHeight + 'px')).observe(dock);
       }
 
-      /* ---------- tabs + bottom sheet ---------- */
-      const tabs = Array.from(document.querySelectorAll('.tab'));
+      /* ---------- ⋯ menu → one popup per section, each with a fixed Done button ---------- */
       const sheet = $('sheet');
-      let currentTab = 'design';
+      const optMenu = $('opt-menu');
+      const TITLES = { design: 'Size & detail', craft: 'Progress & legend', export: 'Export & print', files: 'Image & files' };
+      let current = 'design';
+      const pop = $('color-pop');
       const syncNav = () => {
-        const open = sheet.classList.contains('open');
-        $('btn-menu').setAttribute('aria-pressed', String(open && currentTab !== 'colors'));
-        $('dock-color').setAttribute('aria-pressed', String((open && currentTab === 'colors') || !$('color-pop').hidden));
+        $('btn-menu').setAttribute('aria-pressed', String(!optMenu.hidden || sheet.classList.contains('open')));
+        $('dock-color').setAttribute('aria-pressed', String(!pop.hidden));
       };
-      const showTab = (name) => {
-        currentTab = name;
-        tabs.forEach((t) => t.setAttribute('aria-selected', String(t.dataset.tab === name)));
-        document.querySelectorAll('.tabpanel').forEach((p) => (p.hidden = p.id !== 'panel-' + name));
+      const closeMenu = () => {
+        optMenu.hidden = true;
         syncNav();
       };
-      /** Phones: slide the sheet up on a tab. Desktop: the panel is always visible, this just switches tab. */
       app.openSheet = (name) => {
-        $('color-pop').hidden = true;
-        showTab(name || currentTab);
+        pop.hidden = true;
+        optMenu.hidden = true;
+        current = name || current;
+        $('sheet-title').textContent = TITLES[current] || '';
+        document.querySelectorAll('.tabpanel').forEach((el) => (el.hidden = el.id !== 'panel-' + current));
+        sheet.querySelector('.tabpanel:not([hidden])').scrollTop = 0;
         sheet.classList.add('open');
+        $('sheet-scrim').hidden = false;
         syncNav();
       };
       app.closeSheet = () => {
-        $('color-pop').hidden = true;
+        pop.hidden = true;
+        optMenu.hidden = true;
         sheet.classList.remove('open');
+        $('sheet-scrim').hidden = true;
         syncNav();
       };
-      tabs.forEach((t) => t.addEventListener('click', () => showTab(t.dataset.tab)));
-      const toggleSheet = (tab, isOpenFor) => {
-        if (sheet.classList.contains('open') && isOpenFor()) app.closeSheet();
-        else app.openSheet(tab);
-      };
-      $('btn-menu').addEventListener('click', () => toggleSheet(currentTab === 'colors' ? 'design' : currentTab, () => currentTab !== 'colors'));
-      /* Colour button: on phones a quick-colour row pops up above the bottom bar; desktop uses the side panel */
-      const pop = $('color-pop');
-      const wide = () => window.matchMedia('(min-width: 900px)').matches;
+      $('btn-menu').addEventListener('click', () => {
+        if (sheet.classList.contains('open')) return app.closeSheet();
+        const wasOpen = !optMenu.hidden;
+        app.closeSheet();
+        optMenu.hidden = wasOpen;
+        syncNav();
+      });
+      optMenu.addEventListener('click', (e) => {
+        const b = e.target.closest('[data-open]');
+        if (b) app.openSheet(b.dataset.open);
+      });
+      $('sheet-done').addEventListener('click', app.closeSheet);
+      $('sheet-scrim').addEventListener('click', app.closeSheet);
+      document.addEventListener('click', (e) => {
+        if (!optMenu.hidden && !optMenu.contains(e.target) && !$('btn-menu').contains(e.target)) closeMenu();
+      });
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && (sheet.classList.contains('open') || !optMenu.hidden)) app.closeSheet();
+      });
+
+      /* ---------- Color button: a row pops up above the bar — picker first, then last used, then the palette ---------- */
       const closePop = () => {
         pop.hidden = true;
         syncNav();
       };
       app.closePop = closePop;
+      const refreshPressed = () =>
+        pop.querySelectorAll('.sw[data-color]').forEach((b) => b.setAttribute('aria-pressed', String(Number(b.dataset.color) === settings.color)));
       const fillPop = () => {
         pop.textContent = '';
-        const add = (c) => {
+        // 1st: the RGB picker (the phone's own colour dialog)
+        const pick = document.createElement('label');
+        pick.className = 'sw picker';
+        pick.title = 'Pick any colour';
+        const input = document.createElement('input');
+        input.type = 'color';
+        input.value = U.toHex(settings.color);
+        input.setAttribute('aria-label', 'Pick any colour (RGB)');
+        input.addEventListener('input', () => app.setColor(U.fromHex(input.value))); // live; no re-render while the dialog is open
+        input.addEventListener('change', () => {
+          app.setColor(U.fromHex(input.value));
+          app.addRecent(settings.color);
+          fillPop();
+        });
+        pick.appendChild(input);
+        pop.appendChild(pick);
+        // then the most recently used colours, then the default palette
+        const seen = new Set();
+        settings.recent.concat(M.Palette.DEFAULT_PALETTE.map((hex) => U.fromHex(hex))).forEach((c) => {
+          if (seen.has(c)) return;
+          seen.add(c);
           const b = document.createElement('button');
           b.type = 'button';
           b.className = 'sw';
+          b.dataset.color = String(c);
           b.style.background = U.toHex(c);
           b.setAttribute('aria-label', U.toHex(c));
-          b.setAttribute('aria-pressed', String(c === settings.color));
           b.addEventListener('click', () => {
             app.setColor(c);
             app.addRecent(c);
             fillPop();
           });
           pop.appendChild(b);
-        };
-        const seen = new Set();
-        settings.recent.concat(app.getLegend().entries.map((e) => e.color), M.Palette.DEFAULT_PALETTE.map((h) => U.fromHex(h))).forEach((c) => {
-          if (!seen.has(c)) {
-            seen.add(c);
-            add(c);
-          }
         });
-        const more = document.createElement('button');
-        more.type = 'button';
-        more.className = 'btn small more';
-        more.textContent = 'More';
-        more.addEventListener('click', () => {
-          closePop();
-          app.openSheet('colors');
-        });
-        pop.appendChild(more);
+        refreshPressed();
       };
       $('dock-color').addEventListener('click', () => {
-        if (wide()) return toggleSheet('colors', () => currentTab === 'colors');
         if (!pop.hidden) return closePop();
         app.closeSheet();
         fillPop();
@@ -101,9 +124,10 @@
         syncNav();
       });
       document.querySelectorAll('.tool[data-tool]').forEach((b) => b.addEventListener('click', closePop));
-      $('canvas').addEventListener('pointerdown', closePop);
-      $('sheet-close').addEventListener('click', app.closeSheet);
-      app.showTab = showTab;
+      $('canvas').addEventListener('pointerdown', () => {
+        closePop();
+        closeMenu();
+      });
 
       /* ---------- name ---------- */
       $('design-name').addEventListener('input', (e) => {
@@ -268,52 +292,11 @@
       });
 
       /* ---------- COLORS ---------- */
-      const sw = (hex, pressed, onClick, title) => {
-        const b = document.createElement('button');
-        b.type = 'button';
-        b.className = 'sw';
-        b.style.background = hex;
-        b.title = title || hex;
-        b.setAttribute('aria-label', title || hex);
-        b.setAttribute('aria-pressed', String(pressed));
-        b.addEventListener('click', onClick);
-        return b;
-      };
-      const renderSwatches = (host, colors) => {
-        host.textContent = '';
-        colors.forEach((c) =>
-          host.appendChild(
-            sw(U.toHex(c), c === settings.color, () => {
-              app.setColor(c);
-              app.addRecent(c);
-            })
-          )
-        );
-      };
-      const palette = M.Palette.DEFAULT_PALETTE.map((h) => U.fromHex(h));
       const refreshColors = () => {
-        const cur = settings.color;
-        $('cur-swatch').style.background = U.toHex(cur);
-        document.querySelectorAll('[data-cur-color]').forEach((d) => (d.style.background = U.toHex(cur)));
-        if ($('color-input').value !== U.toHex(cur)) $('color-input').value = U.toHex(cur);
-        if (document.activeElement !== $('color-hex')) $('color-hex').value = U.toHex(cur);
-        renderSwatches($('palette-grid'), palette);
-        renderSwatches($('recent-grid'), settings.recent);
-        renderSwatches($('design-colors'), app.getLegend().entries.map((e) => e.color));
+        const hex = U.toHex(settings.color);
+        document.querySelectorAll('[data-cur-color]').forEach((d) => (d.style.background = hex));
+        refreshPressed();
       };
-      $('color-input').addEventListener('input', (e) => {
-        app.setColor(U.fromHex(e.target.value));
-      });
-      $('color-input').addEventListener('change', () => app.addRecent(settings.color));
-      $('color-hex').addEventListener('input', (e) => {
-        const c = /^#?[0-9a-f]{6}$/i.test(e.target.value.trim()) ? U.fromHex(e.target.value) : null;
-        if (c !== null) app.setColor(c);
-        e.target.setAttribute('aria-invalid', String(c === null));
-      });
-      $('color-hex').addEventListener('blur', () => {
-        $('color-hex').value = U.toHex(settings.color);
-        $('color-hex').removeAttribute('aria-invalid');
-      });
       $('fill-all').addEventListener('change', (e) => (settings.fillAll = e.target.checked));
 
       /* ---------- CRAFT ---------- */
@@ -401,12 +384,8 @@
         refreshAll();
       });
       app.ui.on('color', refreshColors);
-      app.ui.on('recent', () => {
-        renderSwatches($('recent-grid'), settings.recent);
-        app.savePrefs();
-      });
+      app.ui.on('recent', app.savePrefs);
       app.ui.on('filter', refreshCraft);
-      showTab('design');
       refreshColors();
     },
   };
