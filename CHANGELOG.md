@@ -10,6 +10,21 @@ Versions follow [Semantic Versioning](https://semver.org/): `MAJOR.MINOR.PATCH`.
 
 Examples are illustrative; the real versions are listed below. Documentation-only, test-only and refactoring changes do not automatically bump the version.
 
+## [1.8.0] — 2026-10-24 (finalized in the working tree; not tagged or published)
+
+Batch D of the owner's 2026-10-24 list.
+
+### Added
+- Legend button in the bottom bar: a popup above the bar lists every color with its symbol, number and stitch count; tap one to spotlight it, "Show all colors" clears it.
+- Pattern view ⋯ menu: **Export & print…** opens the same options popup as the editor (cell size, colors, symbols, numbers, ticks, Preview & print, Pattern PNG, Artwork image) for the pattern being viewed, and **Clear progress** (with a confirm).
+
+### Changed
+- The settings popup now lives at page level so both the editor and the pattern view use it. The pattern view's separate Preview / PNG menu entries are replaced by Export & print….
+- Editor ⋯ menu: Size & detail, Export & print, Image & files.
+
+### Removed
+- Progress from the editor (progress bar, text and Clear progress button) and the editor's "Progress & legend" section. Progress is shown and managed in the pattern view.
+
 ## [1.7.0] — 2026-10-24 (finalized in the working tree; not tagged or published)
 
 Batch C of the owner's 2026-10-24 list.

@@ -21,12 +21,14 @@
       /* ---------- ⋯ menu → one popup per section, each with a fixed Done button ---------- */
       const sheet = $('sheet');
       const optMenu = $('opt-menu');
-      const TITLES = { design: 'Size & detail', craft: 'Progress & legend', export: 'Export & print', files: 'Image & files' };
+      const TITLES = { design: 'Size & detail', export: 'Export & print', files: 'Image & files' };
       let current = 'design';
       const pop = $('color-pop');
+      const legendPop = $('legend-pop');
       const syncNav = () => {
         $('btn-menu').setAttribute('aria-pressed', String(!optMenu.hidden || sheet.classList.contains('open')));
         $('dock-color').setAttribute('aria-pressed', String(!pop.hidden));
+        $('dock-legend').setAttribute('aria-pressed', String(!legendPop.hidden));
       };
       const closeMenu = () => {
         optMenu.hidden = true;
@@ -34,6 +36,7 @@
       };
       app.openSheet = (name) => {
         pop.hidden = true;
+        legendPop.hidden = true;
         optMenu.hidden = true;
         current = name || current;
         $('sheet-title').textContent = TITLES[current] || '';
@@ -45,6 +48,7 @@
       };
       app.closeSheet = () => {
         pop.hidden = true;
+        legendPop.hidden = true;
         optMenu.hidden = true;
         sheet.classList.remove('open');
         $('sheet-scrim').hidden = true;
@@ -73,6 +77,7 @@
       /* ---------- Color button: a row pops up above the bar — picker first, then last used, then the palette ---------- */
       const closePop = () => {
         pop.hidden = true;
+        legendPop.hidden = true;
         syncNav();
       };
       app.closePop = closePop;
@@ -167,6 +172,13 @@
         });
         refreshPressed();
       };
+      $('dock-legend').addEventListener('click', () => {
+        if (!legendPop.hidden) return closePop();
+        app.closeSheet();
+        refreshCraft();
+        legendPop.hidden = false;
+        syncNav();
+      });
       $('dock-color').addEventListener('click', () => {
         if (!pop.hidden) return closePop();
         app.closeSheet();
@@ -353,12 +365,6 @@
       /* ---------- CRAFT ---------- */
       const refreshCraft = () => {
         const legend = app.getLegend();
-        let done = 0;
-        legend.entries.forEach((e) => (done += e.done));
-        const pct = legend.filled ? Math.round((done / legend.filled) * 100) : 0;
-        $('progress-bar').style.width = pct + '%';
-        $('progress').setAttribute('aria-valuenow', String(pct));
-        $('progress-text').textContent = done + ' of ' + legend.filled + ' stitches done (' + pct + '%)';
         const list = $('legend-list');
         list.textContent = '';
         legend.entries.forEach((e) => {
@@ -376,7 +382,7 @@
           label.textContent = '#' + e.index + ' ' + e.hex;
           const meta = document.createElement('span');
           meta.className = 'meta';
-          meta.textContent = e.done + '/' + e.count;
+          meta.textContent = e.count + ' stitches';
           b.append(s, label, meta);
           b.addEventListener('click', () => app.setFilter(renderer.filter === e.color ? null : e.color));
           li.appendChild(b);
@@ -391,14 +397,6 @@
         $('btn-clear-filter').hidden = renderer.filter === null;
       };
 
-      $('btn-clear-progress').addEventListener('click', () => {
-        const d = store.design;
-        if (!d.done.some((v) => v)) return;
-        store.checkpoint();
-        d.done.fill(0);
-        renderer.draw();
-        store.touch({ keepPristine: true });
-      });
       $('btn-clear-filter').addEventListener('click', () => app.setFilter(null));
 
       /* ---------- EXPORT ---------- */
@@ -410,10 +408,12 @@
         marks: $('ex-marks').checked,
         grid: true,
       });
-      $('btn-preview').addEventListener('click', () => app.act.preview(store.design));
-      $('btn-pattern-png').addEventListener('click', () => app.act.patternPng(store.design));
-      $('btn-art-png').addEventListener('click', () => app.act.artPng(store.design));
-      $('btn-save-file').addEventListener('click', () => app.act.saveFile(store.design));
+      // the same options and buttons serve the editor's pattern and the pattern view's pattern
+      const target = () => (app.route && app.route.name === 'view' && app.viewDesign) || store.design;
+      $('btn-preview').addEventListener('click', () => app.act.preview(target()));
+      $('btn-pattern-png').addEventListener('click', () => app.act.patternPng(target()));
+      $('btn-art-png').addEventListener('click', () => app.act.artPng(target()));
+      $('btn-save-file').addEventListener('click', () => app.act.saveFile(target()));
 
       /* ---------- refresh wiring ---------- */
       const refreshAll = U.debounce(() => {

@@ -66,7 +66,7 @@ const vis = (page, sel) => page.locator(sel).isVisible();
     let r = await lay('editor closed sheet');
     check('canvas area is large (>=300px tall)', r.wrap.h >= 300, r.wrap.h);
     await page.tap('#btn-menu');
-    check('⋯ opens a menu with its own buttons', (await page.locator('#opt-menu button').count()) === 4 && (await vis(page, '#opt-menu')));
+    check('⋯ opens a menu with its own buttons', (await page.locator('#opt-menu button').count()) === 3 && (await vis(page, '#opt-menu')));
     await page.tap('#opt-menu [data-open=design]');
     await page.waitForTimeout(350);
     r = await lay('editor open sheet');
@@ -76,6 +76,7 @@ const vis = (page, sel) => page.locator(sel).isVisible();
     check('canvas area keeps its size with the sheet open (>=300px)', r.wrap.h >= 300, r.wrap.h);
     await page.screenshot({ path: SP + 'editor-sheet.png' });
     await page.tap('#sheet-done'); await page.waitForTimeout(300);
+    check('no Progress section in the editor', (await page.locator('#panel-craft, #btn-clear-progress, #progress-bar').count()) === 0 && (await page.locator('#opt-menu [data-open=craft]').count()) === 0);
     check('no Mark tool in the editor', (await page.locator('.tool[data-tool=mark]').count()) === 0 && (await page.locator('#insp-done, #btn-mark-all').count()) === 0);
     check('no Move button in the bottom bar', (await page.locator('.dock [data-tool=pan]').count()) === 0);
     // pan / zoom / fit / full screen stay put on the canvas whatever opens over them
@@ -148,6 +149,16 @@ const vis = (page, sel) => page.locator(sel).isVisible();
     await page.waitForTimeout(900);
     const lib = await page.evaluate(() => JSON.parse(localStorage.getItem('mochipixelu:library'))[0]);
     check('edits autosave into the library', lib.filled === 6, JSON.stringify(lib));
+    await page.tap('#dock-legend');
+    check('Legend button pops up the legend above the bar', await vis(page, '#legend-pop') && (await page.locator('#legend-list button').count()) >= 1);
+    const lb = await page.locator('#legend-pop').boundingBox(); const dk = await page.locator('.dock').boundingBox();
+    check('legend popup sits directly above the bottom bar', Math.abs(lb.y + lb.height - dk.y) < 2, JSON.stringify([lb, dk]));
+    await page.locator('#legend-list button').first().tap();
+    check('tapping a legend color spotlights it', (await page.evaluate(() => mochipixelu.renderer.filter)) !== null);
+    await page.tap('#btn-clear-filter');
+    check('Show all colors clears the spotlight', (await page.evaluate(() => mochipixelu.renderer.filter)) === null);
+    await page.tap('#dock-legend');
+    check('Legend button closes it again', !(await vis(page, '#legend-pop')));
 
     // back to the view page
     await page.tap('#btn-back');
@@ -183,6 +194,23 @@ const vis = (page, sel) => page.locator(sel).isVisible();
     done = await page.evaluate(() => JSON.parse(localStorage.getItem('mochipixelu:library'))[0].done);
     check('tick mode ticks a stitch', done === 4, done);
     check('progress text updates', /4 of 6/.test(await page.textContent('#view-progress-text')), await page.textContent('#view-progress-text'));
+
+    // export options also live in the pattern view's ⋯ menu; clear progress moved here
+    await page.tap('#view-more'); await page.tap('[data-menu=export]');
+    await page.waitForTimeout(300);
+    check('view ⋯ → Export & print opens the options popup', (await vis(page, '#sheet')) && (await vis(page, '#ex-cell')) && (await vis(page, '#btn-preview')));
+    check('only the export section is shown there', !(await vis(page, '#res-w')));
+    await page.tap('#btn-preview'); await page.waitForSelector('#preview-pages img');
+    check('Preview & print works for the viewed pattern', (await page.locator('#preview-pages img').count()) >= 1);
+    await page.tap('#preview-close');
+    await page.tap('#sheet-done');
+    await page.tap('#view-more'); await page.tap('[data-menu=clear-progress]'); await page.tap('#confirm-ok');
+    await page.waitForTimeout(900);
+    check('Clear progress in the view menu resets the ticks', (await page.evaluate(() => JSON.parse(localStorage.getItem('mochipixelu:library'))[0].done)) === 0);
+    // tick two again so the later checks still have progress
+    p = await vcell(2, 2); await page.touchscreen.tap(p.x, p.y);
+    p = await vcell(3, 2); await page.touchscreen.tap(p.x, p.y);
+    await page.waitForTimeout(800);
 
     // spotlight chip
     await page.tap('#view-legend button');

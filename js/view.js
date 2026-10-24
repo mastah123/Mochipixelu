@@ -282,10 +282,21 @@
           if (!r.ok) return app.toast(r.error, true);
           app.toast('Duplicated — the copy starts with fresh progress');
           M.Router.go('#/p/' + r.id);
-        } else if (what === 'preview') app.act.preview(design);
-        else if (what === 'pattern-png') app.act.patternPng(design);
-        else if (what === 'art-png') app.act.artPng(design);
+        } else if (what === 'export') app.openSheet('export');
         else if (what === 'file') app.act.saveFile(design);
+        else if (what === 'clear-progress') {
+          if (!design.done.some((x) => x)) return app.toast('There is no progress to clear.');
+          const ok = await app.confirm({ title: 'Clear all progress?', text: 'Every ticked stitch of “' + design.name + '” goes back to “to do”. The artwork is not changed.', okLabel: 'Clear progress' });
+          if (!ok) return;
+          design.done.fill(0);
+          renderer.draw();
+          markDirty();
+          saveNow();
+          refresh();
+          showInfo();
+          applyGuide();
+          app.toast('Progress cleared');
+        }
         else if (what === 'delete') {
           const ok = await app.confirm({ title: 'Delete “' + design.name + '”?', text: 'This removes the pattern and its progress from this device. It cannot be undone.', okLabel: 'Delete' });
           if (!ok) return;
@@ -308,6 +319,7 @@
             return;
           }
           id = route.id;
+          app.viewDesign = design;
           dirty = false;
           selected = null;
           row = 0;
@@ -324,6 +336,8 @@
         },
         leave() {
           saveNow();
+          app.viewDesign = null;
+          app.closeSheet();
         },
       });
     },

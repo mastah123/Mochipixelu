@@ -111,6 +111,7 @@
       <path d="M12 8.5v7M8.5 12h7" stroke-width="2.4"/>
     </symbol>
     <symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="6.6"/><path d="M12 2.6v2.8M12 18.6v2.8M2.6 12h2.8M18.6 12h2.8M5.4 5.4l2 2M16.6 16.6l2 2M18.6 5.4l-2 2M7.4 16.6l-2 2"/></symbol>
+    <symbol id="i-legend" viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="4.5" height="4.5" rx="1.2"/><rect x="3.5" y="14.5" width="4.5" height="4.5" rx="1.2"/><path d="M11.5 6.8h9M11.5 16.8h9M11.5 11.8h9"/><rect x="3.5" y="9.5" width="4.5" height="4.5" rx="1.2"/></symbol>
     <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5.5v13M5.5 12h13"/></symbol>
     <symbol id="i-minus" viewBox="0 0 24 24"><path d="M5.5 12h13"/></symbol>
     <symbol id="i-fit" viewBox="0 0 24 24"><path d="M4 9V5h4M20 9V5h-4M4 15v4h4M20 15v4h-4"/><rect x="9" y="9" width="6" height="6" fill="none"/></symbol>
@@ -305,122 +306,8 @@
       </div>
     </section>
 
-    <!-- Bottom sheet on phones, permanent side panel on desktop / landscape tablets -->
-    <aside class="panel sheet" id="sheet" aria-label="Pattern settings">
-      <div class="sheet-head"><h2 id="sheet-title">Design</h2></div>
-
-      <!-- DESIGN -->
-      <section class="tabpanel" id="panel-design" role="tabpanel">
-        <h2>Resolution</h2>
-        <p class="hint" id="img-info">Changing these numbers changes how many pixels the design really has.</p>
-        <div class="row">
-          <label>Width <input id="res-w" type="number" min="1" max="256" value="32" inputmode="numeric"></label>
-          <label>Height <input id="res-h" type="number" min="1" max="256" value="32" inputmode="numeric"></label>
-        </div>
-        <label class="check"><input id="res-lock" type="checkbox" checked> Keep proportions</label>
-        <div class="row presets" id="res-presets">
-          <button class="btn small" data-size="16">16</button>
-          <button class="btn small" data-size="32">32</button>
-          <button class="btn small" data-size="48">48</button>
-          <button class="btn small" data-size="64">64</button>
-          <button class="btn small" data-size="100">100</button>
-        </div>
-        <label class="block">When resizing edited art
-          <select id="res-mode">
-            <option value="scale">Scale (resample cells)</option>
-            <option value="crop-tl">Crop / pad from top-left</option>
-            <option value="crop-c">Crop / pad from center</option>
-          </select>
-        </label>
-        <p class="hint" id="res-hint"></p>
-
-        <h2>Color limit</h2>
-        <div class="row">
-          <label>Limit to <input id="color-limit" type="number" min="0" max="64" value="0" inputmode="numeric"> colors</label>
-          <button id="btn-reduce" class="btn small">Reduce now</button>
-        </div>
-        <p class="hint">0 keeps every color. On an untouched imported image the limit applies live.</p>
-        <button id="btn-repixel" class="btn block-btn" disabled><svg class="ic sm"><use href="#i-redo-arrow"/></svg>Re-pixelate from image (discard edits)</button>
-
-        <h2>Fill tool</h2>
-        <label class="check"><input id="fill-all" type="checkbox"> Recolor <em>every</em> matching cell, not just the connected area</label>
-
-        <h2>View</h2>
-        <label class="check"><input id="toggle-grid" type="checkbox" checked> Show grid lines</label>
-        <label class="check"><input id="toggle-done" type="checkbox" checked> Show done marks</label>
-      </section>
-
-      <!-- CRAFT -->
-      <section class="tabpanel" id="panel-craft" role="tabpanel" hidden>
-        <h2>Progress</h2>
-        <div class="progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="progress">
-          <div id="progress-bar"></div>
-        </div>
-        <p id="progress-text" class="hint">0 of 0 stitches done</p>
-        <p class="hint">Ticking stitches off happens on the pattern page (open a pattern from the home page): it has Guide and Tick modes for stitching.</p>
-        <div class="row">
-          <button id="btn-clear-progress" class="btn small">Clear progress</button>
-        </div>
-        <h2>Legend</h2>
-        <p class="hint">Tap a color to spotlight just those stitches.</p>
-        <ul id="legend-list" class="legend"></ul>
-        <button id="btn-clear-filter" class="btn small" hidden>Show all colors</button>
-      </section>
-
-      <!-- EXPORT -->
-      <section class="tabpanel" id="panel-export" role="tabpanel" hidden>
-        <h2>Printable pattern</h2>
-        <div class="row">
-          <label>Cell size
-            <select id="ex-cell">
-              <option value="16">Small (16 px)</option>
-              <option value="24" selected>Medium (24 px)</option>
-              <option value="32">Large (32 px)</option>
-            </select>
-          </label>
-        </div>
-        <label class="check"><input id="ex-colors" type="checkbox" checked> Fill cells with color</label>
-        <label class="check"><input id="ex-symbols" type="checkbox" checked> Symbols in cells</label>
-        <label class="check"><input id="ex-coords" type="checkbox" checked> Row &amp; column numbers</label>
-        <label class="check"><input id="ex-marks" type="checkbox"> Show completed ticks</label>
-        <div class="row">
-          <button id="btn-preview" class="btn primary"><svg class="ic sm"><use href="#i-eye"/></svg>Preview &amp; print</button>
-          <button id="btn-pattern-png" class="btn"><svg class="ic sm"><use href="#i-export"/></svg>Pattern PNG</button>
-        </div>
-        <p class="hint">Tip: turn off “Fill cells with color” for a black-and-white, ink-friendly chart that relies on symbols.</p>
-
-        <h2>Artwork image</h2>
-        <div class="row">
-          <label>Pixel size
-            <select id="art-scale">
-              <option value="1">1× (exact pixels)</option>
-              <option value="8">8×</option>
-              <option value="16" selected>16×</option>
-              <option value="32">32×</option>
-            </select>
-          </label>
-        </div>
-        <label class="check"><input id="art-transparent" type="checkbox" checked> Transparent empty cells</label>
-        <button id="btn-art-png" class="btn block-btn"><svg class="ic sm"><use href="#i-export"/></svg>Download artwork PNG</button>
-      </section>
-
-      <!-- FILES -->
-      <section class="tabpanel" id="panel-files" role="tabpanel" hidden>
-        <h2>Saved automatically</h2>
-        <p class="hint">Every change is saved to “My patterns” on this device as you work.</p>
-        <h2>Replace with an image</h2>
-        <button id="btn-import" class="btn block-btn" data-action="import"><svg class="ic sm"><use href="#i-image"/></svg>Pixelate an image into this pattern</button>
-        <p class="hint">Replaces the artwork (you can undo). To start a separate pattern, use + on the home page.</p>
-        <h2>Project file</h2>
-        <button id="btn-save-file" class="btn block-btn"><svg class="ic sm"><use href="#i-export"/></svg>Save a backup file</button>
-        <p class="hint">Keeps colors and progress. Open it later from the home page.</p>
-      </section>
-      <div class="sheet-foot"><button id="sheet-done" class="btn primary">Done</button></div>
-    </aside>
-    <div id="sheet-scrim" class="scrim light" hidden></div>
     <div id="opt-menu" class="ctx-menu opt-menu" role="menu" hidden>
       <button data-open="design"><svg class="ic"><use href="#i-design"/></svg>Size &amp; detail</button>
-      <button data-open="craft"><svg class="ic"><use href="#i-craft"/></svg>Progress &amp; legend</button>
       <button data-open="export"><svg class="ic"><use href="#i-export"/></svg>Export &amp; print</button>
       <button data-open="files"><svg class="ic"><use href="#i-files"/></svg>Image &amp; files</button>
     </div>
@@ -428,17 +315,119 @@
     <!-- Fixed bottom bar on phones; vertical tool rail on desktop -->
     <div class="dock">
       <div id="color-pop" class="pop" hidden aria-label="Quick colors"></div>
+      <div id="legend-pop" class="pop legend-pop" hidden aria-label="Legend">
+        <ul id="legend-list" class="legend"></ul>
+        <button id="btn-clear-filter" class="btn small" hidden>Show all colors</button>
+      </div>
       <nav class="tools" id="tools" aria-label="Tools">
         <button class="tool" data-tool="pencil" aria-pressed="true" title="Draw (B)"><svg class="ic"><use href="#i-pencil"/></svg><span class="tl">Draw</span></button>
         <button class="tool" data-tool="eraser" aria-pressed="false" title="Erase (E)"><svg class="ic"><use href="#i-eraser"/></svg><span class="tl">Erase</span></button>
         <button class="tool" data-tool="fill" aria-pressed="false" title="Fill (G)"><svg class="ic"><use href="#i-fill"/></svg><span class="tl">Fill</span></button>
         <button class="tool" data-tool="picker" aria-pressed="false" title="Pick color (I)"><svg class="ic"><use href="#i-picker"/></svg><span class="tl">Pick</span></button>
         <button class="tool" data-tool="inspect" aria-pressed="false" title="Inspect pixels (Q)"><svg class="ic"><use href="#i-inspect"/></svg><span class="tl">Inspect</span></button>
+        <button id="dock-legend" class="tool" aria-pressed="false" title="Legend: colors and symbols"><svg class="ic"><use href="#i-legend"/></svg><span class="tl">Legend</span></button>
         <button id="dock-color" class="tool" aria-pressed="false" title="Colors"><span class="dot" data-cur-color></span><span class="tl">Color</span></button>
       </nav>
     </div>
   </main>
 </section>
+
+    <!-- Settings popup (opened from the ⋯ menus): one section at a time, Done fixed at the bottom. Lives at body level so both the editor and the pattern view can use it. -->
+<aside class="panel sheet" id="sheet" aria-label="Pattern settings">
+  <div class="sheet-head"><h2 id="sheet-title">Design</h2></div>
+
+  <!-- DESIGN -->
+  <section class="tabpanel" id="panel-design" role="tabpanel">
+    <h2>Resolution</h2>
+    <p class="hint" id="img-info">Changing these numbers changes how many pixels the design really has.</p>
+    <div class="row">
+      <label>Width <input id="res-w" type="number" min="1" max="256" value="32" inputmode="numeric"></label>
+      <label>Height <input id="res-h" type="number" min="1" max="256" value="32" inputmode="numeric"></label>
+    </div>
+    <label class="check"><input id="res-lock" type="checkbox" checked> Keep proportions</label>
+    <div class="row presets" id="res-presets">
+      <button class="btn small" data-size="16">16</button>
+      <button class="btn small" data-size="32">32</button>
+      <button class="btn small" data-size="48">48</button>
+      <button class="btn small" data-size="64">64</button>
+      <button class="btn small" data-size="100">100</button>
+    </div>
+    <label class="block">When resizing edited art
+      <select id="res-mode">
+        <option value="scale">Scale (resample cells)</option>
+        <option value="crop-tl">Crop / pad from top-left</option>
+        <option value="crop-c">Crop / pad from center</option>
+      </select>
+    </label>
+    <p class="hint" id="res-hint"></p>
+
+    <h2>Color limit</h2>
+    <div class="row">
+      <label>Limit to <input id="color-limit" type="number" min="0" max="64" value="0" inputmode="numeric"> colors</label>
+      <button id="btn-reduce" class="btn small">Reduce now</button>
+    </div>
+    <p class="hint">0 keeps every color. On an untouched imported image the limit applies live.</p>
+    <button id="btn-repixel" class="btn block-btn" disabled><svg class="ic sm"><use href="#i-redo-arrow"/></svg>Re-pixelate from image (discard edits)</button>
+
+    <h2>Fill tool</h2>
+    <label class="check"><input id="fill-all" type="checkbox"> Recolor <em>every</em> matching cell, not just the connected area</label>
+
+    <h2>View</h2>
+    <label class="check"><input id="toggle-grid" type="checkbox" checked> Show grid lines</label>
+    <label class="check"><input id="toggle-done" type="checkbox" checked> Show done marks</label>
+  </section>
+
+  <!-- EXPORT -->
+  <section class="tabpanel" id="panel-export" role="tabpanel" hidden>
+    <h2>Printable pattern</h2>
+    <div class="row">
+      <label>Cell size
+        <select id="ex-cell">
+          <option value="16">Small (16 px)</option>
+          <option value="24" selected>Medium (24 px)</option>
+          <option value="32">Large (32 px)</option>
+        </select>
+      </label>
+    </div>
+    <label class="check"><input id="ex-colors" type="checkbox" checked> Fill cells with color</label>
+    <label class="check"><input id="ex-symbols" type="checkbox" checked> Symbols in cells</label>
+    <label class="check"><input id="ex-coords" type="checkbox" checked> Row &amp; column numbers</label>
+    <label class="check"><input id="ex-marks" type="checkbox"> Show completed ticks</label>
+    <div class="row">
+      <button id="btn-preview" class="btn primary"><svg class="ic sm"><use href="#i-eye"/></svg>Preview &amp; print</button>
+      <button id="btn-pattern-png" class="btn"><svg class="ic sm"><use href="#i-export"/></svg>Pattern PNG</button>
+    </div>
+    <p class="hint">Tip: turn off “Fill cells with color” for a black-and-white, ink-friendly chart that relies on symbols.</p>
+
+    <h2>Artwork image</h2>
+    <div class="row">
+      <label>Pixel size
+        <select id="art-scale">
+          <option value="1">1× (exact pixels)</option>
+          <option value="8">8×</option>
+          <option value="16" selected>16×</option>
+          <option value="32">32×</option>
+        </select>
+      </label>
+    </div>
+    <label class="check"><input id="art-transparent" type="checkbox" checked> Transparent empty cells</label>
+    <button id="btn-art-png" class="btn block-btn"><svg class="ic sm"><use href="#i-export"/></svg>Download artwork PNG</button>
+  </section>
+
+  <!-- FILES -->
+  <section class="tabpanel" id="panel-files" role="tabpanel" hidden>
+    <h2>Saved automatically</h2>
+    <p class="hint">Every change is saved to “My patterns” on this device as you work.</p>
+    <h2>Replace with an image</h2>
+    <button id="btn-import" class="btn block-btn" data-action="import"><svg class="ic sm"><use href="#i-image"/></svg>Pixelate an image into this pattern</button>
+    <p class="hint">Replaces the artwork (you can undo). To start a separate pattern, use + on the home page.</p>
+    <h2>Project file</h2>
+    <button id="btn-save-file" class="btn block-btn"><svg class="ic sm"><use href="#i-export"/></svg>Save a backup file</button>
+    <p class="hint">Keeps colors and progress. Open it later from the home page.</p>
+  </section>
+  <div class="sheet-foot"><button id="sheet-done" class="btn primary">Done</button></div>
+</aside>
+<div id="sheet-scrim" class="scrim light" hidden></div>
 
 <input id="file-input" type="file" accept="image/*" hidden>
 <input id="file-home-input" type="file" accept="image/*" hidden>
@@ -497,10 +486,9 @@
   <ul class="menu-list">
     <li><button data-menu="rename"><svg class="ic sm"><use href="#i-pencil"/></svg>Rename</button></li>
     <li><button data-menu="duplicate"><svg class="ic sm"><use href="#i-copy"/></svg>Duplicate (fresh progress)</button></li>
-    <li><button data-menu="preview"><svg class="ic sm"><use href="#i-print"/></svg>Preview &amp; print pattern</button></li>
-    <li><button data-menu="pattern-png"><svg class="ic sm"><use href="#i-export"/></svg>Download pattern PNG</button></li>
-    <li><button data-menu="art-png"><svg class="ic sm"><use href="#i-image"/></svg>Download artwork PNG</button></li>
+    <li><button data-menu="export"><svg class="ic sm"><use href="#i-print"/></svg>Export &amp; print…</button></li>
     <li><button data-menu="file"><svg class="ic sm"><use href="#i-export"/></svg>Save a backup file</button></li>
+    <li><button data-menu="clear-progress"><svg class="ic sm"><use href="#i-redo-arrow"/></svg>Clear progress</button></li>
     <li><button data-menu="delete" class="danger-text"><svg class="ic sm"><use href="#i-trash"/></svg>Delete pattern</button></li>
   </ul>
 </dialog>
