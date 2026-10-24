@@ -313,34 +313,40 @@
     ok(copy.ok && copy.id !== id);
     eq(S.library.list().length, 2);
     const c = S.library.get(copy.id);
-    eq(c.done, 0); eq(c.filled, 7); eq(c.name, 'Untitled copy');
+    eq(c.done, 0); eq(c.filled, 7); eq(c.name, 'Untitled1');
     eq(S.library.get(id).done, 3, 'original keeps its progress');
     S.library.remove(id);
     eq(S.library.list().length, 1);
     throws(() => S.library.load(id), /could not be found/);
   }));
-  test('duplicate names become Untitled1, Untitled2… (case-insensitive)', () => withStorage(() => {
-    const a = S.library.save(art('Cat')).id;
-    const b = S.library.save(art('cat')).id;
-    eq(S.library.get(b).name, 'Untitled1');
-    const c = S.library.save(art('CAT')).id;
-    eq(S.library.get(c).name, 'Untitled2');
-    eq(S.library.get(a).name, 'Cat', 'the first keeps its name');
+  test('a taken name gets the next number: Heart → Heart1 → Heart2', () => withStorage(() => {
+    const a = S.library.save(art('Heart')).id;
+    const b = S.library.save(art('heart')).id;
+    eq(S.library.get(b).name, 'heart1');
+    const c = S.library.save(art('HEART')).id;
+    eq(S.library.get(c).name, 'HEART2');
+    eq(S.library.get(a).name, 'Heart', 'the first keeps its name');
     eq(S.library.uniqueName('Dog'), 'Dog');
     eq(S.library.uniqueName(''), 'Untitled');
+    eq(S.library.uniqueName('Heart1'), 'Heart3', 'a numbered name continues the count');
+  }));
+  test('duplicating a pattern names the copy name1 and resets progress', () => withStorage(() => {
+    const id = S.library.save(art('Heart')).id;
+    const copy = S.library.duplicate(id);
+    eq(S.library.get(copy.id).name, 'Heart1');
+    eq(S.library.get(S.library.duplicate(id).id).name, 'Heart2');
   }));
   test('re-saving a pattern under its own name is not a duplicate', () => withStorage(() => {
     const id = S.library.save(art('Cat')).id;
-    const d = S.library.load(id);
-    S.library.save(d, id);
+    S.library.save(S.library.load(id), id);
     eq(S.library.get(id).name, 'Cat');
     eq(S.library.uniqueName('Cat', id), 'Cat');
   }));
-  test('renaming onto an existing name picks the next free Untitled number', () => withStorage(() => {
+  test('renaming onto an existing name numbers it; blank becomes Untitled', () => withStorage(() => {
     S.library.save(art('Cat'));
     const id = S.library.save(art('Dog')).id;
     S.library.rename(id, 'Cat');
-    eq(S.library.get(id).name, 'Untitled1');
+    eq(S.library.get(id).name, 'Cat1');
     S.library.rename(id, '   ');
     eq(S.library.get(id).name, 'Untitled');
   }));

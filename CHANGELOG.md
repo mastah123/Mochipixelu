@@ -10,6 +10,18 @@ Versions follow [Semantic Versioning](https://semver.org/): `MAJOR.MINOR.PATCH`.
 
 Examples are illustrative; the real versions are listed below. Documentation-only, test-only and refactoring changes do not automatically bump the version.
 
+## [1.5.0] — 2026-10-23 (finalized in the working tree; not tagged or published)
+
+### Added
+- Appearance setting (Home → gear): System, Light or Dark. The choice is remembered and applied before the page paints.
+- View button in the editor's bottom bar: a row pops up above the bar (like Color) with Pan, Zoom out, current zoom, Zoom in, Fit and Full screen. It stays open while you work. Full screen also on the project view and desktop canvas (browsers without the Fullscreen API show a message).
+
+### Changed
+- New modern color design: cool violet-grey surfaces with one indigo accent, tinted pattern cards, a system font stack, softer shadows; dark palette to match. The canvas cells stay neutral in both themes so patterns read the same.
+- Long-press options now look like a native sheet: the pressed card gets an accent ring and a rounded menu (title, Open, Rename, Duplicate, Delete) appears under it (above it when there is no room).
+- Name numbering: a taken name gets the next free number added — Heart → Heart1 → Heart2 — and duplicating a pattern names the copy the same way (no more " copy"). Blank names still become Untitled, Untitled1…
+- The floating pan / zoom / fit buttons are gone on phones (they covered the canvas); desktop keeps them.
+
 ## [1.4.0] — 2026-10-23 (finalized in the working tree; not tagged or published)
 
 ### Added

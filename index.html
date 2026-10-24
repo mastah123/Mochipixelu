@@ -3,7 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#fffaf0">
+  <meta name="theme-color" content="#fbfaff">
+  <script>try{var p=JSON.parse(localStorage.getItem("mochipixelu:prefs")||"{}"),t=p.theme||"system";document.documentElement.dataset.theme=t==="dark"||(t==="system"&&matchMedia("(prefers-color-scheme: dark)").matches)?"dark":"light"}catch(e){document.documentElement.dataset.theme="light"}</script>
   <title>Mochipixelu — pixel editor &amp; craft pattern maker</title>
   <meta name="description" content="A cozy, local-first pixel editor that turns images into crochet, cross-stitch, knitting and bead patterns.">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 36'%3E%3Crect x='3' y='5' width='34' height='28' rx='12' fill='%23fff7e8' stroke='%234a3b32' stroke-width='2.5'/%3E%3Crect x='11' y='2' width='8' height='8' rx='2' fill='%23e8737f' stroke='%234a3b32' stroke-width='2'/%3E%3Crect x='19' y='2' width='8' height='8' rx='2' fill='%239cc58d' stroke='%234a3b32' stroke-width='2'/%3E%3Ccircle cx='14' cy='21' r='2.3' fill='%234a3b32'/%3E%3Ccircle cx='26' cy='21' r='2.3' fill='%234a3b32'/%3E%3C/svg%3E">
@@ -110,6 +111,7 @@
       <path d="M12 8.5v7M8.5 12h7" stroke-width="2.4"/>
     </symbol>
     <symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="6.6"/><path d="M12 2.6v2.8M12 18.6v2.8M2.6 12h2.8M18.6 12h2.8M5.4 5.4l2 2M16.6 16.6l2 2M18.6 5.4l-2 2M7.4 16.6l-2 2"/></symbol>
+    <symbol id="i-full" viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></symbol>
     <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5.5v13M5.5 12h13"/></symbol>
     <symbol id="i-minus" viewBox="0 0 24 24"><path d="M5.5 12h13"/></symbol>
     <symbol id="i-fit" viewBox="0 0 24 24"><path d="M4 9V5h4M20 9V5h-4M4 15v4h4M20 15v4h-4"/><rect x="9" y="9" width="6" height="6" fill="none"/></symbol>
@@ -178,7 +180,7 @@
   </main>
 
   <div id="card-scrim" class="scrim" hidden></div>
-  <div id="card-menu" class="card-menu" role="menu" hidden></div>
+  <div id="card-menu" class="ctx-menu" role="menu" hidden></div>
 
   <div class="fab-wrap" id="fab-wrap">
     <div id="fab-menu" class="fab-menu" hidden>
@@ -207,6 +209,7 @@
           <button id="view-zoom-in" class="btn small icon-btn" aria-label="Zoom in"><svg class="ic sm"><use href="#i-plus"/></svg></button>
           <button id="view-zoom-out" class="btn small icon-btn" aria-label="Zoom out"><svg class="ic sm"><use href="#i-minus"/></svg></button>
           <button id="view-zoom-fit" class="btn small icon-btn" aria-label="Fit to screen"><svg class="ic sm"><use href="#i-fit"/></svg></button>
+          <button id="view-full" class="btn small icon-btn" aria-pressed="false" aria-label="Full screen"><svg class="ic sm"><use href="#i-full"/></svg></button>
         </div>
       </div>
     </section>
@@ -281,6 +284,7 @@
           <button id="zoom-in" class="btn small icon-btn" aria-label="Zoom in" title="Zoom in (+)"><svg class="ic sm"><use href="#i-plus"/></svg></button>
           <button id="zoom-out" class="btn small icon-btn" aria-label="Zoom out" title="Zoom out (−)"><svg class="ic sm"><use href="#i-minus"/></svg></button>
           <button id="zoom-fit" class="btn small icon-btn" aria-label="Fit to screen" title="Fit to screen (0)"><svg class="ic sm"><use href="#i-fit"/></svg></button>
+          <button id="zoom-full" class="btn small icon-btn" aria-pressed="false" aria-label="Full screen" title="Full screen"><svg class="ic sm"><use href="#i-full"/></svg></button>
         </div>
         <input id="zoom-range" class="zoom-range" type="range" min="2" max="64" value="16" aria-label="Zoom" hidden>
         <div id="drop-hint" class="drop-hint" hidden>Drop an image to pixelate it</div>
@@ -442,12 +446,23 @@
     <!-- Fixed bottom bar on phones; vertical tool rail on desktop -->
     <div class="dock">
       <div id="color-pop" class="pop" hidden aria-label="Quick colors"></div>
+      <div id="view-pop" class="pop" hidden aria-label="View controls">
+        <div class="vgroup">
+          <button id="vp-pan" class="btn icon-btn" aria-pressed="false" aria-label="Move the view"><svg class="ic"><use href="#i-pan"/></svg></button>
+          <button id="vp-out" class="btn icon-btn" aria-label="Zoom out"><svg class="ic"><use href="#i-minus"/></svg></button>
+          <span id="vp-zoom" class="vz" aria-live="polite">16 px</span>
+          <button id="vp-in" class="btn icon-btn" aria-label="Zoom in"><svg class="ic"><use href="#i-plus"/></svg></button>
+          <button id="vp-fit" class="btn icon-btn" aria-label="Fit to screen"><svg class="ic"><use href="#i-fit"/></svg></button>
+          <button id="vp-full" class="btn icon-btn" aria-pressed="false" aria-label="Full screen"><svg class="ic"><use href="#i-full"/></svg></button>
+        </div>
+      </div>
       <nav class="tools" id="tools" aria-label="Tools">
         <button class="tool" data-tool="pencil" aria-pressed="true" title="Draw (B)"><svg class="ic"><use href="#i-pencil"/></svg><span class="tl">Draw</span></button>
         <button class="tool" data-tool="eraser" aria-pressed="false" title="Erase (E)"><svg class="ic"><use href="#i-eraser"/></svg><span class="tl">Erase</span></button>
         <button class="tool" data-tool="fill" aria-pressed="false" title="Fill (G)"><svg class="ic"><use href="#i-fill"/></svg><span class="tl">Fill</span></button>
         <button class="tool" data-tool="picker" aria-pressed="false" title="Pick color (I)"><svg class="ic"><use href="#i-picker"/></svg><span class="tl">Pick</span></button>
         <button class="tool" data-tool="inspect" aria-pressed="false" title="Inspect pixels (Q)"><svg class="ic"><use href="#i-inspect"/></svg><span class="tl">Inspect</span></button>
+        <button id="dock-view" class="tool" aria-pressed="false" title="Pan, zoom, full screen"><svg class="ic"><use href="#i-fit"/></svg><span class="tl">View</span></button>
         <button id="dock-color" class="tool" aria-pressed="false" title="Colors"><span class="dot" data-cur-color></span><span class="tl">Color</span></button>
       </nav>
     </div>
@@ -521,6 +536,12 @@
 
 <dialog id="settings-dialog" class="dialog menu">
   <div class="dialog-head"><h2>Settings</h2><button id="settings-close" class="btn small icon-btn" aria-label="Close"><svg class="ic sm"><use href="#i-close"/></svg></button></div>
+  <h3 class="sub">Appearance</h3>
+  <div class="seg" id="set-theme" role="group" aria-label="Appearance">
+    <button data-theme-opt="system" aria-pressed="true">System</button>
+    <button data-theme-opt="light" aria-pressed="false">Light</button>
+    <button data-theme-opt="dark" aria-pressed="false">Dark</button>
+  </div>
   <ul class="menu-list">
     <li><button id="set-open"><svg class="ic sm"><use href="#i-upload"/></svg>Open a backup file</button></li>
     <li><button id="set-clear" class="danger-text"><svg class="ic sm"><use href="#i-trash"/></svg>Delete all patterns</button></li>

@@ -49,8 +49,33 @@
     };
 
     /* prefs */
-    app.savePrefs = () => M.Storage.savePrefs({ color: app.settings.color, recent: app.settings.recent });
+    app.theme = ['system', 'light', 'dark'].includes(prefs.theme) ? prefs.theme : 'system';
+    app.savePrefs = () => M.Storage.savePrefs({ color: app.settings.color, recent: app.settings.recent, theme: app.theme });
     ui.on('color', U.debounce(app.savePrefs, 400));
+
+    /* appearance: System follows the phone, Light / Dark force it */
+    const mq = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
+    app.applyTheme = (mode, save) => {
+      app.theme = mode;
+      const dark = mode === 'dark' || (mode === 'system' && mq && mq.matches);
+      document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+      const meta = document.querySelector('meta[name="theme-color"]');
+      if (meta) meta.setAttribute('content', dark ? '#1a1822' : '#fbfaff');
+      if (save) app.savePrefs();
+    };
+    if (mq && mq.addEventListener) mq.addEventListener('change', () => app.theme === 'system' && app.applyTheme('system'));
+    app.applyTheme(app.theme);
+
+    /* full screen (not available in every browser, e.g. iPhone Safari) */
+    const fsButtons = ['vp-full', 'zoom-full', 'view-full'];
+    app.toggleFullscreen = () => {
+      const de = document.documentElement;
+      if (document.fullscreenElement) return document.exitFullscreen();
+      if (!de.requestFullscreen) return app.toast('Full screen is not supported in this browser.', true);
+      de.requestFullscreen().catch(() => app.toast('Could not enter full screen.', true));
+    };
+    fsButtons.forEach((id) => $(id).addEventListener('click', app.toggleFullscreen));
+    document.addEventListener('fullscreenchange', () => fsButtons.forEach((id) => $(id).setAttribute('aria-pressed', String(!!document.fullscreenElement))));
 
     // the editor needs a design object before its first route
     store.load(M.Design.create(32, 32, U.EMPTY, 'Untitled'), { resetHistory: true });

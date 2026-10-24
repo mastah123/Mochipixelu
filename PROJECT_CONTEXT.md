@@ -1,6 +1,6 @@
 # Project context — Mochipixelu
 
-_Last updated: 2026-10-23 · Version 1.4.0 (working tree; no git repo yet, nothing committed, pushed or published) · Batches A and B done, see "Pending changes"_
+_Last updated: 2026-10-23 · Version 1.5.0 (working tree; no git repo yet, nothing committed, pushed or published) · Batches A and B done, see "Pending changes"_
 
 ## What it is
 Browser-based pixel editor and craft-pattern maker. Vanilla HTML/CSS/JS, no build, no deps, no network. See README.md for features and usage.
@@ -70,3 +70,7 @@ Owner's note ("mochipixelu changes"): queue changes, implement **in batches (my 
 ## 1.4.0 notes
 - Name uniqueness lives in `Storage.library.uniqueName`; the editor autosave passes `keepName` so names are only fixed when the name field loses focus.
 - Long press is a 480 ms timer on card pointerdown (+ contextmenu for mouse).
+
+## 1.5.0 notes
+- Theme: CSS variables in `:root` (light) and `:root[data-theme="dark"]`; `app.applyTheme()` in main.js; an inline script in index.html sets the theme before paint.
+- Two pop-up rows share `.pop`: `#color-pop` and `#view-pop` (phones only; desktop uses the side panel and canvas buttons).

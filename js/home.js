@@ -34,13 +34,12 @@
         closeCardMenu();
         const menu = $('card-menu');
         menu.textContent = '';
-        const name = el('div', 'menu-name', entry.name);
-        menu.appendChild(name);
+        menu.appendChild(el('div', 'ctx-title', entry.name));
         const item = (icon, label, fn, cls) => {
-          const b = el('button', 'btn fab-item' + (cls ? ' ' + cls : ''));
+          const b = el('button', cls || '');
           b.type = 'button';
           b.setAttribute('role', 'menuitem');
-          b.innerHTML = '<svg class="ic sm"><use href="#' + icon + '"/></svg>';
+          b.innerHTML = '<svg class="ic"><use href="#' + icon + '"/></svg>';
           b.appendChild(document.createTextNode(label));
           b.addEventListener('click', () => {
             closeCardMenu();
@@ -74,13 +73,14 @@
         cardEl.classList.add('pressed');
         $('card-scrim').hidden = false;
         menu.hidden = false;
-        // place it beside the pressed card, kept inside the screen
+        // sits just under the pressed card (above it when there is no room), inside the screen
         const r = cardEl.getBoundingClientRect();
         const mw = menu.offsetWidth;
         const mh = menu.offsetHeight;
-        const left = Math.max(10, Math.min(r.left + r.width / 2 - mw / 2, innerWidth - mw - 10));
-        let top = r.top + r.height * 0.5 - mh / 2;
-        top = Math.max(10, Math.min(top, innerHeight - mh - 10));
+        const left = Math.max(12, Math.min(r.left, innerWidth - mw - 12));
+        let top = r.bottom + 12;
+        if (top + mh > innerHeight - 12) top = r.top - mh - 12;
+        top = Math.max(12, Math.min(top, innerHeight - mh - 12));
         menu.style.left = left + 'px';
         menu.style.top = top + 'px';
       };
@@ -309,6 +309,14 @@
         sdlg.showModal();
       });
       $('settings-close').addEventListener('click', () => sdlg.close());
+      const syncTheme = () => document.querySelectorAll('#set-theme [data-theme-opt]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.themeOpt === app.theme)));
+      $('set-theme').addEventListener('click', (e) => {
+        const b = e.target.closest('[data-theme-opt]');
+        if (!b) return;
+        app.applyTheme(b.dataset.themeOpt, true);
+        syncTheme();
+      });
+      $('home-settings').addEventListener('click', syncTheme);
       $('set-open').addEventListener('click', () => {
         sdlg.close();
         $('file-project').click();

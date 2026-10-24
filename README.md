@@ -4,7 +4,7 @@ A cozy, browser-based **live pixel editor and craft-pattern maker**, designed ph
 
 Vanilla HTML, CSS and JavaScript. No frameworks, no build step, no backend, no accounts, no network calls. Everything stays on your device.
 
-**Version:** 1.4.0 · see [CHANGELOG.md](CHANGELOG.md)
+**Version:** 1.5.0 · see [CHANGELOG.md](CHANGELOG.md)
 
 ## Features
 
@@ -113,3 +113,11 @@ No license has been chosen yet — add one before publishing.
 - Long-press a pattern card for Open / Rename / Duplicate / Delete.
 - Pattern names are kept unique (Untitled1, Untitled2…).
 - The editor no longer has Mark; tick stitches in the pattern view.
+
+## What is new in 1.5.0
+
+- Light / dark appearance in Settings.
+- New modern colors.
+- **View** button in the editor: pan, zoom, fit and full screen in a row above the bottom bar.
+- Long-press a card for a native-style options menu.
+- Duplicate names become name1, name2…

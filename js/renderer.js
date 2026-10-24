@@ -71,7 +71,7 @@
     drawFrame() {
       if (!this.grid || this.cell < 4) return;
       const ctx = this.ctx;
-      ctx.fillStyle = 'rgba(60,40,30,.55)';
+      ctx.fillStyle = 'rgba(29,26,43,.55)';
       ctx.fillRect(this.canvas.width - 1, 0, 1, this.canvas.height);
       ctx.fillRect(0, this.canvas.height - 1, this.canvas.width, 1);
     }
@@ -85,12 +85,12 @@
       const i = y * d.width + x;
       const v = d.pixels[i];
 
-      if (v === EMPTY) ctx.fillStyle = (x + y) & 1 ? '#efe7d8' : '#fffaf0';
+      if (v === EMPTY) ctx.fillStyle = (x + y) & 1 ? '#e6e3ee' : '#f8f7fc';
       else ctx.fillStyle = U.toHex(v);
       ctx.fillRect(px, py, c, c);
 
       if (this.filter !== null && v !== this.filter) {
-        ctx.fillStyle = 'rgba(251,243,228,.85)';
+        ctx.fillStyle = 'rgba(244,242,250,.86)';
         ctx.fillRect(px, py, c, c);
       }
 
@@ -98,7 +98,7 @@
         ctx.fillStyle = 'rgba(255,255,255,.5)';
         ctx.fillRect(px, py, c, c);
         if (c >= 8) {
-          ctx.strokeStyle = '#2f7a4a';
+          ctx.strokeStyle = '#2f8a64';
           ctx.lineWidth = Math.max(1.5, c / 8);
           ctx.lineCap = 'round';
           ctx.lineJoin = 'round';
@@ -115,10 +115,10 @@
         const inRow = g.row !== null && g.row === y;
         const inCol = g.col !== null && g.col === x;
         if (inRow || inCol) {
-          ctx.fillStyle = 'rgba(246,217,140,.55)';
+          ctx.fillStyle = 'rgba(122,92,214,.22)';
           ctx.fillRect(px, py, c, c);
           const t = Math.max(2, Math.round(c / 8));
-          ctx.fillStyle = '#e8737f';
+          ctx.fillStyle = '#6b4fc4';
           if (inRow) {
             ctx.fillRect(px, py, c, t);
             ctx.fillRect(px, py + c - t, c, t);
@@ -131,16 +131,16 @@
       }
 
       if (this.grid && c >= 4) {
-        ctx.fillStyle = x % MAJOR === 0 ? 'rgba(60,40,30,.55)' : 'rgba(60,40,30,.18)';
+        ctx.fillStyle = x % MAJOR === 0 ? 'rgba(29,26,43,.55)' : 'rgba(29,26,43,.18)';
         ctx.fillRect(px, py, 1, c);
-        ctx.fillStyle = y % MAJOR === 0 ? 'rgba(60,40,30,.55)' : 'rgba(60,40,30,.18)';
+        ctx.fillStyle = y % MAJOR === 0 ? 'rgba(29,26,43,.55)' : 'rgba(29,26,43,.18)';
         ctx.fillRect(px, py, c, 1);
         if (x === d.width - 1 || y === d.height - 1) this.drawFrame();
       }
 
       const sel = this.selected;
       const hov = this.hover;
-      if (sel && sel.x === x && sel.y === y) this.outline(px, py, '#2b2019', '#ffffff', 2);
+      if (sel && sel.x === x && sel.y === y) this.outline(px, py, '#1d1a2b', '#ffffff', 2);
       else if (hov && hov.x === x && hov.y === y) this.outline(px, py, 'rgba(43,32,25,.7)', 'rgba(255,255,255,.7)', 1);
     }
 

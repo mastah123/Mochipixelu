@@ -173,17 +173,19 @@
     },
 
     /**
-     * A name no other pattern uses. An empty or already-taken name becomes "Untitled", then
-     * "Untitled1", "Untitled2"… (case-insensitive; the pattern's own id is ignored).
+     * A name no other pattern uses (case-insensitive; the pattern's own id is ignored).
+     * A taken name gets the next free number added: Heart → Heart1 → Heart2…
+     * An empty name becomes Untitled, then Untitled1, Untitled2…
      */
     uniqueName(name, excludeId) {
       const taken = new Set(S.library.list().filter((e) => e.id !== excludeId).map((e) => String(e.name).toLowerCase()));
-      const clean = String(name || '').trim().slice(0, 60);
-      if (clean && !taken.has(clean.toLowerCase())) return clean;
-      if (!taken.has('untitled') && !clean) return 'Untitled';
+      let clean = String(name || '').trim().slice(0, 60);
+      if (!clean) clean = 'Untitled';
+      if (!taken.has(clean.toLowerCase())) return clean;
+      const stem = (clean.replace(/\d+$/, '') || clean).slice(0, 55);
       let n = 1;
-      while (taken.has('untitled' + n)) n++;
-      return 'Untitled' + n;
+      while (taken.has((stem + n).toLowerCase())) n++;
+      return stem + n;
     },
 
     /** Save (or overwrite when id is given). Returns {ok, id, error}. opts.keepName skips the unique-name rule. */
@@ -224,7 +226,6 @@
     /** Copy of a pattern with progress reset (a fresh start on the same art). */
     duplicate(id) {
       const design = S.library.load(id);
-      design.name = (design.name + ' copy').slice(0, 60);
       design.done.fill(0);
       return S.library.save(design);
     },
