@@ -1,6 +1,6 @@
 # Project context — Mochipixelu
 
-_Last updated: 2026-10-23 · Version 1.6.0 (working tree; no git repo yet, nothing committed, pushed or published) · Batches A and B done, see "Pending changes"_
+_Last updated: 2026-10-24 · Version 1.7.0 (working tree; no git repo yet, nothing committed, pushed or published) · Batches A and B done, see "Pending changes"_
 
 ## What it is
 Browser-based pixel editor and craft-pattern maker. Vanilla HTML/CSS/JS, no build, no deps, no network. See README.md for features and usage.
@@ -40,6 +40,22 @@ Owner's note ("mochipixelu changes"): queue changes, implement **in batches (my 
 4. ✅/⚠ Mobile-friendly pixel area with buttons fixed at the bottom — **done in 1.1.0**, but the owner's layout screenshot ("copy the screenshot layout") was **never received**; the dock layout is my own design. If a reference screenshot arrives, compare and adjust.
 
 **Batch B plan (proposed 1.2.0):** hash routing (`#/`, `#/project/<id>`, `#/edit/<id>`), project cards from the existing library (`Storage.library`), fixed "+" (new project / import), view screen with Edit / Highlight / Delete / Duplicate / Rename / Export / Print, stitch-highlight mode building on the existing spotlight + done marks (highlight current row/column, tap to tick). Data format stays compatible. The top bar will gain a back-to-home button; the Files panel's save/open actions may fold into the home page.
+
+
+## QUEUED — owner's change list of 2026-10-24 (Batch C done in 1.7.0; Batch D still NOT implemented)
+Mobile-first, adapting to desktop. Planned in two batches (my call). Version after Batch C → 1.6.1 or 1.7.0, Batch D → next minor.
+
+**Batch C — fixes and small cleanups — ✅ DONE in 1.7.0** (RGB dialog built in-app; deselect gives tool `'none'`; fullscreen removed)
+1. **Color can't select RGB — fix.** The first swatch of the color row is a hidden `<input type=color>` inside a label (`fillPop()` in `js/panels.js`). Suspected causes on a phone: the hidden input (opacity 0, inside an `overflow:hidden` label) not receiving the tap, or the row closing / re-rendering when the native dialog opens (the canvas `pointerdown`, tool clicks and `fillPop()` on `change` all touch it). Reproduce first (only headless Chromium so far), then make the picker a real visible control (an actual `<button>` that calls `input.showPicker()` / `input.click()` on a user gesture) and add an e2e check that the native input receives the tap.
+2. **Bottom buttons can be deselected like the Color button.** Tapping the active tool again turns it off. Open question to settle when building: what "no tool" does — proposed: no drawing, one-finger drag pans, tap selects a cell (inspect-like). The ⋯-menu / Color row stay as is.
+3. **Remove the Fullscreen button** everywhere: editor canvas buttons (`#zoom-full`), pattern view (`#view-full`), the `fullscreen` code and icon in `main.js` / `index.html`.
+
+**Batch D — restructure (touches the editor menu, bottom bar and pattern view)**
+4. **Remove "Progress" from the editor** (the Craft panel's progress bar, mark/clear buttons) and **move "Clear progress" to the pattern view's ⋯ menu** (with a confirm). The editor's "Show done marks" toggle stays unless the owner says otherwise.
+5. **Move the Legend into the bottom bar** as its own button (popup like Color/⋯). With Progress gone, the ⋯ menu's "Progress & legend" entry disappears. The bar then has 8 items (6 tools + Legend + Color): tight on a 360 px phone — may drop labels or merge Pick/Inspect; decide when building. Desktop: the rail simply gets one more button.
+6. **Export & print options also in the pattern view's ⋯ menu** (cell size, colors, symbols, coordinates, ticks; Preview & print; Pattern PNG; Artwork PNG options). Plan: extract the Export section into a shared popup used by both screens so the options stay in sync (`app.exportOptions()` already reads one set of controls).
+
+Tests to add with each batch: e2e for the RGB picker input, tool deselect, no fullscreen button, Clear progress in the view menu, legend button popup, export options in view menu.
 
 ## Layout notes (1.1.0)
 - `.workspace` order is stage → sheet → dock (flex column on phones). ≥ 900 px it becomes a grid: dock (tool rail) | stage | sheet (permanent panel).

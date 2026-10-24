@@ -66,17 +66,6 @@
     if (mq && mq.addEventListener) mq.addEventListener('change', () => app.theme === 'system' && app.applyTheme('system'));
     app.applyTheme(app.theme);
 
-    /* full screen (not available in every browser, e.g. iPhone Safari) */
-    const fsButtons = ['zoom-full', 'view-full'];
-    app.toggleFullscreen = () => {
-      const de = document.documentElement;
-      if (document.fullscreenElement) return document.exitFullscreen();
-      if (!de.requestFullscreen) return app.toast('Full screen is not supported in this browser.', true);
-      de.requestFullscreen().catch(() => app.toast('Could not enter full screen.', true));
-    };
-    fsButtons.forEach((id) => $(id).addEventListener('click', app.toggleFullscreen));
-    document.addEventListener('fullscreenchange', () => fsButtons.forEach((id) => $(id).setAttribute('aria-pressed', String(!!document.fullscreenElement))));
-
     // the editor needs a design object before its first route
     store.load(M.Design.create(32, 32, U.EMPTY, 'Untitled'), { resetHistory: true });
 

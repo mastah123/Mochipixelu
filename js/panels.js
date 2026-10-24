@@ -78,23 +78,74 @@
       app.closePop = closePop;
       const refreshPressed = () =>
         pop.querySelectorAll('.sw[data-color]').forEach((b) => b.setAttribute('aria-pressed', String(Number(b.dataset.color) === settings.color)));
+      /* ---------- RGB dialog ---------- */
+      const rgbDlg = $('rgb-dialog');
+      let rgbBefore = 0;
+      const rgbVals = () => ['r', 'g', 'b'].map((k) => U.clamp(Math.round(Number($('rgb-' + k).value)) || 0, 0, 255));
+      const rgbShow = (c) => {
+        const [r, g, b] = U.rgb(c);
+        [r, g, b].forEach((v, i) => {
+          const k = 'rgb'[i];
+          $('rgb-' + k).value = v;
+          $('rgb-' + k + 'n').value = v;
+        });
+        $('rgb-hex').value = U.toHex(c).slice(1);
+        $('rgb-preview').style.background = U.toHex(c);
+      };
+      const rgbApply = (c) => {
+        app.setColor(c); // live: the pencil already uses it
+        rgbShow(c);
+      };
+      ['r', 'g', 'b'].forEach((k) => {
+        $('rgb-' + k).addEventListener('input', () => {
+          const v = rgbVals();
+          rgbApply(U.pack(v[0], v[1], v[2]));
+        });
+        $('rgb-' + k + 'n').addEventListener('input', (e) => {
+          $('rgb-' + k).value = e.target.value;
+          const v = rgbVals();
+          app.setColor(U.pack(v[0], v[1], v[2]));
+          $('rgb-preview').style.background = U.toHex(settings.color);
+          $('rgb-hex').value = U.toHex(settings.color).slice(1);
+          $('rgb-' + k).value = v['rgb'.indexOf(k)];
+        });
+      });
+      $('rgb-hex').addEventListener('input', (e) => {
+        const t = e.target.value.trim().replace(/^#/, '');
+        const ok = /^[0-9a-f]{6}$/i.test(t);
+        e.target.setAttribute('aria-invalid', String(!ok));
+        if (ok) rgbApply(U.fromHex('#' + t));
+      });
+      function openRgb() {
+        rgbBefore = settings.color;
+        rgbShow(settings.color);
+        rgbDlg.showModal();
+      }
+      let rgbCancelled = false;
+      $('rgb-ok').addEventListener('click', () => rgbDlg.close());
+      $('rgb-cancel').addEventListener('click', () => {
+        rgbCancelled = true;
+        app.setColor(rgbBefore);
+        rgbDlg.close();
+      });
+      // closing any other way (Done, tapping outside, Esc) keeps the color and files it under "last used"
+      rgbDlg.addEventListener('close', () => {
+        if (!rgbCancelled) app.addRecent(settings.color);
+        rgbCancelled = false;
+      });
+
       const fillPop = () => {
         pop.textContent = '';
-        // 1st: the RGB picker (the phone's own colour dialog)
-        const pick = document.createElement('label');
+        // 1st: the RGB picker — opens the app's own R / G / B sliders (works on every phone)
+        const pick = document.createElement('button');
+        pick.type = 'button';
         pick.className = 'sw picker';
-        pick.title = 'Pick any colour';
-        const input = document.createElement('input');
-        input.type = 'color';
-        input.value = U.toHex(settings.color);
-        input.setAttribute('aria-label', 'Pick any colour (RGB)');
-        input.addEventListener('input', () => app.setColor(U.fromHex(input.value))); // live; no re-render while the dialog is open
-        input.addEventListener('change', () => {
-          app.setColor(U.fromHex(input.value));
-          app.addRecent(settings.color);
-          fillPop();
+        pick.title = 'Mix any color (RGB)';
+        pick.setAttribute('aria-label', 'Mix any color (RGB)');
+        pick.addEventListener('click', () => {
+          closePop();
+          openRgb();
         });
-        pick.appendChild(input);
         pop.appendChild(pick);
         // then the most recently used colours, then the default palette
         const seen = new Set();

@@ -4,7 +4,7 @@ A cozy, browser-based **live pixel editor and craft-pattern maker**, designed ph
 
 Vanilla HTML, CSS and JavaScript. No frameworks, no build step, no backend, no accounts, no network calls. Everything stays on your device.
 
-**Version:** 1.6.0 · see [CHANGELOG.md](CHANGELOG.md)
+**Version:** 1.7.0 · see [CHANGELOG.md](CHANGELOG.md)
 
 ## Features
 
@@ -126,3 +126,9 @@ No license has been chosen yet — add one before publishing.
 
 - The editor's ⋯ button lists Size & detail, Progress & legend, Export & print and Image & files; each opens a popup with a fixed Done button.
 - The Color button's first swatch is an RGB picker; recent colors come next.
+
+## What is new in 1.7.0
+
+- The rainbow swatch opens R / G / B sliders so you can mix any color.
+- Tap the active tool again to deselect it.
+- The Fullscreen button is gone.

@@ -111,7 +111,6 @@
       <path d="M12 8.5v7M8.5 12h7" stroke-width="2.4"/>
     </symbol>
     <symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="6.6"/><path d="M12 2.6v2.8M12 18.6v2.8M2.6 12h2.8M18.6 12h2.8M5.4 5.4l2 2M16.6 16.6l2 2M18.6 5.4l-2 2M7.4 16.6l-2 2"/></symbol>
-    <symbol id="i-full" viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></symbol>
     <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5.5v13M5.5 12h13"/></symbol>
     <symbol id="i-minus" viewBox="0 0 24 24"><path d="M5.5 12h13"/></symbol>
     <symbol id="i-fit" viewBox="0 0 24 24"><path d="M4 9V5h4M20 9V5h-4M4 15v4h4M20 15v4h-4"/><rect x="9" y="9" width="6" height="6" fill="none"/></symbol>
@@ -209,7 +208,6 @@
           <button id="view-zoom-in" class="btn small icon-btn" aria-label="Zoom in"><svg class="ic sm"><use href="#i-plus"/></svg></button>
           <button id="view-zoom-out" class="btn small icon-btn" aria-label="Zoom out"><svg class="ic sm"><use href="#i-minus"/></svg></button>
           <button id="view-zoom-fit" class="btn small icon-btn" aria-label="Fit to screen"><svg class="ic sm"><use href="#i-fit"/></svg></button>
-          <button id="view-full" class="btn small icon-btn" aria-pressed="false" aria-label="Full screen"><svg class="ic sm"><use href="#i-full"/></svg></button>
         </div>
       </div>
     </section>
@@ -284,7 +282,6 @@
           <button id="zoom-in" class="btn small icon-btn" aria-label="Zoom in" title="Zoom in (+)"><svg class="ic sm"><use href="#i-plus"/></svg></button>
           <button id="zoom-out" class="btn small icon-btn" aria-label="Zoom out" title="Zoom out (−)"><svg class="ic sm"><use href="#i-minus"/></svg></button>
           <button id="zoom-fit" class="btn small icon-btn" aria-label="Fit to screen" title="Fit to screen (0)"><svg class="ic sm"><use href="#i-fit"/></svg></button>
-          <button id="zoom-full" class="btn small icon-btn" aria-pressed="false" aria-label="Full screen" title="Full screen"><svg class="ic sm"><use href="#i-full"/></svg></button>
         </div>
         <input id="zoom-range" class="zoom-range" type="range" min="2" max="64" value="16" aria-label="Zoom" hidden>
         <div id="drop-hint" class="drop-hint" hidden>Drop an image to pixelate it</div>
@@ -506,6 +503,19 @@
     <li><button data-menu="file"><svg class="ic sm"><use href="#i-export"/></svg>Save a backup file</button></li>
     <li><button data-menu="delete" class="danger-text"><svg class="ic sm"><use href="#i-trash"/></svg>Delete pattern</button></li>
   </ul>
+</dialog>
+
+<dialog id="rgb-dialog" class="dialog rgb-dialog">
+  <div class="dialog-head"><h2>Pick a color</h2></div>
+  <div id="rgb-preview" class="rgb-preview"></div>
+  <div class="rgb-row"><b>R</b><input id="rgb-r" type="range" min="0" max="255" aria-label="Red"><input id="rgb-rn" type="number" min="0" max="255" inputmode="numeric" aria-label="Red value"></div>
+  <div class="rgb-row"><b>G</b><input id="rgb-g" type="range" min="0" max="255" aria-label="Green"><input id="rgb-gn" type="number" min="0" max="255" inputmode="numeric" aria-label="Green value"></div>
+  <div class="rgb-row"><b>B</b><input id="rgb-b" type="range" min="0" max="255" aria-label="Blue"><input id="rgb-bn" type="number" min="0" max="255" inputmode="numeric" aria-label="Blue value"></div>
+  <div class="rgb-row hex"><b>#</b><input id="rgb-hex" type="text" maxlength="7" spellcheck="false" autocomplete="off" aria-label="Hex color"></div>
+  <div class="row end">
+    <button id="rgb-cancel" type="button" class="btn">Cancel</button>
+    <button id="rgb-ok" type="button" class="btn primary">Done</button>
+  </div>
 </dialog>
 
 <dialog id="settings-dialog" class="dialog menu">

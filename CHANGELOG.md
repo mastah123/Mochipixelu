@@ -10,6 +10,19 @@ Versions follow [Semantic Versioning](https://semver.org/): `MAJOR.MINOR.PATCH`.
 
 Examples are illustrative; the real versions are listed below. Documentation-only, test-only and refactoring changes do not automatically bump the version.
 
+## [1.7.0] — 2026-10-24 (finalized in the working tree; not tagged or published)
+
+Batch C of the owner's 2026-10-24 list.
+
+### Fixed
+- The rainbow swatch in the color row did not let you choose an RGB color on a phone. It now opens the app's own dialog with Red / Green / Blue sliders, number boxes and a hex field; the color applies live, Done keeps it (and files it under "last used"), Cancel restores the previous color. It no longer depends on the phone's native color dialog.
+
+### Added
+- Tapping the active tool in the bottom bar deselects it, like the Color button. With no tool, nothing is drawn: one-finger drag moves the view and a tap selects a cell.
+
+### Removed
+- The Fullscreen button (editor canvas buttons and pattern view) and its code.
+
 ## [1.6.0] — 2026-10-24 (finalized in the working tree; not tagged or published)
 
 ### Changed
