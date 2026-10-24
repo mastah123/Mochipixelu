@@ -29,7 +29,6 @@
       };
 
       const syncZoomUi = () => {
-        $('vp-zoom').textContent = renderer.cell + ' px';
         const range = $('zoom-range');
         range.max = String(renderer.maxCell());
         range.value = String(renderer.cell);
@@ -47,7 +46,6 @@
         document.body.dataset.tool = tool;
         document.querySelectorAll('.tool[data-tool]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.tool === tool)));
         $('hud-pan').setAttribute('aria-pressed', String(tool === 'pan'));
-        $('vp-pan').setAttribute('aria-pressed', String(tool === 'pan'));
         Array.from(scroller.classList)
           .filter((c) => c.startsWith('tool-'))
           .forEach((c) => scroller.classList.remove(c));
@@ -58,7 +56,6 @@
       document.querySelectorAll('.tool[data-tool]').forEach((b) => b.addEventListener('click', () => app.setTool(b.dataset.tool)));
       const togglePan = () => app.setTool(settings.tool === 'pan' ? previousTool : 'pan');
       $('hud-pan').addEventListener('click', togglePan);
-      $('vp-pan').addEventListener('click', togglePan);
 
       /* ---------- color ---------- */
       app.setColor = (color) => {
@@ -283,9 +280,6 @@
       $('zoom-out').addEventListener('click', () => vp.zoomBy(-1));
       $('zoom-range').addEventListener('input', (e) => vp.setZoom(Number(e.target.value)));
       $('zoom-fit').addEventListener('click', vp.fit);
-      $('vp-in').addEventListener('click', () => vp.zoomBy(1));
-      $('vp-out').addEventListener('click', () => vp.zoomBy(-1));
-      $('vp-fit').addEventListener('click', vp.fit);
       $('toggle-grid').addEventListener('change', (e) => {
         renderer.grid = e.target.checked;
         renderer.draw();

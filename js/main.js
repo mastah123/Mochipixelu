@@ -67,7 +67,7 @@
     app.applyTheme(app.theme);
 
     /* full screen (not available in every browser, e.g. iPhone Safari) */
-    const fsButtons = ['vp-full', 'zoom-full', 'view-full'];
+    const fsButtons = ['zoom-full', 'view-full'];
     app.toggleFullscreen = () => {
       const de = document.documentElement;
       if (document.fullscreenElement) return document.exitFullscreen();

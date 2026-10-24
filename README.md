@@ -4,7 +4,7 @@ A cozy, browser-based **live pixel editor and craft-pattern maker**, designed ph
 
 Vanilla HTML, CSS and JavaScript. No frameworks, no build step, no backend, no accounts, no network calls. Everything stays on your device.
 
-**Version:** 1.5.0 · see [CHANGELOG.md](CHANGELOG.md)
+**Version:** 1.5.1 · see [CHANGELOG.md](CHANGELOG.md)
 
 ## Features
 
@@ -118,6 +118,6 @@ No license has been chosen yet — add one before publishing.
 
 - Light / dark appearance in Settings.
 - New modern colors.
-- **View** button in the editor: pan, zoom, fit and full screen in a row above the bottom bar.
+- Pan, zoom, fit and full screen stay fixed on the canvas; panels open over them.
 - Long-press a card for a native-style options menu.
 - Duplicate names become name1, name2…

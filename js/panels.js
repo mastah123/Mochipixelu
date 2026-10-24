@@ -11,6 +11,13 @@
       const $ = app.$;
       const { store, renderer, settings } = app;
 
+      /* the sheet floats over the canvas, resting on the bottom bar — it never resizes the canvas */
+      if (typeof ResizeObserver !== 'undefined') {
+        const dock = document.querySelector('#screen-editor .dock');
+        const ws = document.querySelector('#screen-editor .workspace');
+        new ResizeObserver(() => ws.style.setProperty('--dock-h', dock.offsetHeight + 'px')).observe(dock);
+      }
+
       /* ---------- tabs + bottom sheet ---------- */
       const tabs = Array.from(document.querySelectorAll('.tab'));
       const sheet = $('sheet');
@@ -19,7 +26,6 @@
         const open = sheet.classList.contains('open');
         $('btn-menu').setAttribute('aria-pressed', String(open && currentTab !== 'colors'));
         $('dock-color').setAttribute('aria-pressed', String((open && currentTab === 'colors') || !$('color-pop').hidden));
-        $('dock-view').setAttribute('aria-pressed', String(!$('view-pop').hidden));
       };
       const showTab = (name) => {
         currentTab = name;
@@ -30,14 +36,12 @@
       /** Phones: slide the sheet up on a tab. Desktop: the panel is always visible, this just switches tab. */
       app.openSheet = (name) => {
         $('color-pop').hidden = true;
-        $('view-pop').hidden = true;
         showTab(name || currentTab);
         sheet.classList.add('open');
         syncNav();
       };
       app.closeSheet = () => {
         $('color-pop').hidden = true;
-        $('view-pop').hidden = true;
         sheet.classList.remove('open');
         syncNav();
       };
@@ -94,13 +98,6 @@
         app.closeSheet();
         fillPop();
         pop.hidden = false;
-        syncNav();
-      });
-      // View row: pan / zoom / fit / full screen. It stays open while you work the canvas.
-      $('dock-view').addEventListener('click', () => {
-        const wasOpen = !$('view-pop').hidden;
-        app.closeSheet();
-        $('view-pop').hidden = wasOpen;
         syncNav();
       });
       document.querySelectorAll('.tool[data-tool]').forEach((b) => b.addEventListener('click', closePop));

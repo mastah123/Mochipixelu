@@ -10,6 +10,15 @@ Versions follow [Semantic Versioning](https://semver.org/): `MAJOR.MINOR.PATCH`.
 
 Examples are illustrative; the real versions are listed below. Documentation-only, test-only and refactoring changes do not automatically bump the version.
 
+## [1.5.1] — 2026-10-24 (finalized in the working tree; not tagged or published)
+
+### Fixed
+- Pan, zoom, fit and full-screen buttons are back on the canvas and stay fixed in place. Opening the settings panel, the color row or the inspector no longer moves them or resizes / re-fits the canvas; the panels now float over the canvas (and over those buttons) like the color row does.
+
+### Changed
+- Removed the "View" button and its pop-up row from 1.5.0 (it moved the controls away from the canvas, which was not what was asked for). The bottom bar is back to six tools plus Color.
+- On phones the inspector strip also floats over the bottom of the canvas instead of pushing it.
+
 ## [1.5.0] — 2026-10-23 (finalized in the working tree; not tagged or published)
 
 ### Added
