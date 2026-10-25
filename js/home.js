@@ -24,6 +24,45 @@
       let continueEntry = null; // what the "Keep stitching" card currently shows
       let menuCard = null;
 
+      /* ---------- folder picker (also used by the editor menu) ---------- */
+      app.pickFolder = (id, done) => {
+        const dlg = $('folder-dialog');
+        const host = $('folder-list');
+        const cur = (M.Storage.library.get(id) || {}).folder || '';
+        const choose = (name) => {
+          dlg.close();
+          const r = M.Storage.library.setMeta(id, { folder: name });
+          if (!r.ok) app.toast(r.error, true);
+          else app.toast(name ? 'Moved to “' + name + '”' : 'Removed from folder');
+          if (done) done();
+        };
+        const row = (icon, label, fn, on) => {
+          const li = el('li');
+          const b = el('button');
+          b.type = 'button';
+          b.innerHTML = '<svg class="ic sm"><use href="#' + icon + '"/></svg>';
+          b.appendChild(document.createTextNode(label + (on ? '  ✓' : '')));
+          b.addEventListener('click', fn);
+          li.appendChild(b);
+          host.appendChild(li);
+        };
+        host.textContent = '';
+        M.Storage.library.folders().forEach((f) => row('i-folder', f, () => choose(f), f === cur));
+        row('i-plus', 'New folder…', async () => {
+          dlg.close();
+          const name = await app.askText({ title: 'New folder', label: 'Folder name', value: '', okLabel: 'Create' });
+          if (name && name.trim()) {
+            const r = M.Storage.library.setMeta(id, { folder: name });
+            if (!r.ok) app.toast(r.error, true);
+            else app.toast('Moved to “' + name.trim().slice(0, 30) + '”');
+            if (done) done();
+          }
+        });
+        if (cur) row('i-close', 'No folder', () => choose(''));
+        dlg.showModal();
+      };
+      $('folder-close').addEventListener('click', () => $('folder-dialog').close());
+
       /* ---------- long-press options (same look as the + speed dial) ---------- */
       const closeCardMenu = () => {
         $('card-menu').hidden = true;
@@ -48,27 +87,41 @@
           });
           menu.appendChild(b);
         };
-        item('i-eye', 'Open', () => M.Router.go('#/p/' + entry.id));
-        item('i-pencil', 'Rename', async () => {
-          const name = await app.askText({ title: 'Rename pattern', label: 'Name', value: entry.name });
-          if (name === null) return;
-          const r = M.Storage.library.rename(entry.id, name);
+        const meta = (patch, msg) => {
+          const r = M.Storage.library.setMeta(entry.id, patch);
           if (!r.ok) app.toast(r.error, true);
+          else if (msg) app.toast(msg);
           render();
-        });
-        item('i-copy', 'Duplicate', () => {
-          const r = M.Storage.library.duplicate(entry.id);
-          if (!r.ok) return app.toast(r.error, true);
-          app.toast('Duplicated — the copy starts with fresh progress');
-          render();
-        });
-        item('i-trash', 'Delete', async () => {
-          const ok = await app.confirm({ title: 'Delete “' + entry.name + '”?', text: 'This removes the pattern and its progress from this device. It cannot be undone.', okLabel: 'Delete' });
-          if (!ok) return;
-          M.Storage.library.remove(entry.id);
-          app.toast('Deleted');
-          render();
-        }, 'danger');
+        };
+        if (entry.trashed) {
+          item('i-restore', 'Restore', () => meta({ trashed: false }, 'Restored'));
+          item('i-trash', 'Delete forever', async () => {
+            const ok = await app.confirm({ title: 'Delete “' + entry.name + '” forever?', text: 'This removes the pattern and its progress from this device. It cannot be undone.', okLabel: 'Delete' });
+            if (!ok) return;
+            M.Storage.library.remove(entry.id);
+            app.toast('Deleted');
+            render();
+          }, 'danger');
+        } else {
+          item('i-eye', 'Open', () => M.Router.go('#/p/' + entry.id));
+          item('i-pin', entry.pinned ? 'Unpin' : 'Pin', () => meta({ pinned: !entry.pinned }));
+          item('i-folder', 'Move to folder…', () => app.pickFolder(entry.id, render));
+          item('i-pencil', 'Rename', async () => {
+            const name = await app.askText({ title: 'Rename pattern', label: 'Name', value: entry.name });
+            if (name === null) return;
+            const r = M.Storage.library.rename(entry.id, name);
+            if (!r.ok) app.toast(r.error, true);
+            render();
+          });
+          item('i-copy', 'Duplicate', () => {
+            const r = M.Storage.library.duplicate(entry.id);
+            if (!r.ok) return app.toast(r.error, true);
+            app.toast('Duplicated — the copy starts with fresh progress');
+            render();
+          });
+          item('i-archive', entry.archived ? 'Unarchive' : 'Archive', () => meta({ archived: !entry.archived }, entry.archived ? 'Moved back' : 'Archived'));
+          item('i-trash', 'Move to Trash', () => meta({ trashed: true }, 'Moved to Trash'), 'danger');
+        }
 
         menuCard = cardEl;
         cardEl.classList.add('pressed');
@@ -144,9 +197,12 @@
         const b = el('button', 'card');
         b.type = 'button';
         b.dataset.id = e.id;
+        if (e.theme && e.theme !== 'white') b.dataset.tone = e.theme;
         b.setAttribute('aria-label', 'Open ' + e.name);
         const body = el('div', 'body');
-        body.append(el('div', 'name', e.name), el('div', 'meta', metaText(e)));
+        const nm = el('div', 'name', e.name);
+        if (e.pinned) nm.insertAdjacentHTML('afterbegin', '<svg class="ic sm pin-ic" aria-label="Pinned"><use href="#i-pin"/></svg>');
+        body.append(nm, el('div', 'meta', metaText(e) + (e.folder ? ' · ' + e.folder : '')));
         const st = state(e);
         if (st === 'progress') {
           const bar = el('span', 'mini');
@@ -159,6 +215,7 @@
         b.append(matMini(e), body);
         b.addEventListener('click', () => {
           if (Date.now() < ignoreClickUntil) return; // the click that ends a long press
+          if (e.trashed) return openCardMenu(e, b);
           M.Router.go('#/p/' + e.id);
         });
         attachLongPress(b, () => e);
@@ -167,18 +224,39 @@
       };
 
       const render = () => {
-        const list = M.Storage.library.list();
-        const total = list.length;
+        const all = M.Storage.library.list();
+        const live = all.filter((e) => !e.archived && !e.trashed);
+        const folders = M.Storage.library.folders();
+        if (/^f:/.test(filter) && !folders.includes(filter.slice(2))) filter = 'all';
+        const list = live;
+        const total = all.length;
         $('home-empty').hidden = total > 0;
         $('home-filters').hidden = total === 0;
         $('home-grid').hidden = total === 0;
         $('home-count').hidden = total === 0;
-        $('home-count').textContent = total + (total === 1 ? ' pattern' : ' patterns');
+        $('home-count').textContent = live.length + (live.length === 1 ? ' pattern' : ' patterns');
 
-        const shown = filter === 'all' ? list : list.filter((e) => state(e) === filter);
+        const fh = $('home-folders');
+        fh.textContent = '';
+        folders.forEach((f) => {
+          const c = el('button', 'chipbtn');
+          c.type = 'button';
+          c.dataset.filter = 'f:' + f;
+          c.innerHTML = '<svg class="ic sm"><use href="#i-folder"/></svg>';
+          c.appendChild(document.createTextNode(f));
+          fh.appendChild(c);
+        });
+
+        let shown;
+        if (filter === 'archive') shown = all.filter((e) => e.archived && !e.trashed);
+        else if (filter === 'trash') shown = all.filter((e) => e.trashed);
+        else if (/^f:/.test(filter)) shown = live.filter((e) => e.folder === filter.slice(2));
+        else shown = filter === 'all' ? live : live.filter((e) => state(e) === filter);
+        shown = shown.filter((e) => e.pinned).concat(shown.filter((e) => !e.pinned));
         $('home-grid').textContent = '';
         shown.forEach((e) => $('home-grid').appendChild(card(e)));
         $('home-nomatch').hidden = !(total > 0 && shown.length === 0);
+        $('home-nomatch').textContent = filter === 'trash' ? 'Trash is empty.' : filter === 'archive' ? 'Nothing archived.' : 'No patterns in this group yet.';
 
         const cont = list.find((e) => state(e) === 'progress');
         $('home-continue').hidden = !cont;
@@ -195,6 +273,8 @@
           go.innerHTML = '<svg class="ic sm"><use href="#i-highlight"/></svg>';
           go.appendChild(document.createTextNode('Keep stitching'));
           info.append(bar, go);
+          if (cont.theme && cont.theme !== 'white') cc.dataset.tone = cont.theme;
+          else delete cc.dataset.tone;
           cc.append(matMini(cont), info);
           continueEntry = cont;
           cc.onclick = () => {
@@ -202,7 +282,7 @@
             M.Router.go('#/p/' + cont.id);
           };
         }
-        document.querySelectorAll('#home-filters .chipbtn').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.filter === filter)));
+        document.querySelectorAll('#home-filters .chipbtn[data-filter]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.filter === filter)));
       };
       app.renderHome = render;
 

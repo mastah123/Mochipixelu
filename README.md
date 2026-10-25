@@ -4,7 +4,7 @@ A cozy, browser-based **live pixel editor and craft-pattern maker**, designed ph
 
 Vanilla HTML, CSS and JavaScript. No frameworks, no build step, no backend, no accounts, no network calls. Everything stays on your device.
 
-**Version:** 1.8.2 · see [CHANGELOG.md](CHANGELOG.md)
+**Version:** 1.9.0 · see [CHANGELOG.md](CHANGELOG.md)
 
 ## Features
 
@@ -93,6 +93,12 @@ PLAYWRIGHT_MODULE=/path/to/node_modules/playwright node tests/e2e.cjs
 No license has been chosen yet — add one before publishing.
 
 
+## What is new in 1.9.0
+
+- The editor ⋯ menu has a **Theme** row (white, yellow, green, blue, pink, lavender), **Pin**, **Move to folder…**, **Archive**, **Move to Trash** and an "Edited…" footer, next to Size & detail, Export & print and Image & files.
+- A pattern's theme colours its home card, the Keep stitching card, the editor and the pattern view.
+- Home filters: folders, Archive and Trash (restore or delete forever). Pinned patterns come first.
+
 ## What is new in 1.2.0
 
 - **Home page** lists your saved patterns; the **+** button (bottom-right) starts a new canvas, imports an image, or opens a backup file.
@@ -145,6 +151,6 @@ No license has been chosen yet — add one before publishing.
 - The inspector disappears when Inspect is deselected.
 - Export & print is a single full-width **Export** button (then Save PNG or Print).
 
-## What is new in 1.8.2
+## What is new in 1.9.0
 
 - The color mixer has gradient R / G / B sliders, a hex field, presets and a **Use color** button.

@@ -319,6 +319,10 @@
             return;
           }
           id = route.id;
+          const _e = M.Storage.library.get(id);
+          const _v = document.getElementById('screen-view');
+          if (_e && _e.theme && _e.theme !== 'white') _v.dataset.tone = _e.theme;
+          else delete _v.dataset.tone;
           app.viewDesign = design;
           dirty = false;
           selected = null;

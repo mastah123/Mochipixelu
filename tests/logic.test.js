@@ -336,6 +336,37 @@
     eq(S.library.get(copy.id).name, 'Heart1');
     eq(S.library.get(S.library.duplicate(id).id).name, 'Heart2');
   }));
+  test('theme, pin, folder, archive and trash are kept on the library entry', () => withStorage(() => {
+    const d = D.create(4, 4, U.EMPTY, 'Cat');
+    d.pixels[0] = 0xff0000;
+    const id = S.library.save(d).id;
+    eq(S.library.setMeta(id, { theme: 'pink', pinned: true, folder: ' Pets ' }).ok, true);
+    let e = S.library.get(id);
+    eq(e.theme, 'pink'); eq(e.pinned, true); eq(e.folder, 'Pets');
+    S.library.setMeta(id, { theme: 'neon' });
+    eq(S.library.get(id).theme, 'pink', 'an unknown theme is ignored');
+    S.library.save(d, id, { keepName: true }); // autosave must not lose them
+    e = S.library.get(id);
+    eq(e.theme, 'pink', 'theme survives re-save'); eq(e.folder, 'Pets', 'folder survives re-save');
+    eq(S.library.folders().join(), 'Pets');
+    S.library.setMeta(id, { trashed: true, pinned: false, folder: '' });
+    e = S.library.get(id);
+    eq(e.trashed, true); eq(e.pinned, undefined); eq(e.folder, undefined);
+    eq(S.library.folders().length, 0);
+    eq(S.library.setMeta('nope', { pinned: true }).ok, false);
+  }));
+  test('the project file format is unchanged by themes', () => withStorage(() => {
+    const d = D.create(2, 2, U.EMPTY, 'A');
+    const id = S.library.save(d).id;
+    S.library.setMeta(id, { theme: 'blue' });
+    eq(JSON.stringify(Object.keys(S.serialize(d))), JSON.stringify(['format', 'version', 'name', 'width', 'height', 'palette', 'data', 'done']));
+  }));
+  test('duplicate keeps the theme and folder', () => withStorage(() => {
+    const id = S.library.save(D.create(2, 2, U.EMPTY, 'A')).id;
+    S.library.setMeta(id, { theme: 'green', folder: 'X' });
+    const c = S.library.get(S.library.duplicate(id).id);
+    eq(c.theme, 'green'); eq(c.folder, 'X');
+  }));
   test('re-saving a pattern under its own name is not a duplicate', () => withStorage(() => {
     const id = S.library.save(art('Cat')).id;
     S.library.save(S.library.load(id), id);

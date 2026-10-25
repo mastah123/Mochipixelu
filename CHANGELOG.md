@@ -10,6 +10,18 @@ Versions follow [Semantic Versioning](https://semver.org/): `MAJOR.MINOR.PATCH`.
 
 Examples are illustrative; the real versions are listed below. Documentation-only, test-only and refactoring changes do not automatically bump the version.
 
+## [1.9.0] — 2026-10-25 (finalized in the working tree; not tagged or published)
+
+### Added
+- The editor's ⋯ menu was redesigned: a **Theme** row of six swatches (white, yellow, green, blue, pink, lavender), then Size & detail / Export & print / Image & files, then **Pin**, **Move to folder…**, **Archive** and **Move to Trash**, and a footer line ("Edited just now · 32 × 32").
+- A pattern's theme tints its card and the "Keep stitching" card on the home page, and the editor and pattern view while it is open.
+- Pinned patterns sort first (pin icon on the card). Folders appear as filter chips on the home page; Archive and Trash are filters too. Trash can restore a pattern or delete it forever.
+- Long-press menu on cards now also offers Pin, Move to folder…, Archive and Move to Trash.
+
+### Changed
+- Menu icons use a thinner line (1.6) and new simple pin / folder / archive / restore icons. Delete moved to Trash first (undoable); "Delete forever" is in Trash.
+- The theme, pin, folder, archive and trash flags live on the library entry; the project file format is unchanged.
+
 ## [1.8.2] — 2026-10-25 (finalized in the working tree; not tagged or published)
 
 ### Changed

@@ -123,6 +123,10 @@
     <symbol id="i-print" viewBox="0 0 24 24"><rect x="6.5" y="3.5" width="11" height="6" fill="none"/><rect x="3.5" y="9.5" width="17" height="8" rx="2.5" fill="none"/><rect x="7" y="14" width="10" height="6.5" fill="none"/><circle cx="17" cy="12.3" r=".9" fill="currentColor" stroke="none"/></symbol>
     <symbol id="i-redo-arrow" viewBox="0 0 24 24"><path d="M19.5 12a7.5 7.5 0 1 1-2.4-5.5"/><path d="M19.8 4.5v4.2h-4.2"/></symbol>
     <symbol id="i-trash" viewBox="0 0 24 24"><path d="M5 7h14M10 7V4.8h4V7"/><path d="M6.8 7l.8 12.2h8.8L17.2 7" fill="none"/><path d="M10.3 10.5v5.5M13.7 10.5v5.5"/></symbol>
+    <symbol id="i-pin" viewBox="0 0 24 24"><path d="M9 4.5h6l-.7 5 3.2 3.5H6.5L9.7 9.5 9 4.5z"/><path d="M12 13v6.5"/></symbol>
+    <symbol id="i-folder" viewBox="0 0 24 24"><path d="M4 7.5a1.8 1.8 0 0 1 1.8-1.8h3.6l2 2.2h6.8A1.8 1.8 0 0 1 20 9.7v7.5a1.8 1.8 0 0 1-1.8 1.8H5.8A1.8 1.8 0 0 1 4 17.2V7.5z"/></symbol>
+    <symbol id="i-archive" viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="4" rx="1.2"/><path d="M5.5 9v8.2a1.8 1.8 0 0 0 1.8 1.8h9.4a1.8 1.8 0 0 0 1.8-1.8V9M10 13h4"/></symbol>
+    <symbol id="i-restore" viewBox="0 0 24 24"><path d="M5 12a7 7 0 1 0 2.3-5.2M5 5v3.8h3.8"/></symbol>
     <symbol id="i-copy" viewBox="0 0 24 24"><rect x="8.5" y="8.5" width="11" height="11" rx="2.5" fill="none"/><path d="M15.5 8.5v-2a2 2 0 0 0-2-2h-7a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h2"/></symbol>
     <symbol id="i-highlight" viewBox="0 0 24 24"><path d="M14.8 4.2l5 5-7 7-5-5z" fill="none"/><path d="M7.8 11.2l5 5-2.6.9-3.2.7.8-3.2z" fill="none"/><path d="M4 20.5h7.5" stroke-width="2.6"/></symbol>
     <symbol id="i-mochi" viewBox="0 0 40 36">
@@ -163,6 +167,9 @@
         <button class="chipbtn" data-filter="progress" aria-pressed="false">In progress</button>
         <button class="chipbtn" data-filter="done" aria-pressed="false">Finished</button>
         <button class="chipbtn" data-filter="new" aria-pressed="false">Not started</button>
+        <span id="home-folders" class="folder-chips"></span>
+        <button class="chipbtn" data-filter="archive" aria-pressed="false">Archive</button>
+        <button class="chipbtn" data-filter="trash" aria-pressed="false">Trash</button>
       </div>
       <ul id="home-grid" class="grid"></ul>
       <p id="home-nomatch" class="hint" hidden>No patterns in this group yet.</p>
@@ -307,9 +314,21 @@
     </section>
 
     <div id="opt-menu" class="ctx-menu opt-menu" role="menu" hidden>
+      <div class="theme-row" id="theme-row" role="radiogroup" aria-label="Theme">
+        <span class="theme-label">Theme</span>
+        <div class="swatches"></div>
+      </div>
+      <hr>
       <button data-open="design"><svg class="ic"><use href="#i-design"/></svg>Size &amp; detail</button>
       <button data-open="export"><svg class="ic"><use href="#i-export"/></svg>Export &amp; print</button>
       <button data-open="files"><svg class="ic"><use href="#i-files"/></svg>Image &amp; files</button>
+      <hr>
+      <button data-act="pin"><svg class="ic"><use href="#i-pin"/></svg><span>Pin</span></button>
+      <button data-act="folder"><svg class="ic"><use href="#i-folder"/></svg>Move to folder…</button>
+      <button data-act="archive"><svg class="ic"><use href="#i-archive"/></svg><span>Archive</span></button>
+      <button data-act="trash" class="danger"><svg class="ic"><use href="#i-trash"/></svg>Move to Trash</button>
+      <hr>
+      <div class="menu-foot" id="menu-foot">Edited just now</div>
     </div>
 
     <!-- Fixed bottom bar on phones; vertical tool rail on desktop -->
@@ -476,6 +495,11 @@
     <button id="confirm-cancel" class="btn">Cancel</button>
     <button id="confirm-ok" class="btn danger">Delete</button>
   </div>
+</dialog>
+
+<dialog id="folder-dialog" class="dialog menu">
+  <div class="dialog-head"><h2>Move to folder</h2><button id="folder-close" class="btn small icon-btn" aria-label="Close"><svg class="ic sm"><use href="#i-close"/></svg></button></div>
+  <ul id="folder-list" class="menu-list"></ul>
 </dialog>
 
 <dialog id="menu-dialog" class="dialog menu">

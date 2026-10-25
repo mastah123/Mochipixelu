@@ -422,6 +422,7 @@
           app.hover = null;
           if (renderer.filter !== null) app.setFilter(null);
           app.closeSheet();
+          if (app.refreshOptMenu) app.refreshOptMenu();
           if (pend) app.openSheet('design'); // fresh import: let them tune the resolution right away
           requestAnimationFrame(() => {
             vp.fit();

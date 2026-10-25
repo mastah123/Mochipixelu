@@ -141,6 +141,10 @@
 
   const newId = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
 
+  /** Card / page tones a pattern can wear (the swatches in the ⋯ menu). */
+  S.THEMES = ['white', 'yellow', 'green', 'blue', 'pink', 'lavender'];
+  const META_KEYS = ['theme', 'pinned', 'folder', 'archived', 'trashed'];
+
   S.library = {
     /** Newest first. */
     list() {
@@ -193,8 +197,12 @@
       id = id || newId();
       if (!(opts && opts.keepName)) design.name = S.library.uniqueName(design.name, id);
       const st = S.stats(design);
+      const before = S.library.get(id) || {};
       const list = S.library.list().filter((e) => e.id !== id);
+      const keep = {};
+      META_KEYS.forEach((k) => before[k] !== undefined && (keep[k] = before[k]));
       list.unshift({
+        ...keep,
         id,
         name: design.name,
         width: design.width,
@@ -209,6 +217,32 @@
         return { ok: false, error: 'Browser storage is full or unavailable. Use “Save file” to keep a copy instead.' };
       }
       return { ok: true, id };
+    },
+
+    /** Change organising info only (theme, pinned, folder, archived, trashed) — never touches the artwork or the edited time. */
+    setMeta(id, patch) {
+      const list = S.library.list();
+      const e = list.find((x) => x.id === id);
+      if (!e) return { ok: false, error: 'That pattern could not be found.' };
+      META_KEYS.forEach((k) => {
+        if (!(k in patch)) return;
+        const v = patch[k];
+        if (k === 'theme' && !S.THEMES.includes(v)) return;
+        if (k === 'folder') {
+          const f = String(v || '').trim().slice(0, 30);
+          if (f) e.folder = f;
+          else delete e.folder;
+        } else if (k === 'theme') e.theme = v;
+        else if (v) e[k] = true;
+        else delete e[k];
+      });
+      if (!write(KEY_LIBRARY, list)) return { ok: false, error: 'Browser storage is full or unavailable.' };
+      return { ok: true };
+    },
+
+    /** Names of the folders in use, A–Z. */
+    folders() {
+      return Array.from(new Set(S.library.list().filter((e) => e.folder && !e.trashed).map((e) => e.folder))).sort((a, b) => a.localeCompare(b));
     },
 
     load(id) {
@@ -227,7 +261,10 @@
     duplicate(id) {
       const design = S.library.load(id);
       design.done.fill(0);
-      return S.library.save(design);
+      const src = S.library.get(id) || {};
+      const r = S.library.save(design);
+      if (r.ok) S.library.setMeta(r.id, { theme: src.theme, folder: src.folder });
+      return r;
     },
 
     remove(id) {

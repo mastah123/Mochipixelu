@@ -54,16 +54,81 @@
         $('sheet-scrim').hidden = true;
         syncNav();
       };
+      /* theme swatches, pin / folder / archive / trash, and the "Edited …" footer */
+      const entry = () => (app.projectId && M.Storage.library.get(app.projectId)) || null;
+      const ago = (t) => {
+        const s = Math.max(0, (Date.now() - t) / 1000);
+        if (s < 60) return 'just now';
+        if (s < 3600) return Math.floor(s / 60) + ' min ago';
+        if (s < 86400) return Math.floor(s / 3600) + ' h ago';
+        return new Date(t).toLocaleDateString();
+      };
+      app.applyTone = (tone) => {
+        const t = tone && tone !== 'white' ? tone : '';
+        const scr = document.getElementById('screen-editor');
+        if (t) scr.dataset.tone = t;
+        else delete scr.dataset.tone;
+      };
+      const swHost = optMenu.querySelector('.swatches');
+      M.Storage.THEMES.forEach((t) => {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'tone-sw';
+        b.dataset.tone = t;
+        b.setAttribute('role', 'radio');
+        b.setAttribute('aria-label', t[0].toUpperCase() + t.slice(1));
+        swHost.appendChild(b);
+      });
+      const refreshMenu = () => {
+        const e = entry();
+        const tone = (e && e.theme) || 'white';
+        swHost.querySelectorAll('.tone-sw').forEach((b) => b.setAttribute('aria-checked', String(b.dataset.tone === tone)));
+        app.applyTone(tone);
+        optMenu.querySelector('[data-act=pin] span').textContent = e && e.pinned ? 'Unpin' : 'Pin';
+        optMenu.querySelector('[data-act=archive] span').textContent = e && e.archived ? 'Unarchive' : 'Archive';
+        $('menu-foot').textContent = e ? 'Edited ' + ago(e.updated) + ' · ' + e.width + ' × ' + e.height : 'Edited just now';
+      };
+      app.refreshOptMenu = refreshMenu;
+      swHost.addEventListener('click', (ev) => {
+        const b = ev.target.closest('.tone-sw');
+        if (!b || !app.projectId) return;
+        M.Storage.library.setMeta(app.projectId, { theme: b.dataset.tone });
+        refreshMenu();
+      });
       $('btn-menu').addEventListener('click', () => {
         if (sheet.classList.contains('open')) return app.closeSheet();
         const wasOpen = !optMenu.hidden;
         app.closeSheet();
+        if (!wasOpen) refreshMenu();
         optMenu.hidden = wasOpen;
         syncNav();
       });
-      optMenu.addEventListener('click', (e) => {
+      optMenu.addEventListener('click', async (e) => {
         const b = e.target.closest('[data-open]');
-        if (b) app.openSheet(b.dataset.open);
+        if (b) return app.openSheet(b.dataset.open);
+        const a = e.target.closest('[data-act]');
+        if (!a || !app.projectId) return;
+        const id = app.projectId;
+        const cur = entry() || {};
+        const what = a.dataset.act;
+        if (what === 'pin') {
+          M.Storage.library.setMeta(id, { pinned: !cur.pinned });
+          refreshMenu();
+          app.toast(cur.pinned ? 'Unpinned' : 'Pinned to the top');
+        } else if (what === 'folder') {
+          closeMenu();
+          app.pickFolder(id, refreshMenu);
+        } else if (what === 'archive') {
+          M.Storage.library.setMeta(id, { archived: !cur.archived });
+          closeMenu();
+          app.toast(cur.archived ? 'Moved back to My patterns' : 'Archived');
+          if (!cur.archived) M.Router.go('#/');
+        } else if (what === 'trash') {
+          closeMenu();
+          M.Storage.library.setMeta(id, { trashed: true });
+          app.toast('Moved to Trash — restore it from the Trash tab');
+          M.Router.go('#/');
+        }
       });
       $('sheet-done').addEventListener('click', app.closeSheet);
       $('sheet-scrim').addEventListener('click', app.closeSheet);

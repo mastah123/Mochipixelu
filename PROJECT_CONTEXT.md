@@ -102,3 +102,6 @@ Tests to add with each batch: e2e for the RGB picker input, tool deselect, no fu
 
 ## 1.8.2 notes
 - RGB dialog (`#rgb-dialog`) mirrors the owner's reference screenshot; tracks are set via the `--track` CSS variable in `rgbShow()` (panels.js).
+
+## 1.9.0
+- Library entries carry optional `theme`, `pinned`, `folder`, `archived`, `trashed` (Storage.library.setMeta/folders). Project file format unchanged. ⋯ menu in index.html `#opt-menu`, logic in js/panels.js; folder picker is `app.pickFolder` in js/home.js. Tones are CSS vars `--tone-*` applied through `data-tone`.
