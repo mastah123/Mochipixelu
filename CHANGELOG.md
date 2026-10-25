@@ -10,6 +10,17 @@ Versions follow [Semantic Versioning](https://semver.org/): `MAJOR.MINOR.PATCH`.
 
 Examples are illustrative; the real versions are listed below. Documentation-only, test-only and refactoring changes do not automatically bump the version.
 
+## [1.8.1] — 2026-10-24 (finalized in the working tree; not tagged or published)
+
+### Fixed
+- Deselecting the Inspect tool left the inspector strip (and its selected cell) on screen. The inspector now shows only while Inspect is the active tool, on phones and on desktop; leaving Inspect clears its selection. With no tool selected, dragging only moves the view (a tap no longer selects a cell).
+
+### Added
+- Long press (or right click) on the "Keep stitching" card opens the same options as the pattern cards: Open, Rename, Duplicate, Delete.
+
+### Changed
+- Export & print is one full-width **Export** button. It shows the pages first; the preview now has **Save PNG** and **Print**. (Pattern PNG and Preview & print buttons merged.)
+
 ## [1.8.0] — 2026-10-24 (finalized in the working tree; not tagged or published)
 
 Batch D of the owner's 2026-10-24 list.

@@ -1,6 +1,6 @@
 # Project context — Mochipixelu
 
-_Last updated: 2026-10-24 · Version 1.8.0 (working tree; no git repo yet, nothing committed, pushed or published) · Batches A and B done, see "Pending changes"_
+_Last updated: 2026-10-24 · Version 1.8.1 (working tree; no git repo yet, nothing committed, pushed or published) · Batches A and B done, see "Pending changes"_
 
 ## What it is
 Browser-based pixel editor and craft-pattern maker. Vanilla HTML/CSS/JS, no build, no deps, no network. See README.md for features and usage.
@@ -94,3 +94,8 @@ Tests to add with each batch: e2e for the RGB picker input, tool deselect, no fu
 ## 1.6.0 notes
 - `#sheet` is now a modal-style popup (fixed, bottom card on phones, centered ≥600 px) with `#sheet-done`; opened from `#opt-menu` via `app.openSheet(name)`. No tabs; no Colors panel.
 - `#color-pop` is built in `fillPop()` in panels.js: picker → `settings.recent` → default palette.
+
+## 1.8.1 notes
+- Tool `none` (all tools deselected) only pans. The inspector strip is shown only for tool `inspect`.
+- `attachLongPress(node, getEntry)` in home.js serves the cards and the Keep stitching card.
+- Export popup has one `#btn-preview` ("Export"); `#preview-png` / `#preview-print` live in the preview dialog.

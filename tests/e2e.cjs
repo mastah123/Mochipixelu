@@ -130,7 +130,7 @@ const vis = (page, sel) => page.locator(sel).isVisible();
     const before = await page.evaluate(() => mochipixelu.store.design.pixels.filter((v) => v !== -1).length);
     const pc = await page.evaluate(() => { const b = mochipixelu.renderer.canvas.getBoundingClientRect(); return { x: b.left + b.width / 2, y: b.top + b.height / 2 }; });
     await page.touchscreen.tap(pc.x, pc.y);
-    check('with no tool, a tap selects a cell and draws nothing', (await page.evaluate(() => !!mochipixelu.selected && mochipixelu.store.design.pixels.filter((v) => v !== -1).length)) === before);
+    check('with no tool, a tap draws nothing and no inspector shows', (await page.evaluate(() => mochipixelu.store.design.pixels.filter((v) => v !== -1).length)) === before && !(await vis(page, '#inspector')));
     await page.tap('.tool[data-tool=pencil]');
     check('selecting a tool again turns it back on', (await page.evaluate(() => mochipixelu.settings.tool)) === 'pencil');
     await page.tap('#btn-menu'); await page.tap('#opt-menu [data-open=design]'); await page.waitForTimeout(350);
@@ -290,6 +290,15 @@ const vis = (page, sel) => page.locator(sel).isVisible();
     await page.tap('#view-more'); await page.tap('[data-menu=delete]'); await page.tap('#confirm-ok');
     await screenIs(page, 'home');
 
+    // long press also works on the Keep stitching card
+    await page.evaluate(() => mochipixelu.renderHome());
+    const cc = await page.locator('#continue-card').boundingBox();
+    await page.evaluate(([x, y]) => document.elementFromPoint(x, y).dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, pointerId: 9, pointerType: 'touch', isPrimary: true, clientX: x, clientY: y, button: 0 })), [cc.x + cc.width / 2, cc.y + cc.height / 2]);
+    await page.waitForTimeout(700);
+    check('long press on Keep stitching opens the same options', (await vis(page, '#card-menu')) && (await page.locator('#card-menu button').count()) === 4);
+    await page.evaluate(() => document.getElementById('card-scrim').click());
+    await page.waitForTimeout(800);
+
     // appearance
     await page.tap('#home-settings');
     await page.tap('#set-theme [data-theme-opt=dark]');
@@ -393,10 +402,10 @@ const vis = (page, sel) => page.locator(sel).isVisible();
     check('Done closes the popup', !(await vis(page, '#sheet')));
     // export downloads
     await page.click('#btn-menu'); await page.click('#opt-menu [data-open=export]');
-    const [dl] = await Promise.all([page.waitForEvent('download'), page.click('#btn-pattern-png')]);
-    check('pattern PNG downloads', /pattern\.png$/.test(dl.suggestedFilename()), dl.suggestedFilename());
     await page.click('#btn-preview');
     await page.waitForSelector('#preview-pages img');
+    const [dl] = await Promise.all([page.waitForEvent('download'), page.click('#preview-png')]);
+    check('Export → Save PNG downloads the pattern', /pattern\.png$/.test(dl.suggestedFilename()), dl.suggestedFilename());
     check('print preview shows pages', (await page.locator('#preview-pages img').count()) >= 1);
     await page.click('#preview-close');
     await page.screenshot({ path: SP + 'desktop-editor.png' });

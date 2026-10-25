@@ -10,6 +10,7 @@
       /* ---------- preview & print ---------- */
       const previewDlg = $('preview-dialog');
       let pages = [];
+      let previewDesign = null;
 
       const fill = (host, className) => {
         host.textContent = '';
@@ -26,6 +27,7 @@
 
       /** Build the printable pages for any design and show the preview dialog. */
       app.openPreview = (design) => {
+        previewDesign = design;
         if (!M.Palette.legend(design).filled) return app.toast('The pattern is empty — draw something first.', true);
         const o = app.exportOptions();
         if (!o.colors && !o.symbols) return app.toast('Turn on colors or symbols so the pattern shows something.', true);
@@ -39,6 +41,7 @@
       };
 
       $('preview-close').addEventListener('click', () => previewDlg.close());
+      $('preview-png').addEventListener('click', () => previewDesign && app.act.patternPng(previewDesign));
       $('preview-print').addEventListener('click', () => {
         fill($('print-area'), 'print-page');
         const done = () => {

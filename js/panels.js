@@ -411,7 +411,6 @@
       // the same options and buttons serve the editor's pattern and the pattern view's pattern
       const target = () => (app.route && app.route.name === 'view' && app.viewDesign) || store.design;
       $('btn-preview').addEventListener('click', () => app.act.preview(target()));
-      $('btn-pattern-png').addEventListener('click', () => app.act.patternPng(target()));
       $('btn-art-png').addEventListener('click', () => app.act.artPng(target()));
       $('btn-save-file').addEventListener('click', () => app.act.saveFile(target()));
 

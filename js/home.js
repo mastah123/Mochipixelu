@@ -21,6 +21,7 @@
       let filter = 'all';
 
       let ignoreClickUntil = 0;
+      let continueEntry = null; // what the "Keep stitching" card currently shows
       let menuCard = null;
 
       /* ---------- long-press options (same look as the + speed dial) ---------- */
@@ -87,6 +88,44 @@
       $('card-scrim').addEventListener('click', closeCardMenu);
       document.addEventListener('keydown', (e) => e.key === 'Escape' && closeCardMenu());
 
+      /* long press (touch) or right click (mouse) opens the options, like the + button does */
+      const attachLongPress = (node, getEntry) => {
+        let timer = 0;
+        let start = null;
+        const cancel = () => {
+          clearTimeout(timer);
+          start = null;
+        };
+        const open = () => {
+          const entry = getEntry();
+          if (!entry) return;
+          ignoreClickUntil = Date.now() + 700;
+          if (navigator.vibrate) navigator.vibrate(12);
+          openCardMenu(entry, node);
+        };
+        node.addEventListener('pointerdown', (ev) => {
+          if (ev.pointerType === 'mouse' && ev.button !== 0) return;
+          start = { x: ev.clientX, y: ev.clientY };
+          clearTimeout(timer);
+          timer = setTimeout(() => {
+            if (!start) return;
+            start = null;
+            open();
+          }, 480);
+        });
+        node.addEventListener('pointermove', (ev) => {
+          if (start && Math.hypot(ev.clientX - start.x, ev.clientY - start.y) > 10) cancel();
+        });
+        ['pointerup', 'pointercancel', 'pointerleave'].forEach((t) => node.addEventListener(t, cancel));
+        node.addEventListener('contextmenu', (ev) => {
+          ev.preventDefault();
+          cancel();
+          open();
+        });
+      };
+
+      attachLongPress($('continue-card'), () => continueEntry);
+
       const matMini = (e) => {
         const mat = el('div', 'mat');
         if (e.thumb) {
@@ -122,35 +161,7 @@
           if (Date.now() < ignoreClickUntil) return; // the click that ends a long press
           M.Router.go('#/p/' + e.id);
         });
-        // long press (touch) or right click (mouse) opens the options, like the + button does
-        let timer = 0;
-        let start = null;
-        const cancel = () => {
-          clearTimeout(timer);
-          start = null;
-        };
-        b.addEventListener('pointerdown', (ev) => {
-          if (ev.pointerType === 'mouse' && ev.button !== 0) return;
-          start = { x: ev.clientX, y: ev.clientY };
-          clearTimeout(timer);
-          timer = setTimeout(() => {
-            if (!start) return;
-            start = null;
-            ignoreClickUntil = Date.now() + 700;
-            if (navigator.vibrate) navigator.vibrate(12);
-            openCardMenu(e, b);
-          }, 480);
-        });
-        b.addEventListener('pointermove', (ev) => {
-          if (start && Math.hypot(ev.clientX - start.x, ev.clientY - start.y) > 10) cancel();
-        });
-        ['pointerup', 'pointercancel', 'pointerleave'].forEach((t) => b.addEventListener(t, cancel));
-        b.addEventListener('contextmenu', (ev) => {
-          ev.preventDefault();
-          cancel();
-          ignoreClickUntil = Date.now() + 700;
-          openCardMenu(e, b);
-        });
+        attachLongPress(b, () => e);
         li.appendChild(b);
         return li;
       };
@@ -171,6 +182,7 @@
 
         const cont = list.find((e) => state(e) === 'progress');
         $('home-continue').hidden = !cont;
+        continueEntry = cont || null;
         const cc = $('continue-card');
         cc.textContent = '';
         if (cont) {
@@ -184,7 +196,11 @@
           go.appendChild(document.createTextNode('Keep stitching'));
           info.append(bar, go);
           cc.append(matMini(cont), info);
-          cc.onclick = () => M.Router.go('#/p/' + cont.id);
+          continueEntry = cont;
+          cc.onclick = () => {
+            if (Date.now() < ignoreClickUntil) return;
+            M.Router.go('#/p/' + cont.id);
+          };
         }
         document.querySelectorAll('#home-filters .chipbtn').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.filter === filter)));
       };

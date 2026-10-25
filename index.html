@@ -393,11 +393,8 @@
     <label class="check"><input id="ex-symbols" type="checkbox" checked> Symbols in cells</label>
     <label class="check"><input id="ex-coords" type="checkbox" checked> Row &amp; column numbers</label>
     <label class="check"><input id="ex-marks" type="checkbox"> Show completed ticks</label>
-    <div class="row">
-      <button id="btn-preview" class="btn primary"><svg class="ic sm"><use href="#i-eye"/></svg>Preview &amp; print</button>
-      <button id="btn-pattern-png" class="btn"><svg class="ic sm"><use href="#i-export"/></svg>Pattern PNG</button>
-    </div>
-    <p class="hint">Tip: turn off “Fill cells with color” for a black-and-white, ink-friendly chart that relies on symbols.</p>
+    <button id="btn-preview" class="btn primary block-btn"><svg class="ic sm"><use href="#i-export"/></svg>Export</button>
+    <p class="hint">Export shows the pages first; from there you can save them as a PNG or print. Tip: turn off “Fill cells with color” for a black-and-white, ink-friendly chart that relies on symbols.</p>
 
     <h2>Artwork image</h2>
     <div class="row">
@@ -525,7 +522,8 @@
   <div class="dialog-head">
     <h2>Pattern preview</h2>
     <div class="row">
-      <button id="preview-print" class="btn primary"><svg class="ic sm"><use href="#i-print"/></svg>Print</button>
+      <button id="preview-png" class="btn primary"><svg class="ic sm"><use href="#i-export"/></svg>Save PNG</button>
+      <button id="preview-print" class="btn"><svg class="ic sm"><use href="#i-print"/></svg>Print</button>
       <button id="preview-close" class="btn">Close</button>
     </div>
   </div>

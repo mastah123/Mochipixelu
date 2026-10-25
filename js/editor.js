@@ -17,7 +17,6 @@
       const scroller = $('canvas-scroll');
       let stroke = null; // active drag: { last, changed, tool }
       let lastDims = '';
-      let noneTap = null; // a tap (not a drag) with no tool selected picks the cell
       let previousTool = 'pencil'; // for the phone "move the view" toggle
 
       /** A second finger landing mid-stroke: undo whatever the first finger had just started drawing. */
@@ -42,6 +41,7 @@
 
       /* ---------- tools ---------- */
       app.setTool = (tool) => {
+        if (settings.tool === 'inspect' && tool !== 'inspect') app.select(null); // the inspector goes away with its tool
         if (tool !== 'pan') previousTool = tool;
         settings.tool = tool;
         document.body.dataset.tool = tool;
@@ -54,7 +54,7 @@
         app.ui.emit('tool', tool);
       };
 
-      // tapping the active tool again deselects it (no tool: drag moves the view, tap selects a cell)
+      // tapping the active tool again deselects it (no tool: dragging just moves the view)
       document.querySelectorAll('.tool[data-tool]').forEach((b) => b.addEventListener('click', () => app.setTool(settings.tool === b.dataset.tool ? 'none' : b.dataset.tool)));
       const togglePan = () => app.setTool(settings.tool === 'pan' ? previousTool : 'pan');
       $('hud-pan').addEventListener('click', togglePan);
@@ -206,7 +206,6 @@
         if (tool === 'pan' || tool === 'none') {
           e.preventDefault();
           vp.startPan(e);
-          noneTap = tool === 'none' ? { id: e.pointerId, x: e.clientX, y: e.clientY } : null;
           return;
         }
         const cell = renderer.cellFromPoint(e.clientX, e.clientY);
@@ -258,12 +257,6 @@
 
       const endStroke = (e) => {
         vp.up(e);
-        if (noneTap && e.pointerId === noneTap.id) {
-          const moved = Math.hypot(e.clientX - noneTap.x, e.clientY - noneTap.y) > 8;
-          noneTap = null;
-          const c = !moved && e.type === 'pointerup' ? renderer.cellFromPoint(e.clientX, e.clientY) : null;
-          if (c) app.select(c);
-        }
         if (!stroke) return;
         if (canvas.hasPointerCapture && canvas.hasPointerCapture(e.pointerId)) canvas.releasePointerCapture(e.pointerId);
         if (stroke.changed) {

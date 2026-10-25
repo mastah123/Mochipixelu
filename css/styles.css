@@ -283,7 +283,7 @@ label.block { display: block; margin-top: 10px; }
 
 /* inspector strip: only on phones while Inspect is active */
 .inspector { display: none; align-items: center; gap: 8px; flex: none; flex-wrap: wrap; background: var(--paper-2); border-radius: 12px; padding: 6px 8px; min-height: 52px; }
-body[data-tool="inspect"] .inspector, body[data-tool="none"] .inspector { display: flex; }
+body[data-tool="inspect"] .inspector { display: flex; }
 .insp-text { display: flex; flex-direction: column; flex: 1 1 140px; min-width: 0; font-size: .82rem; line-height: 1.25; }
 .insp-text strong { font-size: .92rem; }
 .insp-text span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -416,7 +416,6 @@ body[data-screen="home"] .toast { bottom: calc(96px + var(--safe-b)); }
   .tl { font-size: .72rem; }
 
   .stage { grid-area: stage; background: var(--card); border: 2px dashed var(--line); border-radius: var(--radius); padding: 8px; gap: 8px; }
-  .inspector { display: flex; }
   .insp-text { font-size: .85rem; }
 
   .sheet { grid-area: sheet; height: auto; visibility: visible; transition: none; border: 2px dashed var(--line); border-radius: var(--radius); box-shadow: none; overflow: hidden; }
@@ -535,7 +534,8 @@ input[type="text"], input[type="number"], select { border: 1.5px solid var(--hai
 .ctx-menu .ic { width: 22px; height: 22px; }
 .ctx-menu button.danger { color: var(--danger-text); }
 .ctx-menu button.danger .ic { stroke: var(--danger-text); }
-.continue-card { background: var(--pill); }
+.continue-card { background: var(--pill); -webkit-touch-callout: none; user-select: none; -webkit-user-select: none; }
+.continue-card.pressed { position: relative; z-index: 27; box-shadow: 0 0 0 3px var(--berry), 0 10px 26px rgb(var(--shadow) / .35); }
 
 @media (orientation: landscape) and (max-height: 520px) and (max-width: 899px) {
   .dock { border-right: 1px solid var(--hair); }
