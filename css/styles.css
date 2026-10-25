@@ -613,16 +613,49 @@ input[type="text"], input[type="number"], select { border: 1.5px solid var(--hai
 }
 
 /* RGB colour dialog (opened by the rainbow swatch) */
-.rgb-dialog { width: min(380px, 94vw); }
-.rgb-preview { height: 64px; border-radius: 16px; box-shadow: inset 0 0 0 1.5px rgb(var(--shadow) / .25); margin: 12px 0 6px; }
-.rgb-row { display: grid; grid-template-columns: 1.2em minmax(0, 1fr) 4.2em; gap: 10px; align-items: center; margin: 10px 0; }
-.rgb-row b { font-weight: 800; }
-.rgb-row input[type="range"] { width: 100%; height: 28px; }
-.rgb-row input[type="number"] { min-height: 40px; padding: 4px 6px; text-align: center; }
-.rgb-row.hex { grid-template-columns: 1.2em minmax(0, 1fr); }
+.rgb-dialog { width: min(420px, 94vw); padding: 22px 20px 18px; border-radius: 24px; }
+.rgb-title { font-size: 1.35rem; margin-bottom: 14px; }
+.rgb-preview { height: 78px; border-radius: 18px; display: grid; place-items: center; box-shadow: inset 0 0 0 1.5px rgb(var(--shadow) / .3); margin-bottom: 18px; }
+.rgb-preview span { font-weight: 700; font-size: 1.05rem; letter-spacing: .04em; }
+.rgb-row { display: grid; grid-template-columns: 1.4em minmax(0, 1fr) 4.6em; gap: 12px; align-items: center; margin: 12px 0; }
+.rgb-row b { font-weight: 800; font-size: 1.05rem; }
+.rgb-row input[type="number"], .rgb-row input[type="text"] { min-height: 48px; border-radius: 14px; text-align: center; font-size: 1.05rem; }
+.rgb-row.hex { grid-template-columns: 1.4em minmax(0, 1fr); }
+.rgb-row.hex input { text-align: left; padding-left: 14px; letter-spacing: .04em; }
+.rgb-row input[type="range"] {
+  -webkit-appearance: none; appearance: none; width: 100%; height: 44px; margin: 0; padding: 0; border-radius: 999px; cursor: pointer;
+  background: var(--track, var(--paper-2)); box-shadow: inset 0 0 0 2px var(--line);
+}
+.rgb-row input[type="range"]::-webkit-slider-runnable-track { background: transparent; height: 44px; }
+.rgb-row input[type="range"]::-moz-range-track { background: transparent; height: 44px; }
+.rgb-row input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 34px; height: 34px; margin-top: 5px; border-radius: 50%; background: var(--card); border: 4px solid var(--berry); box-shadow: 0 1px 6px rgb(var(--shadow) / .4); }
+.rgb-row input[type="range"]::-moz-range-thumb { width: 26px; height: 26px; border-radius: 50%; background: var(--card); border: 4px solid var(--berry); box-shadow: 0 1px 6px rgb(var(--shadow) / .4); }
+.rgb-sub { font-size: .95rem; color: var(--ink-soft); font-weight: 600; margin: 20px 0 10px; }
+.rgb-presets { display: flex; flex-wrap: wrap; gap: 12px; padding: 2px 4px; }
+.rgb-presets .sw { width: 40px; height: 40px; border-radius: 50%; border: 0; cursor: pointer; box-shadow: inset 0 0 0 1.5px rgb(var(--shadow) / .3); }
+.rgb-presets .sw[aria-pressed="true"] { box-shadow: 0 0 0 3px var(--card), 0 0 0 5px var(--ink); }
+.rgb-foot { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 22px; padding-top: 16px; border-top: 1px solid var(--hair); }
+.rgb-foot .btn { min-height: 54px; font-size: 1.05rem; border-radius: 14px; }
 .pop .sw.picker { padding: 0; cursor: pointer; }
 
 /* legend popup in the bottom bar */
 .legend-pop { flex-direction: column; align-items: stretch; flex-wrap: nowrap; gap: 8px; max-height: min(46dvh, 380px); overflow-y: auto; }
 .legend-pop .legend { margin: 0; }
 .legend-pop .btn { align-self: flex-start; }
+
+/* RGB dialog: compact on short phones so Cancel / Use color are always on screen */
+.rgb-dialog { max-height: 96dvh; overflow-y: auto; }
+@media (max-height: 820px) {
+  .rgb-dialog { padding: 16px 16px 14px; }
+  .rgb-title { font-size: 1.2rem; margin-bottom: 10px; }
+  .rgb-preview { height: 56px; margin-bottom: 10px; }
+  .rgb-row { margin: 8px 0; gap: 10px; }
+  .rgb-row input[type="range"], .rgb-row input[type="range"]::-webkit-slider-runnable-track { height: 38px; }
+  .rgb-row input[type="range"]::-webkit-slider-thumb { width: 30px; height: 30px; margin-top: 4px; }
+  .rgb-row input[type="number"], .rgb-row input[type="text"] { min-height: 42px; }
+  .rgb-sub { margin: 12px 0 8px; }
+  .rgb-presets { gap: 9px; }
+  .rgb-presets .sw { width: 34px; height: 34px; }
+  .rgb-foot { margin-top: 14px; padding-top: 12px; }
+  .rgb-foot .btn { min-height: 48px; }
+}

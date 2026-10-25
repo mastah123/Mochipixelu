@@ -4,7 +4,7 @@ A cozy, browser-based **live pixel editor and craft-pattern maker**, designed ph
 
 Vanilla HTML, CSS and JavaScript. No frameworks, no build step, no backend, no accounts, no network calls. Everything stays on your device.
 
-**Version:** 1.8.1 · see [CHANGELOG.md](CHANGELOG.md)
+**Version:** 1.8.2 · see [CHANGELOG.md](CHANGELOG.md)
 
 ## Features
 
@@ -144,3 +144,7 @@ No license has been chosen yet — add one before publishing.
 - Long press works on the Keep stitching card too.
 - The inspector disappears when Inspect is deselected.
 - Export & print is a single full-width **Export** button (then Save PNG or Print).
+
+## What is new in 1.8.2
+
+- The color mixer has gradient R / G / B sliders, a hex field, presets and a **Use color** button.

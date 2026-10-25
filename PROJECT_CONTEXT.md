@@ -1,6 +1,6 @@
 # Project context — Mochipixelu
 
-_Last updated: 2026-10-24 · Version 1.8.1 (working tree; no git repo yet, nothing committed, pushed or published) · Batches A and B done, see "Pending changes"_
+_Last updated: 2026-10-24 · Version 1.8.2 (working tree; no git repo yet, nothing committed, pushed or published) · Batches A and B done, see "Pending changes"_
 
 ## What it is
 Browser-based pixel editor and craft-pattern maker. Vanilla HTML/CSS/JS, no build, no deps, no network. See README.md for features and usage.
@@ -99,3 +99,6 @@ Tests to add with each batch: e2e for the RGB picker input, tool deselect, no fu
 - Tool `none` (all tools deselected) only pans. The inspector strip is shown only for tool `inspect`.
 - `attachLongPress(node, getEntry)` in home.js serves the cards and the Keep stitching card.
 - Export popup has one `#btn-preview` ("Export"); `#preview-png` / `#preview-print` live in the preview dialog.
+
+## 1.8.2 notes
+- RGB dialog (`#rgb-dialog`) mirrors the owner's reference screenshot; tracks are set via the `--track` CSS variable in `rgbShow()` (panels.js).

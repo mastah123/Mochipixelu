@@ -83,57 +83,88 @@
       app.closePop = closePop;
       const refreshPressed = () =>
         pop.querySelectorAll('.sw[data-color]').forEach((b) => b.setAttribute('aria-pressed', String(Number(b.dataset.color) === settings.color)));
-      /* ---------- RGB dialog ---------- */
+      /* ---------- RGB dialog: gradient R / G / B sliders, hex, presets, Cancel / Use color ---------- */
       const rgbDlg = $('rgb-dialog');
       let rgbBefore = 0;
+      let rgbCancelled = false;
+      const hex6 = (c) => U.toHex(c).toUpperCase();
       const rgbVals = () => ['r', 'g', 'b'].map((k) => U.clamp(Math.round(Number($('rgb-' + k).value)) || 0, 0, 255));
-      const rgbShow = (c) => {
-        const [r, g, b] = U.rgb(c);
-        [r, g, b].forEach((v, i) => {
-          const k = 'rgb'[i];
-          $('rgb-' + k).value = v;
-          $('rgb-' + k + 'n').value = v;
+      const rgbPresets = () => {
+        const host = $('rgb-presets');
+        host.textContent = '';
+        const seen = new Set();
+        settings.recent.slice(0, 4).concat(M.Palette.DEFAULT_PALETTE.map((x) => U.fromHex(x))).forEach((c) => {
+          if (seen.has(c) || seen.size >= 12) return;
+          seen.add(c);
+          const b = document.createElement('button');
+          b.type = 'button';
+          b.className = 'sw';
+          b.style.background = U.toHex(c);
+          b.setAttribute('aria-label', hex6(c));
+          b.setAttribute('aria-pressed', String(c === settings.color));
+          b.addEventListener('click', () => rgbApply(c));
+          host.appendChild(b);
         });
-        $('rgb-hex').value = U.toHex(c).slice(1);
-        $('rgb-preview').style.background = U.toHex(c);
       };
-      const rgbApply = (c) => {
+      /** Update every control from the current color. `from` is the control being dragged (left alone). */
+      const rgbShow = (c, from) => {
+        const [r, g, b] = U.rgb(c);
+        const v = [r, g, b];
+        ['r', 'g', 'b'].forEach((k, i) => {
+          if (from !== k) $('rgb-' + k).value = v[i];
+          if (from !== k + 'n') $('rgb-' + k + 'n').value = v[i];
+          // each track shows what the color would be along that channel
+          const lo = v.slice();
+          const hi = v.slice();
+          lo[i] = 0;
+          hi[i] = 255;
+          $('rgb-' + k).style.setProperty('--track', 'linear-gradient(90deg, rgb(' + lo.join(',') + '), rgb(' + hi.join(',') + '))');
+        });
+        if (from !== 'hex') $('rgb-hex').value = hex6(c);
+        $('rgb-hex').removeAttribute('aria-invalid');
+        $('rgb-preview').style.background = U.toHex(c);
+        $('rgb-preview-hex').textContent = hex6(c);
+        $('rgb-preview-hex').style.color = U.textOn(c);
+        $('rgb-presets').querySelectorAll('.sw').forEach((s) => s.setAttribute('aria-pressed', String(s.getAttribute('aria-label') === hex6(c))));
+      };
+      const rgbApply = (c, from) => {
         app.setColor(c); // live: the pencil already uses it
-        rgbShow(c);
+        rgbShow(c, from);
       };
       ['r', 'g', 'b'].forEach((k) => {
         $('rgb-' + k).addEventListener('input', () => {
           const v = rgbVals();
-          rgbApply(U.pack(v[0], v[1], v[2]));
+          rgbApply(U.pack(v[0], v[1], v[2]), k);
         });
         $('rgb-' + k + 'n').addEventListener('input', (e) => {
-          $('rgb-' + k).value = e.target.value;
-          const v = rgbVals();
-          app.setColor(U.pack(v[0], v[1], v[2]));
-          $('rgb-preview').style.background = U.toHex(settings.color);
-          $('rgb-hex').value = U.toHex(settings.color).slice(1);
-          $('rgb-' + k).value = v['rgb'.indexOf(k)];
+          if (e.target.value === '') return;
+          const n = rgbVals(); // reads the sliders; overwrite this channel from the box
+          n['rgb'.indexOf(k)] = U.clamp(Math.round(Number(e.target.value)) || 0, 0, 255);
+          rgbApply(U.pack(n[0], n[1], n[2]), k + 'n');
         });
+        $('rgb-' + k + 'n').addEventListener('blur', () => rgbShow(settings.color));
       });
       $('rgb-hex').addEventListener('input', (e) => {
         const t = e.target.value.trim().replace(/^#/, '');
         const ok = /^[0-9a-f]{6}$/i.test(t);
         e.target.setAttribute('aria-invalid', String(!ok));
-        if (ok) rgbApply(U.fromHex('#' + t));
+        if (ok) rgbApply(U.fromHex('#' + t), 'hex');
       });
+      $('rgb-hex').addEventListener('blur', () => rgbShow(settings.color));
       function openRgb() {
         rgbBefore = settings.color;
+        rgbCancelled = false;
+        rgbPresets();
         rgbShow(settings.color);
         rgbDlg.showModal();
       }
-      let rgbCancelled = false;
       $('rgb-ok').addEventListener('click', () => rgbDlg.close());
       $('rgb-cancel').addEventListener('click', () => {
         rgbCancelled = true;
         app.setColor(rgbBefore);
         rgbDlg.close();
       });
-      // closing any other way (Done, tapping outside, Esc) keeps the color and files it under "last used"
+      // closing any other way (Use color, tapping outside, Esc) keeps the color and files it under "last used"
       rgbDlg.addEventListener('close', () => {
         if (!rgbCancelled) app.addRecent(settings.color);
         rgbCancelled = false;

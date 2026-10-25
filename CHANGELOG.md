@@ -10,6 +10,11 @@ Versions follow [Semantic Versioning](https://semver.org/): `MAJOR.MINOR.PATCH`.
 
 Examples are illustrative; the real versions are listed below. Documentation-only, test-only and refactoring changes do not automatically bump the version.
 
+## [1.8.2] — 2026-10-25 (finalized in the working tree; not tagged or published)
+
+### Changed
+- The RGB color dialog now follows the owner's reference: a preview bar showing the hex code, gradient R / G / B sliders (each track shows the color along that channel and updates as you drag), number boxes, a hex field (#RRGGBB), round presets (recent colors first, then the palette) and Cancel / Use color buttons. It compacts on short phones so both buttons stay on screen. Light and dark themes both supported.
+
 ## [1.8.1] — 2026-10-24 (finalized in the working tree; not tagged or published)
 
 ### Fixed

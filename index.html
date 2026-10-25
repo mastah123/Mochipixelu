@@ -491,15 +491,17 @@
 </dialog>
 
 <dialog id="rgb-dialog" class="dialog rgb-dialog">
-  <div class="dialog-head"><h2>Pick a color</h2></div>
-  <div id="rgb-preview" class="rgb-preview"></div>
+  <h2 class="rgb-title">Color</h2>
+  <div id="rgb-preview" class="rgb-preview"><span id="rgb-preview-hex">#E8737F</span></div>
   <div class="rgb-row"><b>R</b><input id="rgb-r" type="range" min="0" max="255" aria-label="Red"><input id="rgb-rn" type="number" min="0" max="255" inputmode="numeric" aria-label="Red value"></div>
   <div class="rgb-row"><b>G</b><input id="rgb-g" type="range" min="0" max="255" aria-label="Green"><input id="rgb-gn" type="number" min="0" max="255" inputmode="numeric" aria-label="Green value"></div>
   <div class="rgb-row"><b>B</b><input id="rgb-b" type="range" min="0" max="255" aria-label="Blue"><input id="rgb-bn" type="number" min="0" max="255" inputmode="numeric" aria-label="Blue value"></div>
   <div class="rgb-row hex"><b>#</b><input id="rgb-hex" type="text" maxlength="7" spellcheck="false" autocomplete="off" aria-label="Hex color"></div>
-  <div class="row end">
+  <h3 class="rgb-sub">Presets</h3>
+  <div id="rgb-presets" class="rgb-presets"></div>
+  <div class="rgb-foot">
     <button id="rgb-cancel" type="button" class="btn">Cancel</button>
-    <button id="rgb-ok" type="button" class="btn primary">Done</button>
+    <button id="rgb-ok" type="button" class="btn primary">Use color</button>
   </div>
 </dialog>
 
