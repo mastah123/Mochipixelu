@@ -250,10 +250,13 @@
       <div class="progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="view-progress"><div id="view-progress-bar"></div></div>
       <span id="view-progress-text" class="meta-line"></span>
     </div>
+    <div class="view-selected" id="view-info" aria-live="polite">
+      <span id="view-info-swatch" class="swatch empty" hidden></span>
+      <span id="view-info-text"></span>
+    </div>
     <section class="view-stage">
       <div class="canvas-wrap">
         <div id="view-scroll" class="canvas-scroll"><canvas id="view-canvas" aria-label="Pattern"></canvas></div>
-        <div class="hud hud-tl"><span id="view-chip" class="chip">—</span></div>
         <div class="hud hud-br hud-view">
           <button id="view-zoom-in" class="btn small icon-btn" aria-label="Zoom in"><svg class="ic sm"><use href="#i-plus"/></svg></button>
           <button id="view-zoom-out" class="btn small icon-btn" aria-label="Zoom out"><svg class="ic sm"><use href="#i-minus"/></svg></button>
@@ -278,10 +281,6 @@
             <button id="guide-next" class="btn small icon-btn" aria-label="Next"><svg class="ic sm"><use href="#i-chev"/></svg></button>
             <button id="guide-done" class="btn small"><svg class="ic sm"><use href="#i-mark"/></svg><span id="guide-done-label">Mark row done</span></button>
           </div>
-        </div>
-        <div class="vcard cell-info" id="view-info" aria-live="polite">
-          <span id="view-info-swatch" class="swatch empty"></span>
-          <span id="view-info-text">No stitch selected</span>
         </div>
         <p id="mode-hint" class="hint vhint">Tap a stitch to see its color and position.</p>
       </div>

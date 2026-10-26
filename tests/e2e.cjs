@@ -181,6 +181,9 @@ const vis = (page, sel) => page.locator(sel).isVisible();
     // look mode
     const vcell = (x, y) => page.evaluate(([x, y]) => { const c = document.getElementById('view-canvas'), b = c.getBoundingClientRect(); const cell = c.width / mochipixelu.store.design.width * 0 + c.width / 12; return { x: b.left + (x + .5) * cell, y: b.top + (y + .5) * cell }; }, [x, y]);
     let p = await vcell(2, 2); await page.touchscreen.tap(p.x, p.y);
+    check('no size chip over the pattern canvas', (await page.locator('#view-chip').count()) === 0);
+    check('selected stitch shows below the progress bar', await page.evaluate(() => { const a = document.getElementById('view-progress').getBoundingClientRect(); const b = document.getElementById('view-info').getBoundingClientRect(); const c = document.getElementById('view-scroll').getBoundingClientRect(); return b.top >= a.bottom - 1 && b.bottom <= c.top + 1; }));
+    check('no dotted backgrounds', await page.evaluate(() => [...document.querySelectorAll('.mat, .canvas-scroll')].every((n) => getComputedStyle(n).backgroundImage === 'none')));
     check('look mode shows stitch info', /Column 3, Row 3/.test(await page.textContent('#view-info-text')), await page.textContent('#view-info-text'));
 
     // guide mode

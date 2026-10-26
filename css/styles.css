@@ -185,7 +185,7 @@ label.block { display: block; margin-top: 10px; }
 .card:active { transform: translateY(2px); box-shadow: 0 2px 0 var(--ink); }
 .mat {
   aspect-ratio: 1; display: grid; place-items: center; padding: 12px;
-  background-color: var(--mat); background-image: radial-gradient(rgb(var(--shadow) / .16) 1.2px, transparent 1.3px); background-size: 12px 12px;
+  background-color: var(--mat); background-image: none;
 }
 .mat img { max-width: 100%; max-height: 100%; image-rendering: pixelated; background: var(--field); box-shadow: 0 0 0 2px var(--ink), 3px 4px 0 2px rgb(var(--shadow) / .25); }
 .card .body { padding: 8px 10px 11px; border-top: 2px solid var(--ink); }
@@ -257,7 +257,7 @@ label.block { display: block; margin-top: 10px; }
 
 .canvas-scroll {
   flex: 1; min-width: 0; min-height: 0; overflow: auto; border-radius: 12px; border: 2px solid var(--line);
-  background-color: var(--mat); background-image: radial-gradient(rgb(var(--shadow) / .16) 1.2px, transparent 1.3px); background-size: 14px 14px;
+  background-color: var(--mat); background-image: none;
   display: grid; place-items: center; overscroll-behavior: contain;
 }
 #canvas, #view-canvas {
@@ -831,3 +831,8 @@ input[type="text"], input[type="number"], select { border: 1.5px solid var(--hai
 .grid.list .card { flex-direction: row; align-items: center; }
 .grid.list .card .mat { width: 84px; height: 84px; aspect-ratio: auto; flex: none; padding: 8px; border-radius: 20px 0 0 20px; }
 .grid.list .card .body { flex: 1; min-width: 0; border-top: 0; padding: 8px 14px; }
+
+/* ===== 1.17.0: no dots, selected-stitch line under the progress ===== */
+.view-selected { flex: none; display: flex; align-items: center; gap: 8px; min-height: 30px; padding: 0 16px 4px; font-size: .9rem; color: var(--ink-soft); }
+.view-selected .swatch { width: 18px; height: 18px; border-width: 1.5px; border-radius: 5px; }
+.view-selected .swatch[hidden] { display: none; }

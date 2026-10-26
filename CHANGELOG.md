@@ -10,6 +10,12 @@ Versions follow [Semantic Versioning](https://semver.org/): `MAJOR.MINOR.PATCH`.
 
 Examples are illustrative; the real versions are listed below. Documentation-only, test-only and refactoring changes do not automatically bump the version.
 
+## [1.17.0] — 2026-10-26 (finalized in the working tree; not tagged or published)
+
+### Changed
+- The dotted backgrounds are gone everywhere (pattern cards, editor and view canvas surrounds).
+- The pattern view no longer shows the size chip over the canvas or the "No stitch selected" card. The selected stitch is a single line below the progress bar (empty until a stitch is selected), so nothing covers the artwork.
+
 ## [1.16.0] — 2026-10-26 (finalized in the working tree; not tagged or published)
 
 ### Added

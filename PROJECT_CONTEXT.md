@@ -124,3 +124,9 @@ Batch H — home shell: top bar with a menu button (left) and search (right) ins
 Batch I — side drawer: opens from the menu button. All patterns (count), Pinned (count), Archive, Trash (count), Settings; a Folders list with counts, "+ New folder" and "Show all"; replaces the filter chips (progress states move to a sort/filter menu). Drawer on phones, permanent left rail on desktop.
 Batch J — home sections: "Folders" row of colored tiles (name, count, "Show all", list/grid toggle) and "Recent patterns" (sort button, list/grid toggle, pinned first); search filters by name. Tags are NOT planned (patterns have none) unless requested.
 All mobile-first, adapting to desktop.
+
+## Queued changes (requested 2026-10-26 19:05, not built yet)
+Batch K — clean-up: (1) remove every dotted background (card mats, canvas surround, editor and view); (2) remove the "16 × 16" size chip on the pattern view canvas; (3) remove the floating "No stitch selected" card over the canvas; (4) show the selected-stitch line in the flow below the progress bar at the top of the pattern view.
+Batch L — pattern view layout: (5) the canvas can be panned far enough that its bottom is never stuck under the bars; (6) smaller buttons in the bottom bar; (7) guide controls and legend are docked into the bottom area (in the layout, not floating) so they never cover the canvas; (8) explicit show/hide button for the legend.
+Batch M — legend colors: (9) picking a color in the legend must keep light colors visible (outline the spotlighted cells, dim the rest less harshly, border on light swatches).
+Note: Batch L reverses the floating guide/legend cards from 1.13.0; the canvas area gets shorter when they are open, which is why item 5 matters.

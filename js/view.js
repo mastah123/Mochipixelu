@@ -57,7 +57,6 @@
         $('view-progress').setAttribute('aria-valuenow', String(p));
         $('view-progress-text').textContent = done + ' of ' + legend.filled + ' stitches done (' + p + '%)';
         $('view-size').textContent = design.width + ' × ' + design.height + ' · ' + legend.entries.length + ' colors';
-        $('view-chip').textContent = design.width + ' × ' + design.height;
 
         const host = $('view-legend');
         host.textContent = '';
@@ -89,9 +88,11 @@
         if (!selected) {
           sw.className = 'swatch empty';
           sw.style.background = '';
-          $('view-info-text').textContent = 'No stitch selected';
+          $('view-info-text').textContent = '';
+          sw.hidden = true;
           return;
         }
+        sw.hidden = false;
         const i = selected.y * design.width + selected.x;
         const v = design.pixels[i];
         const where = 'Column ' + (selected.x + 1) + ', Row ' + (selected.y + 1);
