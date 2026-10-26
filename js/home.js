@@ -235,16 +235,28 @@
         $('home-count').hidden = total === 0;
         $('home-count').textContent = live.length + (live.length === 1 ? ' pattern' : ' patterns');
 
-        const fh = $('home-folders');
-        fh.textContent = '';
+        const inFolder = /^f:/.test(filter);
+        const tiles = $('home-folder-tiles');
+        tiles.textContent = '';
+        tiles.hidden = !(filter === 'all' && folders.length);
         folders.forEach((f) => {
-          const c = el('button', 'chipbtn');
-          c.type = 'button';
-          c.dataset.filter = 'f:' + f;
-          c.innerHTML = '<svg class="ic sm"><use href="#i-folder"/></svg>';
-          c.appendChild(document.createTextNode(f));
-          fh.appendChild(c);
+          const n = live.filter((e) => e.folder === f).length;
+          const t = el('button', 'folder-tile');
+          t.type = 'button';
+          t.dataset.folder = f;
+          t.innerHTML = '<svg class="ic"><use href="#i-folder"/></svg>';
+          const tx = el('span', 'ft');
+          tx.append(el('b', '', f), el('small', '', n + (n === 1 ? ' pattern' : ' patterns')));
+          t.appendChild(tx);
+          t.addEventListener('click', () => {
+            filter = 'f:' + f;
+            render();
+            window.scrollTo(0, 0);
+          });
+          tiles.appendChild(t);
         });
+        $('folder-head').hidden = !inFolder;
+        if (inFolder) $('folder-title').textContent = filter.slice(2);
 
         let shown;
         if (filter === 'archive') shown = all.filter((e) => e.archived && !e.trashed);
@@ -285,6 +297,28 @@
       };
       app.renderHome = render;
 
+      $('folder-back').addEventListener('click', () => {
+        filter = 'all';
+        render();
+      });
+      $('folder-rename').addEventListener('click', async () => {
+        const old = filter.slice(2);
+        const name = await app.askText({ title: 'Rename folder', label: 'Folder name', value: old });
+        if (name === null || !name.trim()) return;
+        const r = M.Storage.library.renameFolder(old, name);
+        if (!r.ok) return app.toast(r.error, true);
+        filter = 'f:' + name.trim().slice(0, 30);
+        render();
+      });
+      $('folder-remove').addEventListener('click', async () => {
+        const old = filter.slice(2);
+        const ok = await app.confirm({ title: 'Remove folder “' + old + '”?', text: 'The patterns inside are kept — they just move back to All.', okLabel: 'Remove folder' });
+        if (!ok) return;
+        M.Storage.library.renameFolder(old, '');
+        filter = 'all';
+        render();
+        app.toast('Folder removed');
+      });
       $('home-filters').addEventListener('click', (e) => {
         const b = e.target.closest('[data-filter]');
         if (!b) return;

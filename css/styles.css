@@ -712,3 +712,40 @@ input[type="text"], input[type="number"], select { border: 1.5px solid var(--hai
 #card-menu .ctx-title { padding: 6px 16px 4px; font-size: .8rem; }
 #card-menu button { min-height: 42px; gap: 14px; padding: 6px 16px; font-size: .98rem; }
 #card-menu .ic { width: 20px; height: 20px; stroke-width: 1.6; }
+
+/* ===== 1.12.0: folder view ===== */
+.folder-tiles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin: 2px 0 14px; }
+@media (min-width: 700px) { .folder-tiles { grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); } }
+.folder-tile { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border: 0; border-radius: 16px; background: var(--pill); font: inherit; color: var(--ink); text-align: left; cursor: pointer; min-width: 0; }
+.folder-tile .ic { width: 26px; height: 26px; stroke-width: 1.6; stroke: var(--berry); }
+.folder-tile .ft { display: flex; flex-direction: column; min-width: 0; }
+.folder-tile b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.folder-tile small { color: var(--ink-soft); }
+.folder-head { display: flex; align-items: center; gap: 8px; margin: 2px 0 12px; }
+.folder-head h3 { flex: 1; margin: 0; font-size: 1.15rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* ===== 1.13.0: pattern view with a fixed bottom bar ===== */
+.view-main { flex-direction: column !important; padding: 0 !important; gap: 0 !important; position: relative; }
+.view-meta { flex: none; padding: 4px 16px 2px; display: flex; align-items: center; gap: 10px; }
+.view-meta .progress { flex: 1; margin: 0; }
+.view-stage { flex: 1 1 0 !important; min-height: 0; min-width: 0; padding: 6px !important; border: 0 !important; background: transparent !important; }
+.hud-view { top: 8px; bottom: auto; right: 8px; }
+.view-dock { flex: none; position: relative; z-index: 3; background: var(--card); border-top: 1px solid var(--hair); }
+.vtools { display: grid; grid-template-columns: repeat(4, 1fr); gap: 2px; padding: 6px; max-width: 640px; margin: 0 auto; }
+.vtool {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; min-height: 54px;
+  border: 0; border-radius: 14px; background: transparent; font: inherit; font-size: .72rem; font-weight: 700; color: var(--ink); cursor: pointer;
+}
+.vtool .ic { width: 24px; height: 24px; stroke-width: 1.7; }
+.vtool[aria-pressed="true"] { background: var(--pill); }
+.vstack { position: absolute; left: 8px; right: 8px; bottom: 100%; padding-bottom: 8px; display: flex; flex-direction: column; gap: 6px; pointer-events: none; align-items: center; }
+.vstack > * { pointer-events: auto; width: 100%; max-width: 560px; }
+.vcard { background: var(--card); border-radius: 16px; padding: 8px 12px; box-shadow: 0 4px 16px rgb(var(--shadow) / .25); }
+.vcard[hidden] { display: none; }
+.vcard.cell-info { padding: 6px 12px; }
+.vhint { margin: 0; padding: 0 6px; text-align: center; background: color-mix(in srgb, var(--card) 85%, transparent); border-radius: 10px; width: auto !important; font-size: .78rem; }
+.vstack .chips-scroll { max-height: 34vh; overflow: auto; flex-wrap: wrap; }
+#screen-view[data-tone] .view-dock, #screen-editor[data-tone] .dock { background: color-mix(in srgb, var(--tone) 70%, var(--card)); }
+#screen-editor[data-tone] .stage, #screen-editor[data-tone] .canvas-scroll, #screen-view[data-tone] .canvas-scroll { background: transparent; }
+.vcard.cell-info .swatch { width: 22px; height: 22px; min-width: 22px; flex: none; }
+.vcard.cell-info { min-height: 0; }

@@ -240,6 +240,18 @@
       return { ok: true };
     },
 
+    /** Rename a folder (or empty the name to dissolve it). Every pattern inside moves along, trashed ones too. */
+    renameFolder(from, to) {
+      const list = S.library.list();
+      const name = String(to || '').trim().slice(0, 30);
+      list.forEach((e) => {
+        if (e.folder !== from) return;
+        if (name) e.folder = name;
+        else delete e.folder;
+      });
+      return write(KEY_LIBRARY, list) ? { ok: true } : { ok: false, error: 'Browser storage is full or unavailable.' };
+    },
+
     /** Names of the folders in use, A–Z. */
     folders() {
       return Array.from(new Set(S.library.list().filter((e) => e.folder && !e.trashed).map((e) => e.folder))).sort((a, b) => a.localeCompare(b));

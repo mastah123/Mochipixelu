@@ -53,6 +53,13 @@
     app.savePrefs = () => M.Storage.savePrefs({ color: app.settings.color, recent: app.settings.recent, theme: app.theme });
     ui.on('color', U.debounce(app.savePrefs, 400));
 
+    /** The tone color (hex) a screen currently wears, or null for the plain look. */
+    app.toneHex = (screenEl) => {
+      if (!screenEl || !screenEl.dataset.tone) return null;
+      const v = getComputedStyle(screenEl).getPropertyValue('--tone').trim();
+      return /^#[0-9a-f]{6}$/i.test(v) ? v : null;
+    };
+
     /* appearance: System follows the phone, Light / Dark force it */
     const mq = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
     app.applyTheme = (mode, save) => {
@@ -62,6 +69,7 @@
       const meta = document.querySelector('meta[name="theme-color"]');
       if (meta) meta.setAttribute('content', dark ? '#1a1822' : '#fbfaff');
       if (save) app.savePrefs();
+      if (app.retone) app.retone();
     };
     if (mq && mq.addEventListener) mq.addEventListener('change', () => app.theme === 'system' && app.applyTheme('system'));
     app.applyTheme(app.theme);

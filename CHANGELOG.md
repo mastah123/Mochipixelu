@@ -10,6 +10,18 @@ Versions follow [Semantic Versioning](https://semver.org/): `MAJOR.MINOR.PATCH`.
 
 Examples are illustrative; the real versions are listed below. Documentation-only, test-only and refactoring changes do not automatically bump the version.
 
+## [1.13.0] — 2026-10-26 (finalized in the working tree; not tagged or published)
+
+### Changed
+- The pattern view has a fixed bottom bar (Look, Guide, Tick, Legend). The guide controls, the selected-stitch line and the color legend float above it, so the canvas never resizes; zoom and fit buttons moved to the top-right of the canvas. The progress bar sits above the canvas.
+- A pattern's theme now tints the artwork surface too: empty cells of the canvas (editor and pattern view), the canvas surround and the bottom bars.
+
+## [1.12.0] — 2026-10-26 (finalized in the working tree; not tagged or published)
+
+### Added
+- Folder view on the home page: a tile for each folder with its pattern count. Tapping one opens it with a back button, Rename and Remove (removing keeps the patterns). Folder chips were replaced by these tiles.
+- `Storage.library.renameFolder` (rename or dissolve a folder, trashed patterns included).
+
 ## [1.11.0] — 2026-10-26 (finalized in the working tree; not tagged or published)
 
 ### Changed

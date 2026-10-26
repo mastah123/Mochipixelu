@@ -167,9 +167,15 @@
         <button class="chipbtn" data-filter="progress" aria-pressed="false">In progress</button>
         <button class="chipbtn" data-filter="done" aria-pressed="false">Finished</button>
         <button class="chipbtn" data-filter="new" aria-pressed="false">Not started</button>
-        <span id="home-folders" class="folder-chips"></span>
         <button class="chipbtn" data-filter="archive" aria-pressed="false">Archive</button>
         <button class="chipbtn" data-filter="trash" aria-pressed="false">Trash</button>
+      </div>
+      <div id="home-folder-tiles" class="folder-tiles" hidden></div>
+      <div id="folder-head" class="folder-head" hidden>
+        <button id="folder-back" class="btn small icon-btn" aria-label="Back to all patterns"><svg class="ic sm"><use href="#i-back"/></svg></button>
+        <h3 id="folder-title">Folder</h3>
+        <button id="folder-rename" class="btn small">Rename</button>
+        <button id="folder-remove" class="btn small">Remove</button>
       </div>
       <ul id="home-grid" class="grid"></ul>
       <p id="home-nomatch" class="hint" hidden>No patterns in this group yet.</p>
@@ -208,54 +214,53 @@
     <button id="view-more" class="btn icon-btn" aria-label="More actions"><svg class="ic"><use href="#i-more"/></svg></button>
   </header>
   <main class="view-main">
+    <div class="view-meta">
+      <span id="view-size" class="meta-line"></span>
+      <div class="progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="view-progress"><div id="view-progress-bar"></div></div>
+      <span id="view-progress-text" class="meta-line"></span>
+    </div>
     <section class="view-stage">
       <div class="canvas-wrap">
         <div id="view-scroll" class="canvas-scroll"><canvas id="view-canvas" aria-label="Pattern"></canvas></div>
         <div class="hud hud-tl"><span id="view-chip" class="chip">—</span></div>
-        <div class="hud hud-br">
+        <div class="hud hud-br hud-view">
           <button id="view-zoom-in" class="btn small icon-btn" aria-label="Zoom in"><svg class="ic sm"><use href="#i-plus"/></svg></button>
           <button id="view-zoom-out" class="btn small icon-btn" aria-label="Zoom out"><svg class="ic sm"><use href="#i-minus"/></svg></button>
           <button id="view-zoom-fit" class="btn small icon-btn" aria-label="Fit to screen"><svg class="ic sm"><use href="#i-fit"/></svg></button>
         </div>
       </div>
     </section>
-    <section class="view-panel">
-      <div class="view-meta">
-        <span id="view-size" class="meta-line"></span>
-        <div class="progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="view-progress"><div id="view-progress-bar"></div></div>
-        <span id="view-progress-text" class="meta-line"></span>
-      </div>
-
-      <h3 class="sub">Highlight</h3>
-      <div class="seg" id="view-modes" role="group" aria-label="Tap mode">
-        <button data-mode="look" aria-pressed="true"><svg class="ic sm"><use href="#i-eye"/></svg>Look</button>
-        <button data-mode="guide" aria-pressed="false"><svg class="ic sm"><use href="#i-highlight"/></svg>Guide</button>
-        <button data-mode="tick" aria-pressed="false"><svg class="ic sm"><use href="#i-mark"/></svg>Tick</button>
-      </div>
-      <p id="mode-hint" class="hint">Tap a stitch to see its color and position.</p>
-
-      <div id="guide-controls" hidden>
-        <div class="seg" id="view-guides" role="group" aria-label="Guide style">
-          <button data-guide="row" aria-pressed="true">Row</button>
-          <button data-guide="col" aria-pressed="false">Column</button>
-          <button data-guide="cross" aria-pressed="false">Both</button>
+    <div class="view-dock">
+      <div class="vstack">
+        <div id="view-legend-pop" class="vcard" hidden>
+          <div id="view-legend" class="chips-scroll"></div>
         </div>
-        <div class="stepper">
-          <button id="guide-prev" class="btn small icon-btn" aria-label="Previous"><svg class="ic sm"><use href="#i-chev"/></svg></button>
-          <strong id="guide-label">Row 1</strong>
-          <button id="guide-next" class="btn small icon-btn" aria-label="Next"><svg class="ic sm"><use href="#i-chev"/></svg></button>
-          <button id="guide-done" class="btn small"><svg class="ic sm"><use href="#i-mark"/></svg><span id="guide-done-label">Mark row done</span></button>
+        <div id="guide-controls" class="vcard" hidden>
+          <div class="seg" id="view-guides" role="group" aria-label="Guide style">
+            <button data-guide="row" aria-pressed="true">Row</button>
+            <button data-guide="col" aria-pressed="false">Column</button>
+            <button data-guide="cross" aria-pressed="false">Both</button>
+          </div>
+          <div class="stepper">
+            <button id="guide-prev" class="btn small icon-btn" aria-label="Previous"><svg class="ic sm"><use href="#i-chev"/></svg></button>
+            <strong id="guide-label">Row 1</strong>
+            <button id="guide-next" class="btn small icon-btn" aria-label="Next"><svg class="ic sm"><use href="#i-chev"/></svg></button>
+            <button id="guide-done" class="btn small"><svg class="ic sm"><use href="#i-mark"/></svg><span id="guide-done-label">Mark row done</span></button>
+          </div>
         </div>
+        <div class="vcard cell-info" id="view-info" aria-live="polite">
+          <span id="view-info-swatch" class="swatch empty"></span>
+          <span id="view-info-text">No stitch selected</span>
+        </div>
+        <p id="mode-hint" class="hint vhint">Tap a stitch to see its color and position.</p>
       </div>
-
-      <div class="cell-info" id="view-info" aria-live="polite">
-        <span id="view-info-swatch" class="swatch empty"></span>
-        <span id="view-info-text">No stitch selected</span>
-      </div>
-
-      <h3 class="sub">Colors <span class="hint inline">tap to spotlight</span></h3>
-      <div id="view-legend" class="chips-scroll"></div>
-    </section>
+      <nav class="vtools" id="view-modes" role="group" aria-label="Tap mode">
+        <button class="vtool" data-mode="look" aria-pressed="true"><svg class="ic"><use href="#i-eye"/></svg><span class="tl">Look</span></button>
+        <button class="vtool" data-mode="guide" aria-pressed="false"><svg class="ic"><use href="#i-highlight"/></svg><span class="tl">Guide</span></button>
+        <button class="vtool" data-mode="tick" aria-pressed="false"><svg class="ic"><use href="#i-mark"/></svg><span class="tl">Tick</span></button>
+        <button class="vtool" id="view-dock-legend" aria-pressed="false"><svg class="ic"><use href="#i-legend"/></svg><span class="tl">Legend</span></button>
+      </nav>
+    </div>
   </main>
 </section>
 

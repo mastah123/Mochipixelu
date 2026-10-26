@@ -13,6 +13,8 @@
       this.canvas = canvas;
       this.ctx = canvas.getContext('2d');
       this.design = null;
+      this.checkA = '#f8f7fc';
+      this.checkB = '#e6e3ee';
       this.cell = 16;
       this.grid = true;
       this.showDone = true;
@@ -25,6 +27,23 @@
     maxCell(design) {
       const d = design || this.design;
       return Math.max(2, Math.min(64, Math.floor(MAX_CANVAS_SIDE / Math.max(d.width, d.height))));
+    }
+
+    /** Empty-cell checker colors follow the pattern's theme tone (hex like '#fbf0c4'), or the neutral default when null. */
+    setTone(hex) {
+      const m = /^#([0-9a-f]{6})$/i.exec(hex || '');
+      if (!m) {
+        this.checkA = '#f8f7fc';
+        this.checkB = '#e6e3ee';
+      } else {
+        const n = parseInt(m[1], 16);
+        const rgb = [n >> 16, (n >> 8) & 255, n & 255];
+        const lum = (0.299 * rgb[0] + 0.587 * rgb[1] + 0.114 * rgb[2]) / 255;
+        const mix = (to, t) => '#' + rgb.map((c) => Math.round(c + (to - c) * t).toString(16).padStart(2, '0')).join('');
+        this.checkA = lum > 0.5 ? mix(255, 0.55) : mix(255, 0.1);
+        this.checkB = lum > 0.5 ? mix(0, 0.07) : mix(0, 0.25);
+      }
+      if (this.design) this.draw();
     }
 
     /** Attach a design and (re)size the canvas to it. */
@@ -85,7 +104,7 @@
       const i = y * d.width + x;
       const v = d.pixels[i];
 
-      if (v === EMPTY) ctx.fillStyle = (x + y) & 1 ? '#e6e3ee' : '#f8f7fc';
+      if (v === EMPTY) ctx.fillStyle = (x + y) & 1 ? this.checkB : this.checkA;
       else ctx.fillStyle = U.toHex(v);
       ctx.fillRect(px, py, c, c);
 

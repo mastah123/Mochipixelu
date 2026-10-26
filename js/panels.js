@@ -68,7 +68,10 @@
         const scr = document.getElementById('screen-editor');
         if (t) scr.dataset.tone = t;
         else delete scr.dataset.tone;
+        renderer.setTone(app.toneHex(scr));
       };
+      app.retone = () => app.retoneEditor();
+      app.retoneEditor = () => app.applyTone(((entry() || {}).theme) || 'white');
       const swHost = optMenu.querySelector('.swatches');
       M.Storage.THEMES.forEach((t) => {
         const b = document.createElement('button');

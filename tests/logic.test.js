@@ -361,6 +361,15 @@
     S.library.setMeta(id, { theme: 'blue' });
     eq(JSON.stringify(Object.keys(S.serialize(d))), JSON.stringify(['format', 'version', 'name', 'width', 'height', 'palette', 'data', 'done']));
   }));
+  test('renaming or dissolving a folder moves every pattern in it', () => withStorage(() => {
+    const a = S.library.save(D.create(2, 2, U.EMPTY, 'A')).id;
+    const b = S.library.save(D.create(2, 2, U.EMPTY, 'B')).id;
+    S.library.setMeta(a, { folder: 'Old' }); S.library.setMeta(b, { folder: 'Old', trashed: true });
+    S.library.renameFolder('Old', 'New');
+    eq(S.library.get(a).folder, 'New'); eq(S.library.get(b).folder, 'New');
+    S.library.renameFolder('New', '');
+    eq(S.library.get(a).folder, undefined); eq(S.library.get(b).folder, undefined);
+  }));
   test('duplicate keeps the theme and folder', () => withStorage(() => {
     const id = S.library.save(D.create(2, 2, U.EMPTY, 'A')).id;
     S.library.setMeta(id, { theme: 'green', folder: 'X' });

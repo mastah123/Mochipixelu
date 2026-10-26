@@ -224,8 +224,16 @@ const vis = (page, sel) => page.locator(sel).isVisible();
     p = await vcell(3, 2); await page.touchscreen.tap(p.x, p.y);
     await page.waitForTimeout(800);
 
+    check('view has a fixed bottom bar with 4 buttons', (await page.locator('.view-dock .vtool').count()) === 4 && (await vis(page, '.view-dock')));
+    const base = await page.evaluate(() => mochipixelu.viewRenderer.checkA);
+    await page.tap('#view-more'); await page.tap('#view-swatches [data-tone=blue]'); await page.tap('#menu-close');
+    const tint = await page.evaluate(() => [mochipixelu.$('screen-view').dataset.tone, mochipixelu.viewRenderer.checkA]);
+    check('choosing a theme in the pattern view tints the artwork cells', tint[0] === 'blue' && tint[1] !== base, JSON.stringify([base, tint]));
+    await page.tap('#view-more'); await page.tap('#view-swatches [data-tone=white]'); await page.tap('#menu-close');
+
     // spotlight chip
-    await page.tap('#view-legend button');
+    await page.tap('#view-dock-legend'); await page.tap('#view-legend button');
+    check('legend pop opens above the bar', await vis(page, '#view-legend-pop'));
     check('legend chip spotlights a color', (await page.evaluate(() => mochipixelu.renderer && true)) );
 
     // menu: rename, duplicate
@@ -264,6 +272,18 @@ const vis = (page, sel) => page.locator(sel).isVisible();
     check('delete moves it to Trash', (await page.evaluate(() => JSON.parse(localStorage.getItem('mochipixelu:library')).filter((e) => e.trashed).length)) === 1);
     await page.evaluate(() => Mochi.Storage.library.list().filter((e) => e.trashed).forEach((e) => Mochi.Storage.library.remove(e.id)));
     check('purging Trash removes it from the library', (await page.evaluate(() => JSON.parse(localStorage.getItem('mochipixelu:library')).length)) === 1);
+
+    // folder view
+    await page.evaluate(() => { const l = Mochi.Storage.library.list(); Mochi.Storage.library.setMeta(l[0].id, { folder: 'Pets' }); mochipixelu.renderHome(); });
+    check('folder tile shows with a count', (await page.locator('.folder-tile').count()) === 1 && /1 pattern/.test(await page.textContent('.folder-tile')));
+    await page.tap('.folder-tile');
+    check('opening a folder shows only its patterns and a header', (await page.locator('#home-grid .card').count()) === 1 && (await page.textContent('#folder-title')) === 'Pets');
+    await page.tap('#folder-rename'); await page.fill('#text-input', 'Cats'); await page.tap('#text-ok');
+    await page.waitForTimeout(250);
+    check('renaming the folder keeps the pattern in it', (await page.textContent('#folder-title')) === 'Cats' && (await page.locator('#home-grid .card').count()) === 1);
+    await page.tap('#folder-remove'); await page.tap('#confirm-ok');
+    await page.waitForTimeout(250);
+    check('removing the folder keeps the patterns', (await page.locator('.folder-tile').count()) === 0 && (await page.locator('#home-grid .card').count()) === 1);
 
     // long-press options, duplicate names, settings
     await screenIs(page, 'home');

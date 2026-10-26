@@ -18,6 +18,7 @@
       const canvas = $('view-canvas');
       const scroller = $('view-scroll');
       const renderer = new M.Renderer(canvas);
+      app.viewRenderer = renderer;
       let design = null;
       let id = null;
       let mode = 'look';
@@ -189,6 +190,11 @@
         $('guide-controls').hidden = m !== 'guide';
         applyGuide();
       };
+      $('view-dock-legend').addEventListener('click', () => {
+        const pop = $('view-legend-pop');
+        pop.hidden = !pop.hidden;
+        $('view-dock-legend').setAttribute('aria-pressed', String(!pop.hidden));
+      });
       $('view-modes').addEventListener('click', (e) => {
         const b = e.target.closest('[data-mode]');
         if (b) setMode(b.dataset.mode);
@@ -273,6 +279,7 @@
         const scr = $('screen-view');
         if (e.theme && e.theme !== 'white') scr.dataset.tone = e.theme;
         else delete scr.dataset.tone;
+        renderer.setTone(app.toneHex(scr));
       };
       sw.addEventListener('click', (ev) => {
         const b = ev.target.closest('.tone-sw');
@@ -355,6 +362,9 @@
           const _v = document.getElementById('screen-view');
           if (_e && _e.theme && _e.theme !== 'white') _v.dataset.tone = _e.theme;
           else delete _v.dataset.tone;
+          renderer.setTone(app.toneHex(_v));
+          $('view-legend-pop').hidden = true;
+          $('view-dock-legend').setAttribute('aria-pressed', 'false');
           app.viewDesign = design;
           dirty = false;
           selected = null;
