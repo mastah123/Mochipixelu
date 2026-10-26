@@ -260,9 +260,10 @@ const vis = (page, sel) => page.locator(sel).isVisible();
     await page.tap('#btn-back');
     await page.tap('#view-more');
     await page.tap('[data-menu=delete]');
-    await page.tap('#confirm-ok');
     await page.waitForFunction(() => location.hash === '#/' || location.hash === '');
-    check('delete removes it from the library', (await page.evaluate(() => JSON.parse(localStorage.getItem('mochipixelu:library')).length)) === 1);
+    check('delete moves it to Trash', (await page.evaluate(() => JSON.parse(localStorage.getItem('mochipixelu:library')).filter((e) => e.trashed).length)) === 1);
+    await page.evaluate(() => Mochi.Storage.library.list().filter((e) => e.trashed).forEach((e) => Mochi.Storage.library.remove(e.id)));
+    check('purging Trash removes it from the library', (await page.evaluate(() => JSON.parse(localStorage.getItem('mochipixelu:library')).length)) === 1);
 
     // long-press options, duplicate names, settings
     await screenIs(page, 'home');
@@ -299,8 +300,9 @@ const vis = (page, sel) => page.locator(sel).isVisible();
     await screenIs(page, 'editor');
     check('creating with a taken name adds a number', (await page.inputValue('#design-name')) !== names[0] && /\d$/.test(await page.inputValue('#design-name')), await page.inputValue('#design-name'));
     await page.tap('#btn-back'); await screenIs(page, 'view');
-    await page.tap('#view-more'); await page.tap('[data-menu=delete]'); await page.tap('#confirm-ok');
+    await page.tap('#view-more'); await page.tap('[data-menu=delete]');
     await screenIs(page, 'home');
+    await page.evaluate(() => Mochi.Storage.library.list().filter((e) => e.trashed).forEach((e) => Mochi.Storage.library.remove(e.id)));
 
     // long press also works on the Keep stitching card
     await page.evaluate(() => mochipixelu.renderHome());

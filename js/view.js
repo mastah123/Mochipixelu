@@ -256,8 +256,33 @@
         M.Router.go('#/e/' + id);
       });
       const menu = $('menu-dialog');
+      const sw = $('view-swatches');
+      M.Storage.THEMES.forEach((t) => {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'tone-sw';
+        b.dataset.tone = t;
+        b.setAttribute('aria-label', t);
+        sw.appendChild(b);
+      });
+      const paintMenu = () => {
+        const e = M.Storage.library.get(id) || {};
+        sw.querySelectorAll('.tone-sw').forEach((b) => b.setAttribute('aria-checked', String(b.dataset.tone === (e.theme || 'white'))));
+        menu.querySelector('[data-menu=pin] span').textContent = e.pinned ? 'Unpin' : 'Pin';
+        menu.querySelector('[data-menu=archive] span').textContent = e.archived ? 'Unarchive' : 'Archive';
+        const scr = $('screen-view');
+        if (e.theme && e.theme !== 'white') scr.dataset.tone = e.theme;
+        else delete scr.dataset.tone;
+      };
+      sw.addEventListener('click', (ev) => {
+        const b = ev.target.closest('.tone-sw');
+        if (!b) return;
+        M.Storage.library.setMeta(id, { theme: b.dataset.tone });
+        paintMenu();
+      });
       $('view-more').addEventListener('click', () => {
         $('menu-title').textContent = design.name;
+        paintMenu();
         menu.showModal();
       });
       $('menu-close').addEventListener('click', () => menu.close());
@@ -270,7 +295,16 @@
         menu.close();
         const what = b.dataset.menu;
         saveNow();
-        if (what === 'rename') {
+        const cur = M.Storage.library.get(id) || {};
+        if (what === 'pin') {
+          M.Storage.library.setMeta(id, { pinned: !cur.pinned });
+          app.toast(cur.pinned ? 'Unpinned' : 'Pinned to the top');
+        } else if (what === 'folder') app.pickFolder(id);
+        else if (what === 'archive') {
+          M.Storage.library.setMeta(id, { archived: !cur.archived });
+          app.toast(cur.archived ? 'Moved back to My patterns' : 'Archived');
+          if (!cur.archived) M.Router.go('#/');
+        } else if (what === 'rename') {
           const name = await app.askText({ title: 'Rename pattern', label: 'Name', value: design.name });
           if (name === null) return;
           design.name = name.trim().slice(0, 60) || 'Untitled';
@@ -298,11 +332,9 @@
           app.toast('Progress cleared');
         }
         else if (what === 'delete') {
-          const ok = await app.confirm({ title: 'Delete “' + design.name + '”?', text: 'This removes the pattern and its progress from this device. It cannot be undone.', okLabel: 'Delete' });
-          if (!ok) return;
           dirty = false;
-          M.Storage.library.remove(id);
-          app.toast('Deleted');
+          M.Storage.library.setMeta(id, { trashed: true });
+          app.toast('Moved to Trash — restore it from the Trash tab');
           M.Router.go('#/');
         }
       });

@@ -10,6 +10,14 @@ Versions follow [Semantic Versioning](https://semver.org/): `MAJOR.MINOR.PATCH`.
 
 Examples are illustrative; the real versions are listed below. Documentation-only, test-only and refactoring changes do not automatically bump the version.
 
+## [1.10.0] — 2026-10-26 (finalized in the working tree; not tagged or published)
+
+### Added
+- The pattern view's ⋯ menu now has the same Theme swatches, Pin, Move to folder… and Archive as the editor menu.
+
+### Changed
+- "Delete pattern" in the pattern view is now "Move to Trash" (no confirmation; restore from the Trash tab).
+
 ## [1.9.0] — 2026-10-25 (finalized in the working tree; not tagged or published)
 
 ### Added

@@ -698,3 +698,11 @@ input[type="text"], input[type="number"], select { border: 1.5px solid var(--hai
 .opt-menu .tone-sw[data-tone="lavender"] { background: var(--tone-lavender); }
 .opt-menu .tone-sw[aria-checked="true"] { border: 2px solid var(--berry); box-shadow: 0 0 0 2px var(--card) inset; }
 .menu-foot { padding: 6px 20px 4px; font-size: .8rem; color: var(--ink-soft); }
+.view-theme { padding: 4px 2px 6px; }
+.menu .tone-sw { width: 34px; height: 34px; padding: 0; border-radius: 10px; border: 1.5px solid var(--line); background: var(--tone-white); flex: none; }
+.menu .tone-sw[data-tone="yellow"] { background: var(--tone-yellow); }
+.menu .tone-sw[data-tone="green"] { background: var(--tone-green); }
+.menu .tone-sw[data-tone="blue"] { background: var(--tone-blue); }
+.menu .tone-sw[data-tone="pink"] { background: var(--tone-pink); }
+.menu .tone-sw[data-tone="lavender"] { background: var(--tone-lavender); }
+.menu .tone-sw[aria-checked="true"] { border: 2px solid var(--berry); }

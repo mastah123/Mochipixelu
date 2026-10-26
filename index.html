@@ -504,13 +504,17 @@
 
 <dialog id="menu-dialog" class="dialog menu">
   <div class="dialog-head"><h2 id="menu-title">Pattern</h2><button id="menu-close" class="btn small icon-btn" aria-label="Close"><svg class="ic sm"><use href="#i-close"/></svg></button></div>
+  <div class="theme-row view-theme"><span class="theme-label">Theme</span><div class="swatches" id="view-swatches"></div></div>
   <ul class="menu-list">
+    <li><button data-menu="pin"><svg class="ic sm"><use href="#i-pin"/></svg><span>Pin</span></button></li>
+    <li><button data-menu="folder"><svg class="ic sm"><use href="#i-folder"/></svg>Move to folder…</button></li>
+    <li><button data-menu="archive"><svg class="ic sm"><use href="#i-archive"/></svg><span>Archive</span></button></li>
     <li><button data-menu="rename"><svg class="ic sm"><use href="#i-pencil"/></svg>Rename</button></li>
     <li><button data-menu="duplicate"><svg class="ic sm"><use href="#i-copy"/></svg>Duplicate (fresh progress)</button></li>
     <li><button data-menu="export"><svg class="ic sm"><use href="#i-print"/></svg>Export &amp; print…</button></li>
     <li><button data-menu="file"><svg class="ic sm"><use href="#i-export"/></svg>Save a backup file</button></li>
     <li><button data-menu="clear-progress"><svg class="ic sm"><use href="#i-redo-arrow"/></svg>Clear progress</button></li>
-    <li><button data-menu="delete" class="danger-text"><svg class="ic sm"><use href="#i-trash"/></svg>Delete pattern</button></li>
+    <li><button data-menu="delete" class="danger-text"><svg class="ic sm"><use href="#i-trash"/></svg>Move to Trash</button></li>
   </ul>
 </dialog>
 
