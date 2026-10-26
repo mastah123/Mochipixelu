@@ -236,8 +236,17 @@ const vis = (page, sel) => page.locator(sel).isVisible();
 
     // spotlight chip
     await page.tap('#view-dock-legend'); await page.tap('#view-legend button');
-    check('legend pop opens above the bar', await vis(page, '#view-legend-pop'));
+    check('legend opens in the bottom area', await vis(page, '#view-legend-pop'));
+    check('legend never overlaps the canvas', await page.evaluate(() => { const l = document.getElementById('view-legend-pop').getBoundingClientRect(); const c = document.getElementById('view-scroll').getBoundingClientRect(); return l.top >= c.bottom - 1; }));
+    await page.tap('#view-legend-hide');
+    check('Hide closes the legend', !(await vis(page, '#view-legend-pop')));
+    await page.tap('#view-dock-legend'); await page.tap('#view-legend button');
     check('legend chip spotlights a color', (await page.evaluate(() => mochipixelu.renderer && true)) );
+
+    for (let i = 0; i < 8; i++) await page.tap('#view-zoom-in');
+    const edges = await page.evaluate(() => { const sc = document.getElementById('view-scroll'); const cv = document.getElementById('view-canvas'); sc.scrollTop = 0; sc.scrollLeft = 0; const a = cv.getBoundingClientRect(); const r = sc.getBoundingClientRect(); const top = a.top >= r.top - 1 && a.left >= r.left - 1; sc.scrollTop = 1e6; sc.scrollLeft = 1e6; const b = cv.getBoundingClientRect(); return { top, bottom: b.bottom <= r.bottom - 60, big: a.height > r.height }; });
+    check('a zoomed canvas can be panned to its top and bottom edges', edges.big && edges.top && edges.bottom, JSON.stringify(edges));
+    await page.tap('#view-zoom-fit');
 
     // menu: rename, duplicate
     await page.tap('#view-more');

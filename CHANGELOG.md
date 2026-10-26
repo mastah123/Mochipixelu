@@ -10,6 +10,15 @@ Versions follow [Semantic Versioning](https://semver.org/): `MAJOR.MINOR.PATCH`.
 
 Examples are illustrative; the real versions are listed below. Documentation-only, test-only and refactoring changes do not automatically bump the version.
 
+## [1.18.0] — 2026-10-26 (finalized in the working tree; not tagged or published)
+
+### Fixed
+- A zoomed canvas could not be panned to its top and left edges (centering clipped them). The editor and the pattern view now centre safely; when zoomed there is extra room below so the bottom is never stuck under the bars or buttons.
+
+### Changed
+- Pattern view: the guide controls and the colors legend are part of the bottom area (not floating over the canvas); the canvas re-fits to the space left. The Legend button toggles show/hide and the legend has its own Hide button.
+- The bottom bar buttons are smaller.
+
 ## [1.17.0] — 2026-10-26 (finalized in the working tree; not tagged or published)
 
 ### Changed

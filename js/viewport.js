@@ -32,6 +32,7 @@
 
       vp.setZoom = (cell) => {
         vp.autoFit = false;
+        scroller.classList.add('roomy');
         // keep the view centred on the same spot while zooming
         const before = renderer.cell;
         const cx = (scroller.scrollLeft + scroller.clientWidth / 2) / before;
@@ -45,6 +46,7 @@
 
       vp.fit = () => {
         vp.autoFit = true;
+        scroller.classList.remove('roomy');
         if (!renderer.design) return;
         const w = Math.max(60, scroller.clientWidth - 36);
         const h = Math.max(60, scroller.clientHeight - 36);
@@ -93,6 +95,7 @@
         const next = Math.round((vp.gesture.cell * dist) / vp.gesture.dist);
         if (next !== renderer.cell && renderer.setCell(next)) {
           vp.autoFit = false;
+          scroller.classList.add('roomy');
           notify();
         }
         // keep the content point that started under the fingers under the fingers

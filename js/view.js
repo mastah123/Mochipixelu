@@ -191,11 +191,14 @@
         $('guide-controls').hidden = m !== 'guide';
         applyGuide();
       };
-      $('view-dock-legend').addEventListener('click', () => {
-        const pop = $('view-legend-pop');
-        pop.hidden = !pop.hidden;
-        $('view-dock-legend').setAttribute('aria-pressed', String(!pop.hidden));
-      });
+      const setLegend = (open) => {
+        $('view-legend-pop').hidden = !open;
+        $('view-dock-legend').setAttribute('aria-pressed', String(open));
+        $('view-dock-legend').querySelector('.tl').textContent = open ? 'Hide legend' : 'Legend';
+        requestAnimationFrame(() => vp.autoFit && vp.fit());
+      };
+      $('view-dock-legend').addEventListener('click', () => setLegend($('view-legend-pop').hidden));
+      $('view-legend-hide').addEventListener('click', () => setLegend(false));
       $('view-modes').addEventListener('click', (e) => {
         const b = e.target.closest('[data-mode]');
         if (b) setMode(b.dataset.mode);
@@ -364,8 +367,7 @@
           if (_e && _e.theme && _e.theme !== 'white') _v.dataset.tone = _e.theme;
           else delete _v.dataset.tone;
           renderer.setTone(app.toneHex(_v));
-          $('view-legend-pop').hidden = true;
-          $('view-dock-legend').setAttribute('aria-pressed', 'false');
+          setLegend(false);
           app.viewDesign = design;
           dirty = false;
           selected = null;

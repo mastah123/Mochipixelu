@@ -4,7 +4,7 @@ A cozy, browser-based **live pixel editor and craft-pattern maker**, designed ph
 
 Vanilla HTML, CSS and JavaScript. No frameworks, no build step, no backend, no accounts, no network calls. Everything stays on your device.
 
-**Version:** 1.17.0 · see [CHANGELOG.md](CHANGELOG.md)
+**Version:** 1.18.0 · see [CHANGELOG.md](CHANGELOG.md)
 
 ## Features
 
