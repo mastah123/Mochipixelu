@@ -125,6 +125,9 @@
     <symbol id="i-trash" viewBox="0 0 24 24"><path d="M5 7h14M10 7V4.8h4V7"/><path d="M6.8 7l.8 12.2h8.8L17.2 7" fill="none"/><path d="M10.3 10.5v5.5M13.7 10.5v5.5"/></symbol>
     <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 8h16M4 15h10"/></symbol>
     <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4 4"/></symbol>
+    <symbol id="i-list" viewBox="0 0 24 24"><path d="M9 7h11M9 12h11M9 17h11"/><circle cx="4.8" cy="7" r=".9" fill="currentColor"/><circle cx="4.8" cy="12" r=".9" fill="currentColor"/><circle cx="4.8" cy="17" r=".9" fill="currentColor"/></symbol>
+    <symbol id="i-grid" viewBox="0 0 24 24"><rect x="4.5" y="4.5" width="6" height="6" rx="1.5"/><rect x="13.5" y="4.5" width="6" height="6" rx="1.5"/><rect x="4.5" y="13.5" width="6" height="6" rx="1.5"/><rect x="13.5" y="13.5" width="6" height="6" rx="1.5"/></symbol>
+    <symbol id="i-sort" viewBox="0 0 24 24"><path d="M8 5v14M8 19l-3-3M8 19l3-3M16 19V5M16 5l-3 3M16 5l3 3"/></symbol>
     <symbol id="i-pin" viewBox="0 0 24 24"><path d="M9 4.5h6l-.7 5 3.2 3.5H6.5L9.7 9.5 9 4.5z"/><path d="M12 13v6.5"/></symbol>
     <symbol id="i-folder" viewBox="0 0 24 24"><path d="M4 7.5a1.8 1.8 0 0 1 1.8-1.8h3.6l2 2.2h6.8A1.8 1.8 0 0 1 20 9.7v7.5a1.8 1.8 0 0 1-1.8 1.8H5.8A1.8 1.8 0 0 1 4 17.2V7.5z"/></symbol>
     <symbol id="i-archive" viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="4" rx="1.2"/><path d="M5.5 9v8.2a1.8 1.8 0 0 0 1.8 1.8h9.4a1.8 1.8 0 0 0 1.8-1.8V9M10 13h4"/></symbol>
@@ -181,11 +184,24 @@
     </section>
 
     <section id="home-library">
-      <div class="home-bar">
-        <h2 class="sec" id="home-title">My patterns</h2>
-        <span id="home-count" class="chip"></span>
+      <div id="home-folders-sec" hidden>
+        <div class="home-bar">
+          <h2 class="sec">Folders</h2>
+          <span class="bar-actions">
+            <button id="folders-all" class="linkbtn" hidden>Show all</button>
+            <button id="folders-layout" class="btn small icon-btn" aria-label="Folder layout: grid"><svg class="ic sm"><use href="#i-list"/></svg></button>
+          </span>
+        </div>
+        <div id="home-folder-tiles" class="folder-tiles"></div>
       </div>
-      <div id="home-folder-tiles" class="folder-tiles" hidden></div>
+      <div class="home-bar">
+        <h2 class="sec" id="home-title">Recent patterns</h2>
+        <span class="bar-actions">
+          <button id="sort-btn" class="btn small icon-btn" aria-label="Sort patterns" aria-haspopup="menu" aria-expanded="false"><svg class="ic sm"><use href="#i-sort"/></svg></button>
+          <button id="grid-layout" class="btn small icon-btn" aria-label="Pattern layout: grid"><svg class="ic sm"><use href="#i-list"/></svg></button>
+        </span>
+        <div id="sort-menu" class="ctx-menu sort-menu" role="menu" hidden></div>
+      </div>
       <div id="folder-head" class="folder-head" hidden>
         <button id="folder-back" class="btn small icon-btn" aria-label="Back to all patterns"><svg class="ic sm"><use href="#i-back"/></svg></button>
         <h3 id="folder-title">Folder</h3>

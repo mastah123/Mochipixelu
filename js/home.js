@@ -20,6 +20,7 @@
       const $ = app.$;
       let filter = 'all';
       let query = '';
+      let showAllTiles = false;
 
       let ignoreClickUntil = 0;
       let continueEntry = null; // what the "Keep stitching" card currently shows
@@ -232,16 +233,22 @@
         const total = all.length;
         $('home-empty').hidden = total > 0;
                 $('home-grid').hidden = total === 0;
-        $('home-count').hidden = total === 0;
-        $('home-count').textContent = live.length + (live.length === 1 ? ' pattern' : ' patterns');
 
         const inFolder = /^f:/.test(filter);
         const tiles = $('home-folder-tiles');
         tiles.textContent = '';
-        tiles.hidden = !(filter === 'all' && folders.length && !query);
-        folders.forEach((f) => {
+        const showTiles = filter === 'all' && folders.length > 0 && !query;
+        $('home-folders-sec').hidden = !showTiles;
+        const fl = app.homePrefs.flayout === 'list' ? 'list' : 'grid';
+        tiles.classList.toggle('list', fl === 'list');
+        $('folders-layout').innerHTML = '<svg class="ic sm"><use href="#' + (fl === 'list' ? 'i-grid' : 'i-list') + '"/></svg>';
+        $('folders-layout').setAttribute('aria-label', 'Folder layout: ' + fl);
+        $('folders-all').hidden = folders.length <= 2;
+        $('folders-all').textContent = showAllTiles ? 'Show less' : 'Show all';
+        const byCount = folders.slice().sort((a, b) => live.filter((e) => e.folder === b).length - live.filter((e) => e.folder === a).length);
+        byCount.slice(0, showAllTiles ? byCount.length : 2).forEach((f, i) => {
           const n = live.filter((e) => e.folder === f).length;
-          const t = el('button', 'folder-tile');
+          const t = el('button', 'folder-tile tone-' + (i % 4));
           t.type = 'button';
           t.dataset.folder = f;
           t.innerHTML = '<svg class="ic"><use href="#i-folder"/></svg>';
@@ -251,7 +258,7 @@
           t.addEventListener('click', () => {
             filter = 'f:' + f;
             render();
-            window.scrollTo(0, 0);
+            $('home-main').scrollTop = 0;
           });
           tiles.appendChild(t);
         });
@@ -265,6 +272,19 @@
         else if (/^f:/.test(filter)) shown = live.filter((e) => e.folder === filter.slice(2));
         else shown = filter === 'all' ? live : live.filter((e) => state(e) === filter);
         if (query) shown = shown.filter((e) => e.name.toLowerCase().includes(query));
+        const sortBy = app.homePrefs.sort;
+        const cmp = {
+          recent: (a, b) => b.updated - a.updated,
+          oldest: (a, b) => a.updated - b.updated,
+          name: (a, b) => a.name.localeCompare(b.name),
+          progress: (a, b) => pct(b) - pct(a) || b.updated - a.updated,
+          size: (a, b) => b.width * b.height - a.width * a.height,
+        }[sortBy] || ((a, b) => b.updated - a.updated);
+        shown = shown.slice().sort(cmp);
+        const lay = app.homePrefs.layout === 'list' ? 'list' : 'grid';
+        $('home-grid').classList.toggle('list', lay === 'list');
+        $('grid-layout').innerHTML = '<svg class="ic sm"><use href="#' + (lay === 'list' ? 'i-grid' : 'i-list') + '"/></svg>';
+        $('grid-layout').setAttribute('aria-label', 'Pattern layout: ' + lay);
         shown = shown.filter((e) => e.pinned).concat(shown.filter((e) => !e.pinned));
         $('home-grid').textContent = '';
         shown.forEach((e) => $('home-grid').appendChild(card(e)));
@@ -326,7 +346,7 @@
         $('drawer-scrim').hidden = !open || wide();
         $('home-menu').setAttribute('aria-expanded', String(open));
       };
-      const TITLES = { all: 'My patterns', pinned: 'Pinned', archive: 'Archive', trash: 'Trash', progress: 'In progress', done: 'Finished', new: 'Not started' };
+      const TITLES = { all: 'Recent patterns', pinned: 'Pinned', archive: 'Archive', trash: 'Trash', progress: 'In progress', done: 'Finished', new: 'Not started' };
       const renderDrawer = (all, live, folders) => {
         const count = (id, n) => ($(id).textContent = n ? String(n) : '');
         count('dc-all', live.length);
@@ -350,7 +370,7 @@
         $('drawer-showall').hidden = folders.length <= 4;
         $('drawer-showall').textContent = showAllFolders ? 'Show less' : 'Show all';
         drawer.querySelectorAll('[data-view]').forEach((b) => b.setAttribute('aria-current', String(b.dataset.view === filter)));
-        $('home-title').textContent = /^f:/.test(filter) ? filter.slice(2) : TITLES[filter] || 'My patterns';
+        $('home-title').textContent = /^f:/.test(filter) ? filter.slice(2) : TITLES[filter] || 'Recent patterns';
       };
       $('home-menu').addEventListener('click', () => setDrawer(!drawer.classList.contains('open')));
       $('drawer-scrim').addEventListener('click', () => setDrawer(false));
@@ -377,6 +397,52 @@
         render();
         $('home-main').scrollTop = 0;
       });
+
+      /* ---------- Folders / patterns headers: show all, layout toggles, sort menu ---------- */
+      $('folders-all').addEventListener('click', () => {
+        showAllTiles = !showAllTiles;
+        render();
+      });
+      $('folders-layout').addEventListener('click', () => {
+        app.homePrefs.flayout = app.homePrefs.flayout === 'list' ? 'grid' : 'list';
+        app.savePrefs();
+        render();
+      });
+      $('grid-layout').addEventListener('click', () => {
+        app.homePrefs.layout = app.homePrefs.layout === 'list' ? 'grid' : 'list';
+        app.savePrefs();
+        render();
+      });
+      const SORTS = [['recent', 'Recently edited'], ['oldest', 'Oldest first'], ['name', 'Name A–Z'], ['progress', 'Most progress'], ['size', 'Largest']];
+      const sortMenu = $('sort-menu');
+      const setSortMenu = (open) => {
+        sortMenu.hidden = !open;
+        $('sort-btn').setAttribute('aria-expanded', String(open));
+        if (!open) return;
+        sortMenu.textContent = '';
+        SORTS.forEach(([k, label]) => {
+          const b = el('button');
+          b.type = 'button';
+          b.setAttribute('role', 'menuitemradio');
+          b.setAttribute('aria-checked', String(app.homePrefs.sort === k));
+          b.append(el('span', '', label), el('span', 'tick', app.homePrefs.sort === k ? '✓' : ''));
+          b.addEventListener('click', () => {
+            app.homePrefs.sort = k;
+            app.savePrefs();
+            setSortMenu(false);
+            render();
+          });
+          sortMenu.appendChild(b);
+        });
+      };
+      $('sort-btn').addEventListener('click', (e) => {
+        e.stopPropagation();
+        setSortMenu(sortMenu.hidden);
+      });
+      document.addEventListener('click', (e) => {
+        if (!sortMenu.hidden && !sortMenu.contains(e.target)) setSortMenu(false);
+      });
+      document.addEventListener('keydown', (e) => e.key === 'Escape' && !sortMenu.hidden && setSortMenu(false));
 
       /* ---------- search ---------- */
       const searchBox = $('home-search');

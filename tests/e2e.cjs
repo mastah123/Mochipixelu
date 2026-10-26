@@ -285,11 +285,23 @@ const vis = (page, sel) => page.locator(sel).isVisible();
     await page.waitForTimeout(250);
     check('removing the folder keeps the patterns', (await page.locator('.folder-tile').count()) === 0 && (await page.locator('#home-grid .card').count()) === 1);
 
+    // sort + layout
+    await page.tap('#sort-btn');
+    check('sort menu lists the options', (await vis(page, '#sort-menu')) && (await page.locator('#sort-menu button').count()) === 5);
+    await page.locator('#sort-menu button', { hasText: 'Name A–Z' }).tap();
+    const nm = await page.locator('#home-grid .card .name').allTextContents();
+    check('sorted by name', JSON.stringify(nm) === JSON.stringify(nm.slice().sort((a, b) => a.localeCompare(b))), JSON.stringify(nm));
+    await page.tap('#grid-layout');
+    check('list layout is one column', (await page.evaluate(() => getComputedStyle(document.getElementById('home-grid')).gridTemplateColumns.split(' ').length)) === 1);
+    check('layout and sort are remembered', await page.evaluate(() => { const p = JSON.parse(localStorage.getItem('mochipixelu:prefs')).home; return p.layout === 'list' && p.sort === 'name'; }));
+    await page.tap('#grid-layout');
+    await page.tap('#sort-btn'); await page.locator('#sort-menu button', { hasText: 'Recently edited' }).tap();
+
     // drawer
     await page.tap('#home-menu');
     check('drawer opens with views, folders and settings', (await vis(page, '#drawer')) && (await page.locator('#drawer [data-view]').count()) >= 7 && (await vis(page, '#drawer-settings')));
     await page.tap('#drawer-newfolder'); await page.fill('#text-input', 'Empty box'); await page.tap('#text-ok');
-    await page.waitForTimeout(250);
+    await page.waitForFunction(() => document.getElementById('folder-title').textContent === 'Empty box' && getComputedStyle(document.getElementById('drawer')).visibility === 'hidden');
     check('a new empty folder opens as a folder view', (await page.textContent('#folder-title')) === 'Empty box' && !(await vis(page, '#drawer')));
     await page.tap('#home-menu');
     check('the empty folder is listed in the drawer', (await page.locator('#drawer-folders button', { hasText: 'Empty box' }).count()) === 1);

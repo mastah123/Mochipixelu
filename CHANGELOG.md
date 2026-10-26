@@ -10,6 +10,15 @@ Versions follow [Semantic Versioning](https://semver.org/): `MAJOR.MINOR.PATCH`.
 
 Examples are illustrative; the real versions are listed below. Documentation-only, test-only and refactoring changes do not automatically bump the version.
 
+## [1.16.0] — 2026-10-26 (finalized in the working tree; not tagged or published)
+
+### Added
+- Home "Folders" section: coloured folder tiles (name and pattern count), "Show all" past two folders, and a list/grid toggle.
+- "Recent patterns" section header with a sort button (Recently edited, Oldest first, Name A–Z, Most progress, Largest) and a list/grid toggle for the patterns. Pinned patterns stay first. Sort and layouts are remembered on the device.
+
+### Changed
+- The "My patterns" heading and pattern-count chip were replaced by these section headers.
+
 ## [1.15.0] — 2026-10-26 (finalized in the working tree; not tagged or published)
 
 ### Added

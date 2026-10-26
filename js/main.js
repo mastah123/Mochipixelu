@@ -50,7 +50,8 @@
 
     /* prefs */
     app.theme = ['system', 'light', 'dark'].includes(prefs.theme) ? prefs.theme : 'system';
-    app.savePrefs = () => M.Storage.savePrefs({ color: app.settings.color, recent: app.settings.recent, theme: app.theme });
+    app.homePrefs = Object.assign({ sort: 'recent', layout: 'grid', flayout: 'grid' }, prefs.home && typeof prefs.home === 'object' ? prefs.home : {});
+    app.savePrefs = () => M.Storage.savePrefs({ color: app.settings.color, recent: app.settings.recent, theme: app.theme, home: app.homePrefs });
     ui.on('color', U.debounce(app.savePrefs, 400));
 
     /** The tone color (hex) a screen currently wears, or null for the plain look. */
