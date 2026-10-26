@@ -370,6 +370,17 @@
     S.library.renameFolder('New', '');
     eq(S.library.get(a).folder, undefined); eq(S.library.get(b).folder, undefined);
   }));
+  test('an empty folder persists until it is removed', () => withStorage(() => {
+    eq(S.library.addFolder('  Soft toys ').ok, true);
+    eq(S.library.folders().join(), 'Soft toys');
+    eq(S.library.addFolder('soft TOYS').name, 'Soft toys', 'same name in another case is the same folder');
+    eq(S.library.folders().length, 1);
+    eq(S.library.addFolder('   ').ok, false);
+    S.library.renameFolder('Soft toys', 'Toys');
+    eq(S.library.folders().join(), 'Toys');
+    S.library.renameFolder('Toys', '');
+    eq(S.library.folders().length, 0);
+  }));
   test('duplicate keeps the theme and folder', () => withStorage(() => {
     const id = S.library.save(D.create(2, 2, U.EMPTY, 'A')).id;
     S.library.setMeta(id, { theme: 'green', folder: 'X' });

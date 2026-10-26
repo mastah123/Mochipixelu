@@ -254,9 +254,9 @@ const vis = (page, sel) => page.locator(sel).isVisible();
     await screenIs(page, 'home');
     check('home lists two patterns', (await page.locator('#home-grid .card').count()) === 2);
     check('continue card shows the in-progress pattern', await vis(page, '#continue-card'));
-    await page.tap('[data-filter=new]');
+    await page.tap('#home-menu'); await page.tap('#drawer [data-view=new]');
     check('filter "Not started" shows only the copy', (await page.locator('#home-grid .card').count()) === 1);
-    await page.tap('[data-filter=all]');
+    await page.tap('#home-menu'); await page.tap('#drawer [data-view=all]');
     await page.screenshot({ path: SP + 'home.png' });
 
     // open from card, edit button, delete
@@ -284,6 +284,20 @@ const vis = (page, sel) => page.locator(sel).isVisible();
     await page.tap('#folder-remove'); await page.tap('#confirm-ok');
     await page.waitForTimeout(250);
     check('removing the folder keeps the patterns', (await page.locator('.folder-tile').count()) === 0 && (await page.locator('#home-grid .card').count()) === 1);
+
+    // drawer
+    await page.tap('#home-menu');
+    check('drawer opens with views, folders and settings', (await vis(page, '#drawer')) && (await page.locator('#drawer [data-view]').count()) >= 7 && (await vis(page, '#drawer-settings')));
+    await page.tap('#drawer-newfolder'); await page.fill('#text-input', 'Empty box'); await page.tap('#text-ok');
+    await page.waitForTimeout(250);
+    check('a new empty folder opens as a folder view', (await page.textContent('#folder-title')) === 'Empty box' && !(await vis(page, '#drawer')));
+    await page.tap('#home-menu');
+    check('the empty folder is listed in the drawer', (await page.locator('#drawer-folders button', { hasText: 'Empty box' }).count()) === 1);
+    await page.tap('#drawer [data-view=pinned]');
+    check('Pinned view shows its title', (await page.textContent('#home-title')) === 'Pinned');
+    await page.evaluate(() => Mochi.Storage.library.renameFolder('Empty box', ''));
+    await page.tap('#home-menu'); await page.tap('#drawer [data-view=all]');
+    check('removing a folder drops it from the drawer', (await page.evaluate(() => Mochi.Storage.library.folders().length)) === 0);
 
     // search
     await page.tap('#home-search-btn');
@@ -318,7 +332,7 @@ const vis = (page, sel) => page.locator(sel).isVisible();
     await page.waitForTimeout(300);
     const names = await page.evaluate(() => Mochi.Storage.library.list().map((e) => e.name));
     check('renaming to an existing name adds 1', names.includes(other[1] + '1') && names.length === 2, JSON.stringify(names));
-    await page.tap('#home-settings');
+    await page.tap('#home-menu'); await page.tap('#drawer-settings');
     check('settings dialog opens', await vis(page, '#settings-dialog'));
     check('settings shows the version', /v1\.\d+\.\d+/.test(await page.textContent('#set-about')), await page.textContent('#set-about'));
     await page.tap('#settings-close');
@@ -344,14 +358,14 @@ const vis = (page, sel) => page.locator(sel).isVisible();
     await page.waitForTimeout(800);
 
     // appearance
-    await page.tap('#home-settings');
+    await page.tap('#home-menu'); await page.tap('#drawer-settings');
     await page.tap('#set-theme [data-theme-opt=dark]');
     check('dark mode applies', (await page.evaluate(() => document.documentElement.dataset.theme)) === 'dark');
     await page.screenshot({ path: SP + 'settings-dark.png' });
     await page.tap('#settings-close');
     await page.screenshot({ path: SP + 'home-dark.png' });
     check('theme is remembered', (await page.evaluate(() => JSON.parse(localStorage.getItem('mochipixelu:prefs')).theme)) === 'dark');
-    await page.tap('#home-settings');
+    await page.tap('#home-menu'); await page.tap('#drawer-settings');
     await page.tap('#set-theme [data-theme-opt=light]');
     await page.tap('#settings-close');
     check('light mode applies', (await page.evaluate(() => document.documentElement.dataset.theme)) === 'light');

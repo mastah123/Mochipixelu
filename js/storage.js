@@ -12,6 +12,7 @@
   const KEY_LIBRARY = 'mochipixelu:library';
   const KEY_PROJECT = 'mochipixelu:project:';
   const KEY_PREFS = 'mochipixelu:prefs';
+  const KEY_FOLDERS = 'mochipixelu:folders';
 
   /* ---------- (de)serialisation ---------- */
 
@@ -249,12 +250,27 @@
         if (name) e.folder = name;
         else delete e.folder;
       });
+      const stored = read(KEY_FOLDERS);
+      if (Array.isArray(stored)) write(KEY_FOLDERS, stored.filter((x) => x !== from).concat(name && !stored.includes(name) ? [name] : []));
       return write(KEY_LIBRARY, list) ? { ok: true } : { ok: false, error: 'Browser storage is full or unavailable.' };
     },
 
     /** Names of the folders in use, A–Z. */
     folders() {
-      return Array.from(new Set(S.library.list().filter((e) => e.folder && !e.trashed).map((e) => e.folder))).sort((a, b) => a.localeCompare(b));
+      const stored = read(KEY_FOLDERS);
+      const names = new Set(Array.isArray(stored) ? stored.filter((x) => typeof x === 'string') : []);
+      S.library.list().forEach((e) => e.folder && !e.trashed && names.add(e.folder));
+      return Array.from(names).sort((a, b) => a.localeCompare(b));
+    },
+
+    /** Create an empty folder (it stays until removed). */
+    addFolder(name) {
+      const n = String(name || '').trim().slice(0, 30);
+      if (!n) return { ok: false, error: 'Give the folder a name.' };
+      const stored = read(KEY_FOLDERS);
+      const list = Array.isArray(stored) ? stored.slice() : [];
+      if (!S.library.folders().some((f) => f.toLowerCase() === n.toLowerCase())) list.push(n);
+      return write(KEY_FOLDERS, list) ? { ok: true, name: S.library.folders().find((f) => f.toLowerCase() === n.toLowerCase()) || n } : { ok: false, error: 'Browser storage is full or unavailable.' };
     },
 
     load(id) {

@@ -10,6 +10,15 @@ Versions follow [Semantic Versioning](https://semver.org/): `MAJOR.MINOR.PATCH`.
 
 Examples are illustrative; the real versions are listed below. Documentation-only, test-only and refactoring changes do not automatically bump the version.
 
+## [1.15.0] — 2026-10-26 (finalized in the working tree; not tagged or published)
+
+### Added
+- Side drawer from the menu button (a permanent left rail on desktop): All patterns, Pinned, Archive, Trash and Settings with counts; a Folders list (first four, Show all / Show less) with "+ New folder"; and Progress views (In progress, Finished, Not started). The heading above the patterns follows the chosen view.
+- Folders can now be created empty and stay until removed (`Storage.library.addFolder`).
+
+### Changed
+- The filter chips under "My patterns" were removed; their views live in the drawer. Settings moved into the drawer.
+
 ## [1.14.0] — 2026-10-26 (finalized in the working tree; not tagged or published)
 
 ### Changed

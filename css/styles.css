@@ -773,3 +773,34 @@ input[type="text"], input[type="number"], select { border: 1.5px solid var(--hai
 .fab .ic { width: 24px; height: 24px; }
 .fab-label { white-space: nowrap; }
 .fab-wrap { align-items: flex-end; }
+
+/* ===== 1.15.0: side drawer (phone: slides in; desktop: permanent left rail) ===== */
+.drawer {
+  position: fixed; top: 0; bottom: 0; left: 0; width: min(310px, 86vw); z-index: 30; overflow-y: auto; padding: 18px 12px 24px;
+  background: var(--card); border-radius: 0 24px 24px 0; box-shadow: 0 0 40px rgb(var(--shadow) / .35);
+  transform: translateX(-105%); visibility: hidden; transition: transform .22s ease, visibility 0s .22s;
+}
+.drawer.open { transform: none; visibility: visible; transition: transform .22s ease; }
+#drawer-scrim { z-index: 29; }
+.drawer-brand { display: flex; align-items: center; gap: 12px; padding: 4px 12px 14px; font-weight: 800; font-size: 1.4rem; }
+.drawer-nav { display: flex; flex-direction: column; gap: 2px; }
+.drawer-nav button {
+  display: flex; align-items: center; gap: 16px; width: 100%; min-height: 50px; padding: 6px 14px; border: 0; border-radius: 16px;
+  background: transparent; font: inherit; font-size: 1.05rem; color: var(--ink); text-align: left; cursor: pointer;
+}
+.drawer-nav button:hover { background: var(--paper-2); }
+.drawer-nav button[aria-current="true"] { background: var(--pill); font-weight: 700; }
+.drawer-nav .ic { stroke-width: 1.6; }
+.drawer-nav .dl { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.drawer-nav .dc { color: var(--ink-soft); font-size: .95rem; }
+.drawer-sec { display: flex; align-items: center; justify-content: space-between; padding: 18px 14px 6px; font-size: .78rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-soft); }
+.linkbtn { border: 0; background: transparent; font: inherit; font-size: .9rem; letter-spacing: 0; text-transform: none; font-weight: 600; color: var(--berry); cursor: pointer; padding: 6px 4px; }
+.drawer-more { margin-left: 10px; }
+@media (min-width: 900px) {
+  .drawer { transform: none; visibility: visible; width: 270px; border-radius: 0; box-shadow: none; border-right: 1px solid var(--hair); }
+  #screen-home .home-top, #screen-home .home-main, #screen-home .home-search { margin-left: 270px; max-width: none; width: auto; }
+  #screen-home .home-top { padding-left: 28px; padding-right: 28px; }
+  #home-menu { visibility: hidden; }
+  #drawer-scrim { display: none; }
+}
+#home-search-btn { margin-left: auto; }

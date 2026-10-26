@@ -231,8 +231,7 @@
         const list = live;
         const total = all.length;
         $('home-empty').hidden = total > 0;
-        $('home-filters').hidden = total === 0;
-        $('home-grid').hidden = total === 0;
+                $('home-grid').hidden = total === 0;
         $('home-count').hidden = total === 0;
         $('home-count').textContent = live.length + (live.length === 1 ? ' pattern' : ' patterns');
 
@@ -262,6 +261,7 @@
         let shown;
         if (filter === 'archive') shown = all.filter((e) => e.archived && !e.trashed);
         else if (filter === 'trash') shown = all.filter((e) => e.trashed);
+        else if (filter === 'pinned') shown = live.filter((e) => e.pinned);
         else if (/^f:/.test(filter)) shown = live.filter((e) => e.folder === filter.slice(2));
         else shown = filter === 'all' ? live : live.filter((e) => state(e) === filter);
         if (query) shown = shown.filter((e) => e.name.toLowerCase().includes(query));
@@ -291,7 +291,7 @@
             M.Router.go('#/p/' + cont.id);
           };
         }
-        document.querySelectorAll('#home-filters .chipbtn[data-filter]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.filter === filter)));
+        renderDrawer(all, live, folders);
       };
       app.renderHome = render;
 
@@ -317,11 +317,65 @@
         render();
         app.toast('Folder removed');
       });
-      $('home-filters').addEventListener('click', (e) => {
-        const b = e.target.closest('[data-filter]');
-        if (!b) return;
-        filter = b.dataset.filter;
+      /* ---------- side drawer: views, folders, progress, settings ---------- */
+      const drawer = $('drawer');
+      let showAllFolders = false;
+      const wide = () => window.matchMedia('(min-width: 900px)').matches;
+      const setDrawer = (open) => {
+        drawer.classList.toggle('open', open);
+        $('drawer-scrim').hidden = !open || wide();
+        $('home-menu').setAttribute('aria-expanded', String(open));
+      };
+      const TITLES = { all: 'My patterns', pinned: 'Pinned', archive: 'Archive', trash: 'Trash', progress: 'In progress', done: 'Finished', new: 'Not started' };
+      const renderDrawer = (all, live, folders) => {
+        const count = (id, n) => ($(id).textContent = n ? String(n) : '');
+        count('dc-all', live.length);
+        count('dc-pinned', live.filter((e) => e.pinned).length);
+        count('dc-archive', all.filter((e) => e.archived && !e.trashed).length);
+        count('dc-trash', all.filter((e) => e.trashed).length);
+        count('dc-progress', live.filter((e) => state(e) === 'progress').length);
+        count('dc-done', live.filter((e) => state(e) === 'done').length);
+        count('dc-new', live.filter((e) => state(e) === 'new').length);
+        const host = $('drawer-folders');
+        host.textContent = '';
+        const cap = showAllFolders ? folders.length : 4;
+        folders.slice(0, cap).forEach((f) => {
+          const b = el('button');
+          b.type = 'button';
+          b.dataset.view = 'f:' + f;
+          b.innerHTML = '<svg class="ic"><use href="#i-folder"/></svg>';
+          b.append(el('span', 'dl', f), el('span', 'dc', String(live.filter((e) => e.folder === f).length || '')));
+          host.appendChild(b);
+        });
+        $('drawer-showall').hidden = folders.length <= 4;
+        $('drawer-showall').textContent = showAllFolders ? 'Show less' : 'Show all';
+        drawer.querySelectorAll('[data-view]').forEach((b) => b.setAttribute('aria-current', String(b.dataset.view === filter)));
+        $('home-title').textContent = /^f:/.test(filter) ? filter.slice(2) : TITLES[filter] || 'My patterns';
+      };
+      $('home-menu').addEventListener('click', () => setDrawer(!drawer.classList.contains('open')));
+      $('drawer-scrim').addEventListener('click', () => setDrawer(false));
+      document.addEventListener('keydown', (e) => e.key === 'Escape' && drawer.classList.contains('open') && setDrawer(false));
+      $('drawer-showall').addEventListener('click', () => {
+        showAllFolders = !showAllFolders;
         render();
+      });
+      $('drawer-newfolder').addEventListener('click', async () => {
+        const name = await app.askText({ title: 'New folder', label: 'Folder name', value: '', okLabel: 'Create' });
+        if (name === null || !name.trim()) return;
+        const r = M.Storage.library.addFolder(name);
+        if (!r.ok) return app.toast(r.error, true);
+        filter = 'f:' + r.name;
+        setDrawer(false);
+        render();
+      });
+      drawer.addEventListener('click', (e) => {
+        const b = e.target.closest('[data-view]');
+        if (!b) return;
+        filter = b.dataset.view;
+        if (searchBox && !searchBox.hidden) setSearch(false);
+        setDrawer(false);
+        render();
+        $('home-main').scrollTop = 0;
       });
 
       /* ---------- search ---------- */
@@ -440,7 +494,8 @@
 
       /* ---------- settings ---------- */
       const sdlg = $('settings-dialog');
-      $('home-settings').addEventListener('click', () => {
+      $('drawer-settings').addEventListener('click', () => {
+        setDrawer(false);
         const list = M.Storage.library.list();
         let bytes = 0;
         try {
@@ -463,7 +518,7 @@
         app.applyTheme(b.dataset.themeOpt, true);
         syncTheme();
       });
-      $('home-settings').addEventListener('click', syncTheme);
+      $('drawer-settings').addEventListener('click', syncTheme);
       $('set-open').addEventListener('click', () => {
         sdlg.close();
         $('file-project').click();

@@ -144,8 +144,28 @@
 
 <!-- ============================ HOME ============================ -->
 <section id="screen-home" class="screen home" hidden>
+  <div id="drawer-scrim" class="scrim" hidden></div>
+  <aside id="drawer" class="drawer" aria-label="Menu">
+    <div class="drawer-brand"><svg class="ic mascot" viewBox="0 0 40 36" aria-hidden="true"><use href="#i-mochi"/></svg><span>Mochipixelu</span></div>
+    <nav class="drawer-nav" id="drawer-nav">
+      <button data-view="all"><svg class="ic"><use href="#i-design"/></svg><span class="dl">All patterns</span><span class="dc" id="dc-all"></span></button>
+      <button data-view="pinned"><svg class="ic"><use href="#i-pin"/></svg><span class="dl">Pinned</span><span class="dc" id="dc-pinned"></span></button>
+      <button data-view="archive"><svg class="ic"><use href="#i-archive"/></svg><span class="dl">Archive</span><span class="dc" id="dc-archive"></span></button>
+      <button data-view="trash"><svg class="ic"><use href="#i-trash"/></svg><span class="dl">Trash</span><span class="dc" id="dc-trash"></span></button>
+      <button id="drawer-settings"><svg class="ic"><use href="#i-sliders"/></svg><span class="dl">Settings</span></button>
+    </nav>
+    <div class="drawer-sec"><span>Folders</span><button id="drawer-newfolder" class="linkbtn">+ New folder</button></div>
+    <nav class="drawer-nav" id="drawer-folders"></nav>
+    <button id="drawer-showall" class="linkbtn drawer-more" hidden>Show all</button>
+    <div class="drawer-sec"><span>Progress</span></div>
+    <nav class="drawer-nav" id="drawer-progress">
+      <button data-view="progress"><svg class="ic"><use href="#i-highlight"/></svg><span class="dl">In progress</span><span class="dc" id="dc-progress"></span></button>
+      <button data-view="done"><svg class="ic"><use href="#i-mark"/></svg><span class="dl">Finished</span><span class="dc" id="dc-done"></span></button>
+      <button data-view="new"><svg class="ic"><use href="#i-newfile"/></svg><span class="dl">Not started</span><span class="dc" id="dc-new"></span></button>
+    </nav>
+  </aside>
   <header class="home-top">
-    <button id="home-settings" class="btn icon-btn" aria-label="Menu and settings"><svg class="ic"><use href="#i-menu"/></svg></button>
+    <button id="home-menu" class="btn icon-btn" aria-label="Open menu" aria-expanded="false"><svg class="ic"><use href="#i-menu"/></svg></button>
     <h1 class="sr-only">Mochipixelu</h1>
     <button id="home-search-btn" class="btn icon-btn" aria-label="Search patterns" aria-expanded="false"><svg class="ic"><use href="#i-search"/></svg></button>
   </header>
@@ -162,16 +182,8 @@
 
     <section id="home-library">
       <div class="home-bar">
-        <h2 class="sec">My patterns</h2>
+        <h2 class="sec" id="home-title">My patterns</h2>
         <span id="home-count" class="chip"></span>
-      </div>
-      <div class="filters" id="home-filters" role="group" aria-label="Filter patterns">
-        <button class="chipbtn" data-filter="all" aria-pressed="true">All</button>
-        <button class="chipbtn" data-filter="progress" aria-pressed="false">In progress</button>
-        <button class="chipbtn" data-filter="done" aria-pressed="false">Finished</button>
-        <button class="chipbtn" data-filter="new" aria-pressed="false">Not started</button>
-        <button class="chipbtn" data-filter="archive" aria-pressed="false">Archive</button>
-        <button class="chipbtn" data-filter="trash" aria-pressed="false">Trash</button>
       </div>
       <div id="home-folder-tiles" class="folder-tiles" hidden></div>
       <div id="folder-head" class="folder-head" hidden>
