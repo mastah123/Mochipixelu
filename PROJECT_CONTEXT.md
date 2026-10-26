@@ -111,3 +111,16 @@ Batch E — menus: (1) long-press menu narrower (~200px, anchored to the card); 
 Batch F — folders: (3) an easy-to-reach folder view on home: folder tiles with counts, tap to open a folder, back, rename/remove folder.
 Batch G — pattern view + theme: (4) fixed bottom bar in the pattern view like the editor dock (mode, guide, legend, highlight); (5) the theme also tints the artwork surface in the editor (canvas surround, empty cells, dock), not only the header.
 All mobile-first, adapting to desktop.
+
+## Queued changes (requested 2026-10-26, from two MochiNote screenshots, not built yet)
+Reference: MochiNote drawer (All / Pinned / Archive / Trash / Settings with counts, Folders list with counts, "+ New folder", "Show all") and its home (hamburger + search, a "Your space" header card, a Folders row of colored tiles with "Show all" and a list/grid toggle, "Recent notes" with sort and list/grid toggle, extended "+ New note" button).
+Batch H — navigation: side drawer opened by a hamburger (All patterns, Pinned, Archive, Trash, Settings with counts; folders list with counts, "+ New folder", "Show all"); Archive / Trash / folder chips leave the filter row; Pinned becomes a view. Drawer is a permanent sidebar on desktop.
+Batch I — home layout: top bar with hamburger + search (name search); an editable "Your space" header card; Folders row of colored tiles (0-pattern folders allowed, folder color) with Show all and list/grid toggle; "Recent patterns" with sort (recent / name / progress) and list/grid toggle; extended "+ New pattern" button.
+Batch J — folders: create empty folders ("+ New folder"), folder colors, rename and delete from the drawer.
+All mobile-first, adapting to desktop.
+
+## Queued changes (requested 2026-10-26, home page redesign after the MochiNote reference, not built yet)
+Batch H — home shell: top bar with a menu button (left) and search (right) instead of the logo header and gear; an editable "Your space" banner card (small label, title, subtitle, pencil to edit; stored in prefs); the + button becomes an extended "+ New pattern" button that still opens the speed dial.
+Batch I — side drawer: opens from the menu button. All patterns (count), Pinned (count), Archive, Trash (count), Settings; a Folders list with counts, "+ New folder" and "Show all"; replaces the filter chips (progress states move to a sort/filter menu). Drawer on phones, permanent left rail on desktop.
+Batch J — home sections: "Folders" row of colored tiles (name, count, "Show all", list/grid toggle) and "Recent patterns" (sort button, list/grid toggle, pinned first); search filters by name. Tags are NOT planned (patterns have none) unless requested.
+All mobile-first, adapting to desktop.

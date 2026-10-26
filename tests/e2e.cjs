@@ -285,6 +285,15 @@ const vis = (page, sel) => page.locator(sel).isVisible();
     await page.waitForTimeout(250);
     check('removing the folder keeps the patterns', (await page.locator('.folder-tile').count()) === 0 && (await page.locator('#home-grid .card').count()) === 1);
 
+    // search
+    await page.tap('#home-search-btn');
+    await page.fill('#home-search-input', 'zzzz-nothing');
+    check('search with no match shows the empty message', (await page.locator('#home-grid .card').count()) === 0 && (await vis(page, '#home-nomatch')));
+    await page.fill('#home-search-input', '');
+    check('clearing the search brings the patterns back', (await page.locator('#home-grid .card').count()) >= 1);
+    await page.tap('#home-search-clear');
+    check('closing search hides the box', !(await vis(page, '#home-search')));
+
     // long-press options, duplicate names, settings
     await screenIs(page, 'home');
     await page.evaluate(() => { Mochi.Storage.library.save(Mochi.Design.create(4, 4, Mochi.Utils.EMPTY, 'Zed')); mochipixelu.renderHome(); });

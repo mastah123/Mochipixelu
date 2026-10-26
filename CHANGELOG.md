@@ -10,6 +10,13 @@ Versions follow [Semantic Versioning](https://semver.org/): `MAJOR.MINOR.PATCH`.
 
 Examples are illustrative; the real versions are listed below. Documentation-only, test-only and refactoring changes do not automatically bump the version.
 
+## [1.14.0] — 2026-10-26 (finalized in the working tree; not tagged or published)
+
+### Changed
+- Home top bar: a menu button on the left (opens Settings until the side drawer arrives) and a search button on the right; the logo header and gear are gone. Search filters patterns by name.
+- "Continue stitching" is now a large banner card (label, pattern name, progress, thumbnail on the right) in place of the planned "Your space" card; it shows on the All view only.
+- The + button is an extended "+ New pattern" button; it still opens the same speed dial.
+
 ## [1.13.0] — 2026-10-26 (finalized in the working tree; not tagged or published)
 
 ### Changed

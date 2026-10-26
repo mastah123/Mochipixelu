@@ -123,6 +123,8 @@
     <symbol id="i-print" viewBox="0 0 24 24"><rect x="6.5" y="3.5" width="11" height="6" fill="none"/><rect x="3.5" y="9.5" width="17" height="8" rx="2.5" fill="none"/><rect x="7" y="14" width="10" height="6.5" fill="none"/><circle cx="17" cy="12.3" r=".9" fill="currentColor" stroke="none"/></symbol>
     <symbol id="i-redo-arrow" viewBox="0 0 24 24"><path d="M19.5 12a7.5 7.5 0 1 1-2.4-5.5"/><path d="M19.8 4.5v4.2h-4.2"/></symbol>
     <symbol id="i-trash" viewBox="0 0 24 24"><path d="M5 7h14M10 7V4.8h4V7"/><path d="M6.8 7l.8 12.2h8.8L17.2 7" fill="none"/><path d="M10.3 10.5v5.5M13.7 10.5v5.5"/></symbol>
+    <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 8h16M4 15h10"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4 4"/></symbol>
     <symbol id="i-pin" viewBox="0 0 24 24"><path d="M9 4.5h6l-.7 5 3.2 3.5H6.5L9.7 9.5 9 4.5z"/><path d="M12 13v6.5"/></symbol>
     <symbol id="i-folder" viewBox="0 0 24 24"><path d="M4 7.5a1.8 1.8 0 0 1 1.8-1.8h3.6l2 2.2h6.8A1.8 1.8 0 0 1 20 9.7v7.5a1.8 1.8 0 0 1-1.8 1.8H5.8A1.8 1.8 0 0 1 4 17.2V7.5z"/></symbol>
     <symbol id="i-archive" viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="4" rx="1.2"/><path d="M5.5 9v8.2a1.8 1.8 0 0 0 1.8 1.8h9.4a1.8 1.8 0 0 0 1.8-1.8V9M10 13h4"/></symbol>
@@ -143,17 +145,18 @@
 <!-- ============================ HOME ============================ -->
 <section id="screen-home" class="screen home" hidden>
   <header class="home-top">
-    <svg class="ic mascot" viewBox="0 0 40 36" aria-hidden="true"><use href="#i-mochi"/></svg>
-    <div>
-      <h1>Mochipixelu</h1>
-      <p class="tagline">your pixel pattern box</p>
-    </div>
-    <button id="home-settings" class="btn icon-btn" aria-label="Settings"><svg class="ic"><use href="#i-gear"/></svg></button>
+    <button id="home-settings" class="btn icon-btn" aria-label="Menu and settings"><svg class="ic"><use href="#i-menu"/></svg></button>
+    <h1 class="sr-only">Mochipixelu</h1>
+    <button id="home-search-btn" class="btn icon-btn" aria-label="Search patterns" aria-expanded="false"><svg class="ic"><use href="#i-search"/></svg></button>
   </header>
+  <div id="home-search" class="home-search" hidden>
+    <svg class="ic sm" aria-hidden="true"><use href="#i-search"/></svg>
+    <input id="home-search-input" type="search" placeholder="Search patterns" aria-label="Search patterns" autocomplete="off">
+    <button id="home-search-clear" class="btn small icon-btn" aria-label="Close search"><svg class="ic sm"><use href="#i-close"/></svg></button>
+  </div>
 
   <main class="home-main" id="home-main">
     <section id="home-continue" hidden>
-      <h2 class="sec">Continue stitching</h2>
       <button id="continue-card" class="continue-card" type="button"></button>
     </section>
 
@@ -201,7 +204,7 @@
       <button class="btn fab-item" data-home="import"><svg class="ic sm"><use href="#i-image"/></svg>Import image</button>
       <button class="btn fab-item" data-home="open"><svg class="ic sm"><use href="#i-upload"/></svg>Open file</button>
     </div>
-    <button id="fab" class="fab" type="button" aria-label="Add a pattern" aria-expanded="false"><svg class="ic"><use href="#i-plus"/></svg></button>
+    <button id="fab" class="fab" type="button" aria-label="Add a pattern" aria-expanded="false"><svg class="ic"><use href="#i-plus"/></svg><span class="fab-label">New pattern</span></button>
   </div>
 </section>
 

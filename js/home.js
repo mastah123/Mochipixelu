@@ -19,6 +19,7 @@
     init(app) {
       const $ = app.$;
       let filter = 'all';
+      let query = '';
 
       let ignoreClickUntil = 0;
       let continueEntry = null; // what the "Keep stitching" card currently shows
@@ -238,7 +239,7 @@
         const inFolder = /^f:/.test(filter);
         const tiles = $('home-folder-tiles');
         tiles.textContent = '';
-        tiles.hidden = !(filter === 'all' && folders.length);
+        tiles.hidden = !(filter === 'all' && folders.length && !query);
         folders.forEach((f) => {
           const n = live.filter((e) => e.folder === f).length;
           const t = el('button', 'folder-tile');
@@ -263,30 +264,27 @@
         else if (filter === 'trash') shown = all.filter((e) => e.trashed);
         else if (/^f:/.test(filter)) shown = live.filter((e) => e.folder === filter.slice(2));
         else shown = filter === 'all' ? live : live.filter((e) => state(e) === filter);
+        if (query) shown = shown.filter((e) => e.name.toLowerCase().includes(query));
         shown = shown.filter((e) => e.pinned).concat(shown.filter((e) => !e.pinned));
         $('home-grid').textContent = '';
         shown.forEach((e) => $('home-grid').appendChild(card(e)));
         $('home-nomatch').hidden = !(total > 0 && shown.length === 0);
-        $('home-nomatch').textContent = filter === 'trash' ? 'Trash is empty.' : filter === 'archive' ? 'Nothing archived.' : 'No patterns in this group yet.';
+        $('home-nomatch').textContent = query ? 'No pattern matches “' + query + '”.' : filter === 'trash' ? 'Trash is empty.' : filter === 'archive' ? 'Nothing archived.' : 'No patterns in this group yet.';
 
         const cont = list.find((e) => state(e) === 'progress');
-        $('home-continue').hidden = !cont;
+        $('home-continue').hidden = !cont || filter !== 'all' || !!query;
         continueEntry = cont || null;
         const cc = $('continue-card');
         cc.textContent = '';
         if (cont) {
           const info = el('div', 'info');
-          info.append(el('div', 'name', cont.name), el('div', 'meta', pct(cont) + '% stitched · ' + metaText(cont)));
           const bar = el('span', 'mini');
           bar.appendChild(el('i'));
           bar.firstChild.style.width = pct(cont) + '%';
-          const go = el('span', 'go');
-          go.innerHTML = '<svg class="ic sm"><use href="#i-highlight"/></svg>';
-          go.appendChild(document.createTextNode('Keep stitching'));
-          info.append(bar, go);
+          info.append(el('div', 'kicker', 'Continue stitching'), el('div', 'name', cont.name), el('div', 'meta', pct(cont) + '% stitched · ' + metaText(cont)), bar);
           if (cont.theme && cont.theme !== 'white') cc.dataset.tone = cont.theme;
           else delete cc.dataset.tone;
-          cc.append(matMini(cont), info);
+          cc.append(info, matMini(cont));
           continueEntry = cont;
           cc.onclick = () => {
             if (Date.now() < ignoreClickUntil) return;
@@ -325,6 +323,26 @@
         filter = b.dataset.filter;
         render();
       });
+
+      /* ---------- search ---------- */
+      const searchBox = $('home-search');
+      const setSearch = (open) => {
+        searchBox.hidden = !open;
+        $('home-search-btn').setAttribute('aria-expanded', String(open));
+        if (open) $('home-search-input').focus();
+        else {
+          $('home-search-input').value = '';
+          query = '';
+          render();
+        }
+      };
+      $('home-search-btn').addEventListener('click', () => setSearch(searchBox.hidden));
+      $('home-search-clear').addEventListener('click', () => setSearch(false));
+      $('home-search-input').addEventListener('input', (e) => {
+        query = e.target.value.trim().toLowerCase();
+        render();
+      });
+      $('home-search-input').addEventListener('keydown', (e) => e.key === 'Escape' && setSearch(false));
 
       /* ---------- + speed dial ---------- */
       const fab = $('fab');
