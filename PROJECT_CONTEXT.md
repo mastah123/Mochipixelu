@@ -105,3 +105,9 @@ Tests to add with each batch: e2e for the RGB picker input, tool deselect, no fu
 
 ## 1.9.0
 - Library entries carry optional `theme`, `pinned`, `folder`, `archived`, `trashed` (Storage.library.setMeta/folders). Project file format unchanged. ⋯ menu in index.html `#opt-menu`, logic in js/panels.js; folder picker is `app.pickFolder` in js/home.js. Tones are CSS vars `--tone-*` applied through `data-tone`.
+
+## Queued changes (requested 2026-10-26, not built yet)
+Batch E — menus: (1) long-press menu narrower (~200px, anchored to the card); (2) options become Pin, Rename, Copy, Move, Archive, Delete (Copy = duplicate with fresh progress, Move = folder picker, Delete = to Trash; Trash view keeps Restore / Delete forever).
+Batch F — folders: (3) an easy-to-reach folder view on home: folder tiles with counts, tap to open a folder, back, rename/remove folder.
+Batch G — pattern view + theme: (4) fixed bottom bar in the pattern view like the editor dock (mode, guide, legend, highlight); (5) the theme also tints the artwork surface in the editor (canvas surround, empty cells, dock), not only the header.
+All mobile-first, adapting to desktop.

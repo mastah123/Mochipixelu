@@ -10,6 +10,11 @@ Versions follow [Semantic Versioning](https://semver.org/): `MAJOR.MINOR.PATCH`.
 
 Examples are illustrative; the real versions are listed below. Documentation-only, test-only and refactoring changes do not automatically bump the version.
 
+## [1.11.0] — 2026-10-26 (finalized in the working tree; not tagged or published)
+
+### Changed
+- The long-press menu is narrow (about 190px) and lists Pin, Rename, Copy, Move, Archive, Delete. Open was dropped (tapping the card opens it). Copy = duplicate with fresh progress; Move opens the folder picker; Delete moves to Trash (Trash keeps Restore and Delete forever).
+
 ## [1.10.0] — 2026-10-26 (finalized in the working tree; not tagged or published)
 
 ### Added

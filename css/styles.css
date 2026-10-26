@@ -706,3 +706,9 @@ input[type="text"], input[type="number"], select { border: 1.5px solid var(--hai
 .menu .tone-sw[data-tone="pink"] { background: var(--tone-pink); }
 .menu .tone-sw[data-tone="lavender"] { background: var(--tone-lavender); }
 .menu .tone-sw[aria-checked="true"] { border: 2px solid var(--berry); }
+
+/* ===== 1.11.0: compact long-press menu ===== */
+#card-menu { width: min(190px, 62vw); padding: 6px 0; border-radius: 16px; }
+#card-menu .ctx-title { padding: 6px 16px 4px; font-size: .8rem; }
+#card-menu button { min-height: 42px; gap: 14px; padding: 6px 16px; font-size: .98rem; }
+#card-menu .ic { width: 20px; height: 20px; stroke-width: 1.6; }

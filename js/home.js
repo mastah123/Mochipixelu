@@ -103,9 +103,7 @@
             render();
           }, 'danger');
         } else {
-          item('i-eye', 'Open', () => M.Router.go('#/p/' + entry.id));
           item('i-pin', entry.pinned ? 'Unpin' : 'Pin', () => meta({ pinned: !entry.pinned }));
-          item('i-folder', 'Move to folder…', () => app.pickFolder(entry.id, render));
           item('i-pencil', 'Rename', async () => {
             const name = await app.askText({ title: 'Rename pattern', label: 'Name', value: entry.name });
             if (name === null) return;
@@ -113,14 +111,15 @@
             if (!r.ok) app.toast(r.error, true);
             render();
           });
-          item('i-copy', 'Duplicate', () => {
+          item('i-copy', 'Copy', () => {
             const r = M.Storage.library.duplicate(entry.id);
             if (!r.ok) return app.toast(r.error, true);
-            app.toast('Duplicated — the copy starts with fresh progress');
+            app.toast('Copied — the copy starts with fresh progress');
             render();
           });
+          item('i-folder', 'Move', () => app.pickFolder(entry.id, render));
           item('i-archive', entry.archived ? 'Unarchive' : 'Archive', () => meta({ archived: !entry.archived }, entry.archived ? 'Moved back' : 'Archived'));
-          item('i-trash', 'Move to Trash', () => meta({ trashed: true }, 'Moved to Trash'), 'danger');
+          item('i-trash', 'Delete', () => meta({ trashed: true }, 'Moved to Trash'), 'danger');
         }
 
         menuCard = cardEl;

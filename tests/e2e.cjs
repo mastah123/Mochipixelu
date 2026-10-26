@@ -277,10 +277,11 @@ const vis = (page, sel) => page.locator(sel).isVisible();
     }, [bb.x + bb.width / 2, bb.y + bb.height / 2]);
     await page.waitForTimeout(700);
     check('long press opens the options menu', await vis(page, '#card-menu'));
-    check('menu has Open / Pin / Folder / Rename / Duplicate / Archive / Trash', (await page.locator('#card-menu button').allTextContents()).join('|') === 'Open|Pin|Move to folder…|Rename|Duplicate|Archive|Move to Trash', (await page.locator('#card-menu button').allTextContents()).join('|'));
+    check('menu has Pin / Rename / Copy / Move / Archive / Delete', (await page.locator('#card-menu button').allTextContents()).join('|') === 'Pin|Rename|Copy|Move|Archive|Delete', (await page.locator('#card-menu button').allTextContents()).join('|'));
     await page.screenshot({ path: SP + 'home-longpress.png' });
     await page.evaluate(() => document.getElementById('home-grid').querySelector('.card').dispatchEvent(new PointerEvent('pointerup', { bubbles: true, pointerType: 'touch', pointerId: 7 })));
     check('releasing does not open the pattern', (await page.evaluate(() => document.body.dataset.screen)) === 'home');
+    check('long-press menu is narrow', (await page.locator('#card-menu').boundingBox()).width <= 200, (await page.locator('#card-menu').boundingBox()).width);
     await page.locator('#card-menu button', { hasText: 'Rename' }).tap();
     const other = await page.evaluate(() => Mochi.Storage.library.list().map((e) => e.name));
     await page.fill('#text-input', other[1]); // the other pattern's name
@@ -309,7 +310,7 @@ const vis = (page, sel) => page.locator(sel).isVisible();
     const cc = await page.locator('#continue-card').boundingBox();
     await page.evaluate(([x, y]) => document.elementFromPoint(x, y).dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, pointerId: 9, pointerType: 'touch', isPrimary: true, clientX: x, clientY: y, button: 0 })), [cc.x + cc.width / 2, cc.y + cc.height / 2]);
     await page.waitForTimeout(700);
-    check('long press on Keep stitching opens the same options', (await vis(page, '#card-menu')) && (await page.locator('#card-menu button').count()) === 7);
+    check('long press on Keep stitching opens the same options', (await vis(page, '#card-menu')) && (await page.locator('#card-menu button').count()) === 6);
     await page.evaluate(() => document.getElementById('card-scrim').click());
     await page.waitForTimeout(800);
 
