@@ -869,3 +869,11 @@ input[type="text"], input[type="number"], select { border: 1.5px solid var(--hai
   .tool .dot { width: 20px; height: 20px; }
   .tool .tl { font-size: .66rem; line-height: 1.1; }
 }
+
+/* ===== 1.21.0: pattern view bar like the editor's, fixed-height info line ===== */
+.view-selected { height: 30px; overflow: hidden; white-space: nowrap; }
+.view-selected #view-info-text, .view-selected #edit-info-text { overflow: hidden; text-overflow: ellipsis; }
+.vtools { gap: 2px; padding: 3px 6px 4px; }
+.vtool { min-height: 46px; padding: 2px; gap: 2px; font-size: .66rem; line-height: 1.1; }
+.vtool .ic { width: 20px; height: 20px; }
+.legend-dock .chips-scroll[hidden], #view-legend[hidden] { display: none; }

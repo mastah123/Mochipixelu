@@ -46,7 +46,6 @@
         settings.tool = tool;
         document.body.dataset.tool = tool;
         document.querySelectorAll('.tool[data-tool]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.tool === tool)));
-        $('hud-pan').setAttribute('aria-pressed', String(tool === 'pan'));
         Array.from(scroller.classList)
           .filter((c) => c.startsWith('tool-'))
           .forEach((c) => scroller.classList.remove(c));
@@ -56,8 +55,6 @@
 
       // tapping the active tool again deselects it (no tool: dragging just moves the view)
       document.querySelectorAll('.tool[data-tool]').forEach((b) => b.addEventListener('click', () => app.setTool(settings.tool === b.dataset.tool ? 'none' : b.dataset.tool)));
-      const togglePan = () => app.setTool(settings.tool === 'pan' ? previousTool : 'pan');
-      $('hud-pan').addEventListener('click', togglePan);
 
       /* ---------- color ---------- */
       app.setColor = (color) => {
@@ -268,8 +265,6 @@
       });
 
       /* ---------- zoom + view toggles ---------- */
-      $('zoom-in').addEventListener('click', () => vp.zoomBy(1));
-      $('zoom-out').addEventListener('click', () => vp.zoomBy(-1));
       $('zoom-range').addEventListener('input', (e) => vp.setZoom(Number(e.target.value)));
       $('zoom-fit').addEventListener('click', vp.fit);
       $('toggle-grid').addEventListener('change', (e) => {

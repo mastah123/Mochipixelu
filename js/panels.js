@@ -275,10 +275,16 @@
           refreshCraft();
         }
         legendPop.hidden = !open;
+        if (open) setChips(true);
         syncNav();
       };
+      const setChips = (show) => {
+        $('legend-list').hidden = !show;
+        $('legend-hide').textContent = show ? 'Hide' : 'Show';
+        $('legend-hide').setAttribute('aria-expanded', String(show));
+      };
       $('dock-legend').addEventListener('click', () => app.setLegend(legendPop.hidden));
-      $('legend-hide').addEventListener('click', () => app.setLegend(false));
+      $('legend-hide').addEventListener('click', () => setChips($('legend-list').hidden));
       $('dock-color').addEventListener('click', () => {
         if (!pop.hidden) return closePop();
         app.closeSheet();

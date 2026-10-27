@@ -10,6 +10,15 @@ Versions follow [Semantic Versioning](https://semver.org/): `MAJOR.MINOR.PATCH`.
 
 Examples are illustrative; the real versions are listed below. Documentation-only, test-only and refactoring changes do not automatically bump the version.
 
+## [1.21.0] — 2026-10-27 (finalized in the working tree; not tagged or published)
+
+### Changed
+- Pattern view bottom bar: the buttons are now the same height as the editor's; they release each other — picking a mode closes the legend, opening the legend releases the mode, and tapping the active mode releases it (with no mode a tap does nothing; dragging still moves the view).
+- The legend's Hide / Show button now folds only the color chips (editor and pattern view); the Legend button and the legend header stay.
+- The selected-stitch line (pattern view and editor) has one fixed height, with or without a selection, so nothing shifts.
+- Helper labels ("Tap a stitch to see…", "tap to spotlight", "Tap the pattern to place the guide…") were removed.
+- The pan, zoom-in and zoom-out buttons were removed from the pattern view and the editor; only Fit is left. Pinch to zoom and one-finger drag (with no tool selected) still move the canvas.
+
 ## [1.20.0] — 2026-10-27 (finalized in the working tree; not tagged or published)
 
 ### Changed

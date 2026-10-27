@@ -6,11 +6,6 @@
   const U = M.Utils;
   const EMPTY = U.EMPTY;
 
-  const HINTS = {
-    look: 'Tap a stitch to see its color and position. Drag to move, pinch to zoom.',
-    guide: 'Tap the pattern to place the guide, or use the arrows to walk row by row.',
-    tick: 'Tap a stitch to tick it off (tap again to untick).',
-  };
 
   M.View = {
     init(app) {
@@ -30,6 +25,7 @@
       let saveTimer = 0;
 
       const vp = M.Viewport.create({ canvas, scroller, renderer, onZoom() {}, onGestureStart() { tap = null; } });
+      app.viewVp = vp;
 
       /* ---------- saving ---------- */
       const saveNow = () => {
@@ -187,26 +183,39 @@
       const setMode = (m) => {
         mode = m;
         document.querySelectorAll('#view-modes [data-mode]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.mode === m)));
-        $('mode-hint').textContent = HINTS[m];
         $('guide-controls').hidden = m !== 'guide';
         applyGuide();
+      };
+      /* the Legend button opens the legend card (and releases the mode buttons); Hide / Show only folds the chips */
+      const setChips = (show) => {
+        $('view-legend').hidden = !show;
+        $('view-legend-hide').textContent = show ? 'Hide' : 'Show';
+        $('view-legend-hide').setAttribute('aria-expanded', String(show));
       };
       const setLegend = (open) => {
         $('view-legend-pop').hidden = !open;
         $('view-dock-legend').setAttribute('aria-pressed', String(open));
-        $('view-dock-legend').querySelector('.tl').textContent = open ? 'Hide legend' : 'Legend';
+        if (open) setChips(true);
         requestAnimationFrame(() => vp.autoFit && vp.fit());
       };
-      $('view-dock-legend').addEventListener('click', () => setLegend($('view-legend-pop').hidden));
-      $('view-legend-hide').addEventListener('click', () => setLegend(false));
+      $('view-dock-legend').addEventListener('click', () => {
+        const open = $('view-legend-pop').hidden;
+        if (open) setMode('none');
+        setLegend(open);
+      });
+      $('view-legend-hide').addEventListener('click', () => setChips($('view-legend').hidden));
+      // one button at a time: picking a mode closes the legend, tapping the active mode releases it
       $('view-modes').addEventListener('click', (e) => {
         const b = e.target.closest('[data-mode]');
-        if (b) setMode(b.dataset.mode);
+        if (!b) return;
+        setLegend(false);
+        setMode(mode === b.dataset.mode ? 'none' : b.dataset.mode);
       });
 
       /* ---------- taps on the pattern ---------- */
       let tap = null;
       const onTap = (cell) => {
+        if (mode === 'none') return;
         selected = cell;
         renderer.setSelected(mode === 'look' || mode === 'tick' ? cell : null);
         if (mode === 'guide') {
@@ -252,8 +261,6 @@
       canvas.addEventListener('pointerup', end);
       canvas.addEventListener('pointercancel', end);
 
-      $('view-zoom-in').addEventListener('click', () => vp.zoomBy(1));
-      $('view-zoom-out').addEventListener('click', () => vp.zoomBy(-1));
       $('view-zoom-fit').addEventListener('click', vp.fit);
 
       /* ---------- top bar + ⋯ menu ---------- */
