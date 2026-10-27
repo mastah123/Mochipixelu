@@ -108,9 +108,21 @@
       else ctx.fillStyle = U.toHex(v);
       ctx.fillRect(px, py, c, c);
 
-      if (this.filter !== null && v !== this.filter) {
-        ctx.fillStyle = 'rgba(244,242,250,.86)';
-        ctx.fillRect(px, py, c, c);
+      if (this.filter !== null) {
+        if (v !== this.filter) {
+          // a mid-tone veil (not a pale one) so even a very light spotlighted color stands out from the rest
+          ctx.fillStyle = 'rgba(64,58,88,.66)';
+          ctx.fillRect(px, py, c, c);
+        } else if (c >= 6) {
+          // dark + white double outline: visible on any color, light or dark
+          const w = Math.max(1.5, c / 9);
+          ctx.lineWidth = w;
+          ctx.strokeStyle = '#1d1a2b';
+          ctx.strokeRect(px + w / 2, py + w / 2, c - w, c - w);
+          ctx.lineWidth = Math.max(1, w * 0.6);
+          ctx.strokeStyle = '#ffffff';
+          ctx.strokeRect(px + w * 1.4, py + w * 1.4, c - w * 2.8, c - w * 2.8);
+        }
       }
 
       if (this.showDone && v !== EMPTY && d.done[i]) {

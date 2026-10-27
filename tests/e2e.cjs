@@ -234,6 +234,19 @@ const vis = (page, sel) => page.locator(sel).isVisible();
     check('choosing a theme in the pattern view tints the artwork cells', tint[0] === 'blue' && tint[1] !== base, JSON.stringify([base, tint]));
     await page.tap('#view-more'); await page.tap('#view-swatches [data-tone=white]'); await page.tap('#menu-close');
 
+    const spot = await page.evaluate(() => {
+      const M = Mochi;
+      const d = M.Design.create(4, 4, M.Utils.EMPTY, 't');
+      d.pixels[5] = 0xfdf3c8; d.pixels[6] = 0xe8737f;
+      const r = new M.Renderer(document.createElement('canvas'));
+      r.setDesign(d); r.setCell(20);
+      const lum = (x, y) => { const px = r.ctx.getImageData(x, y, 1, 1).data; return 0.299 * px[0] + 0.587 * px[1] + 0.114 * px[2]; };
+      r.filter = 0xfdf3c8; r.draw();
+      // the light cell is at x=1,y=1 (20px cells): sample its edge (outline) and a dimmed neighbour
+      return { edge: lum(20 + 1, 20 + 10), neighbour: lum(40 + 10, 20 + 10), centre: lum(30, 30), empty: lum(70, 70) };
+    });
+    check('spotlighting a light color keeps it visible (outlined, others dimmed darker)', spot.edge < 80 && spot.centre > 220 && spot.empty < 180 && spot.neighbour < 200, JSON.stringify(spot));
+
     // spotlight chip
     await page.tap('#view-dock-legend'); await page.tap('#view-legend button');
     check('legend opens in the bottom area', await vis(page, '#view-legend-pop'));

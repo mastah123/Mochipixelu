@@ -10,6 +10,11 @@ Versions follow [Semantic Versioning](https://semver.org/): `MAJOR.MINOR.PATCH`.
 
 Examples are illustrative; the real versions are listed below. Documentation-only, test-only and refactoring changes do not automatically bump the version.
 
+## [1.19.0] — 2026-10-26 (finalized in the working tree; not tagged or published)
+
+### Fixed
+- Picking a color in the legend made light colors hard or impossible to see: the other cells were covered with a very pale veil, so a light spotlighted color disappeared into it. Now the other cells get a darker mid-tone veil and the spotlighted cells get a dark-and-white double outline, so any color (light or dark) stands out. Legend swatches have a firmer border so light colors are visible there too.
+
 ## [1.18.0] — 2026-10-26 (finalized in the working tree; not tagged or published)
 
 ### Fixed
