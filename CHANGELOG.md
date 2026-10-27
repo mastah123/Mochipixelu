@@ -10,6 +10,11 @@ Versions follow [Semantic Versioning](https://semver.org/): `MAJOR.MINOR.PATCH`.
 
 Examples are illustrative; the real versions are listed below. Documentation-only, test-only and refactoring changes do not automatically bump the version.
 
+## [1.22.0] — 2026-10-27 (finalized in the working tree; not tagged or published)
+
+### Changed
+- The pattern view's ⋯ menu is a popup under the button, like the editor's (it was a dialog): Theme swatches, then Pin, Rename, Copy, Move, Archive, Export, Save backup, Clear progress and Delete (to Trash), with an "Edited …" footer. Tapping ⋯ again, outside the popup or Escape closes it; picking a theme keeps it open.
+
 ## [1.21.0] — 2026-10-27 (finalized in the working tree; not tagged or published)
 
 ### Changed

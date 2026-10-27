@@ -10,6 +10,13 @@
   M.View = {
     init(app) {
       const $ = app.$;
+      const ago = (t) => {
+        const sec = Math.max(0, (Date.now() - t) / 1000);
+        if (sec < 60) return 'just now';
+        if (sec < 3600) return Math.floor(sec / 60) + ' min ago';
+        if (sec < 86400) return Math.floor(sec / 3600) + ' h ago';
+        return new Date(t).toLocaleDateString();
+      };
       const canvas = $('view-canvas');
       const scroller = $('view-scroll');
       const renderer = new M.Renderer(canvas);
@@ -272,7 +279,11 @@
         saveNow();
         M.Router.go('#/e/' + id);
       });
-      const menu = $('menu-dialog');
+      const menu = $('view-menu');
+      const closeMenu = () => {
+        menu.hidden = true;
+        $('view-more').setAttribute('aria-expanded', 'false');
+      };
       const sw = $('view-swatches');
       M.Storage.THEMES.forEach((t) => {
         const b = document.createElement('button');
@@ -287,6 +298,7 @@
         sw.querySelectorAll('.tone-sw').forEach((b) => b.setAttribute('aria-checked', String(b.dataset.tone === (e.theme || 'white'))));
         menu.querySelector('[data-menu=pin] span').textContent = e.pinned ? 'Unpin' : 'Pin';
         menu.querySelector('[data-menu=archive] span').textContent = e.archived ? 'Unarchive' : 'Archive';
+        $('view-foot').textContent = e.updated ? 'Edited ' + ago(e.updated) + ' · ' + e.width + ' × ' + e.height : 'Edited just now';
         const scr = $('screen-view');
         if (e.theme && e.theme !== 'white') scr.dataset.tone = e.theme;
         else delete scr.dataset.tone;
@@ -299,18 +311,22 @@
         paintMenu();
       });
       $('view-more').addEventListener('click', () => {
-        $('menu-title').textContent = design.name;
+        if (!menu.hidden) return closeMenu();
         paintMenu();
-        menu.showModal();
+        menu.hidden = false;
+        $('view-more').setAttribute('aria-expanded', 'true');
       });
-      $('menu-close').addEventListener('click', () => menu.close());
+      document.addEventListener('click', (ev) => {
+        if (!menu.hidden && !menu.contains(ev.target) && !$('view-more').contains(ev.target)) closeMenu();
+      });
+      document.addEventListener('keydown', (ev) => ev.key === 'Escape' && !menu.hidden && closeMenu());
 
       const title = () => ($('view-title').textContent = design.name);
 
       menu.addEventListener('click', async (e) => {
         const b = e.target.closest('[data-menu]');
         if (!b) return;
-        menu.close();
+        closeMenu();
         const what = b.dataset.menu;
         saveNow();
         const cur = M.Storage.library.get(id) || {};
@@ -361,6 +377,7 @@
       M.Router.register('view', {
         el: $('screen-view'),
         enter(route) {
+          closeMenu();
           try {
             design = M.Storage.library.load(route.id);
           } catch (err) {
@@ -391,6 +408,7 @@
           requestAnimationFrame(vp.fit);
         },
         leave() {
+          closeMenu();
           saveNow();
           app.viewDesign = null;
           app.closeSheet();

@@ -258,8 +258,6 @@
       <div class="canvas-wrap">
         <div id="view-scroll" class="canvas-scroll"><canvas id="view-canvas" aria-label="Pattern"></canvas></div>
         <div class="hud hud-br hud-view">
-          <button id="view-zoom-in" class="btn small icon-btn" aria-label="Zoom in"><svg class="ic sm"><use href="#i-plus"/></svg></button>
-          <button id="view-zoom-out" class="btn small icon-btn" aria-label="Zoom out"><svg class="ic sm"><use href="#i-minus"/></svg></button>
           <button id="view-zoom-fit" class="btn small icon-btn" aria-label="Fit to screen"><svg class="ic sm"><use href="#i-fit"/></svg></button>
         </div>
       </div>
@@ -267,7 +265,7 @@
     <div class="view-dock">
       <div class="vstack">
         <div id="view-legend-pop" class="vcard" hidden>
-          <div class="legend-head"><strong>Colors</strong><span class="hint inline">tap to spotlight</span><button id="view-legend-hide" class="linkbtn" type="button">Hide</button></div>
+          <div class="legend-head"><strong>Colors</strong><button id="view-legend-hide" class="linkbtn" type="button">Hide</button></div>
           <div id="view-legend" class="chips-scroll"></div>
         </div>
         <div id="guide-controls" class="vcard" hidden>
@@ -283,7 +281,6 @@
             <button id="guide-done" class="btn small"><svg class="ic sm"><use href="#i-mark"/></svg><span id="guide-done-label">Mark row done</span></button>
           </div>
         </div>
-        <p id="mode-hint" class="hint vhint">Tap a stitch to see its color and position.</p>
       </div>
       <nav class="vtools" id="view-modes" role="group" aria-label="Tap mode">
         <button class="vtool" data-mode="look" aria-pressed="true"><svg class="ic"><use href="#i-eye"/></svg><span class="tl">Look</span></button>
@@ -326,9 +323,6 @@
           <span id="status-coords" class="chip" title="Cell under the pointer">—</span>
         </div>
         <div class="hud hud-br">
-          <button id="hud-pan" class="btn small icon-btn" aria-pressed="false" aria-label="Move the view" title="Move the view"><svg class="ic sm"><use href="#i-pan"/></svg></button>
-          <button id="zoom-in" class="btn small icon-btn" aria-label="Zoom in" title="Zoom in (+)"><svg class="ic sm"><use href="#i-plus"/></svg></button>
-          <button id="zoom-out" class="btn small icon-btn" aria-label="Zoom out" title="Zoom out (−)"><svg class="ic sm"><use href="#i-minus"/></svg></button>
           <button id="zoom-fit" class="btn small icon-btn" aria-label="Fit to screen" title="Fit to screen (0)"><svg class="ic sm"><use href="#i-fit"/></svg></button>
         </div>
         <input id="zoom-range" class="zoom-range" type="range" min="2" max="64" value="16" aria-label="Zoom" hidden>
@@ -358,7 +352,7 @@
     <div class="dock">
       <div id="color-pop" class="pop" hidden aria-label="Quick colors"></div>
       <div id="legend-pop" class="vcard legend-dock" hidden aria-label="Legend">
-        <div class="legend-head"><strong>Colors</strong><span class="hint inline">tap to spotlight</span><button id="btn-clear-filter" class="linkbtn" type="button" hidden>Show all</button><button id="legend-hide" class="linkbtn" type="button">Hide</button></div>
+        <div class="legend-head"><strong>Colors</strong><button id="btn-clear-filter" class="linkbtn" type="button" hidden>Show all</button><button id="legend-hide" class="linkbtn" type="button">Hide</button></div>
         <div id="legend-list" class="chips-scroll"></div>
       </div>
       <nav class="tools" id="tools" aria-label="Tools">
@@ -524,21 +518,22 @@
   <ul id="folder-list" class="menu-list"></ul>
 </dialog>
 
-<dialog id="menu-dialog" class="dialog menu">
-  <div class="dialog-head"><h2 id="menu-title">Pattern</h2><button id="menu-close" class="btn small icon-btn" aria-label="Close"><svg class="ic sm"><use href="#i-close"/></svg></button></div>
-  <div class="theme-row view-theme"><span class="theme-label">Theme</span><div class="swatches" id="view-swatches"></div></div>
-  <ul class="menu-list">
-    <li><button data-menu="pin"><svg class="ic sm"><use href="#i-pin"/></svg><span>Pin</span></button></li>
-    <li><button data-menu="folder"><svg class="ic sm"><use href="#i-folder"/></svg>Move to folder…</button></li>
-    <li><button data-menu="archive"><svg class="ic sm"><use href="#i-archive"/></svg><span>Archive</span></button></li>
-    <li><button data-menu="rename"><svg class="ic sm"><use href="#i-pencil"/></svg>Rename</button></li>
-    <li><button data-menu="duplicate"><svg class="ic sm"><use href="#i-copy"/></svg>Duplicate (fresh progress)</button></li>
-    <li><button data-menu="export"><svg class="ic sm"><use href="#i-print"/></svg>Export &amp; print…</button></li>
-    <li><button data-menu="file"><svg class="ic sm"><use href="#i-export"/></svg>Save a backup file</button></li>
-    <li><button data-menu="clear-progress"><svg class="ic sm"><use href="#i-redo-arrow"/></svg>Clear progress</button></li>
-    <li><button data-menu="delete" class="danger-text"><svg class="ic sm"><use href="#i-trash"/></svg>Move to Trash</button></li>
-  </ul>
-</dialog>
+<div id="view-menu" class="ctx-menu opt-menu view-menu" role="menu" hidden>
+  <div class="theme-row"><span class="theme-label">Theme</span><div class="swatches" id="view-swatches"></div></div>
+  <hr>
+  <button data-menu="pin"><svg class="ic"><use href="#i-pin"/></svg><span>Pin</span></button>
+  <button data-menu="rename"><svg class="ic"><use href="#i-pencil"/></svg>Rename</button>
+  <button data-menu="duplicate"><svg class="ic"><use href="#i-copy"/></svg>Copy</button>
+  <button data-menu="folder"><svg class="ic"><use href="#i-folder"/></svg>Move</button>
+  <button data-menu="archive"><svg class="ic"><use href="#i-archive"/></svg><span>Archive</span></button>
+  <hr>
+  <button data-menu="export"><svg class="ic"><use href="#i-print"/></svg>Export</button>
+  <button data-menu="file"><svg class="ic"><use href="#i-export"/></svg>Save backup</button>
+  <button data-menu="clear-progress"><svg class="ic"><use href="#i-redo-arrow"/></svg>Clear progress</button>
+  <hr>
+  <button data-menu="delete" class="danger"><svg class="ic"><use href="#i-trash"/></svg>Delete</button>
+  <div class="menu-foot" id="view-foot">Edited just now</div>
+</div>
 
 <dialog id="rgb-dialog" class="dialog rgb-dialog">
   <h2 class="rgb-title">Color</h2>

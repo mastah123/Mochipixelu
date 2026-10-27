@@ -243,10 +243,10 @@ const vis = (page, sel) => page.locator(sel).isVisible();
 
     check('view has a fixed bottom bar with 4 buttons', (await page.locator('.view-dock .vtool').count()) === 4 && (await vis(page, '.view-dock')));
     const base = await page.evaluate(() => mochipixelu.viewRenderer.checkA);
-    await page.tap('#view-more'); await page.tap('#view-swatches [data-tone=blue]'); await page.tap('#menu-close');
+    await page.tap('#view-more'); await page.tap('#view-swatches [data-tone=blue]'); await page.tap('#view-more');
     const tint = await page.evaluate(() => [mochipixelu.$('screen-view').dataset.tone, mochipixelu.viewRenderer.checkA]);
     check('choosing a theme in the pattern view tints the artwork cells', tint[0] === 'blue' && tint[1] !== base, JSON.stringify([base, tint]));
-    await page.tap('#view-more'); await page.tap('#view-swatches [data-tone=white]'); await page.tap('#menu-close');
+    await page.tap('#view-more'); await page.tap('#view-swatches [data-tone=white]'); await page.tap('#view-more');
 
     const spot = await page.evaluate(() => {
       const M = Mochi;
@@ -288,6 +288,13 @@ const vis = (page, sel) => page.locator(sel).isVisible();
     const edges = await page.evaluate(() => { const sc = document.getElementById('view-scroll'); const cv = document.getElementById('view-canvas'); sc.scrollTop = 0; sc.scrollLeft = 0; const a = cv.getBoundingClientRect(); const r = sc.getBoundingClientRect(); const top = a.top >= r.top - 1 && a.left >= r.left - 1; sc.scrollTop = 1e6; sc.scrollLeft = 1e6; const b = cv.getBoundingClientRect(); return { top, bottom: b.bottom <= r.bottom - 60, big: a.height > r.height }; });
     check('a zoomed canvas can be panned to its top and bottom edges', edges.big && edges.top && edges.bottom, JSON.stringify(edges));
     await page.tap('#view-zoom-fit');
+
+    // the ⋯ menu is a popup with the full list
+    await page.tap('#view-more');
+    check('pattern ⋯ menu is a popup with theme swatches and the full option list', (await vis(page, '#view-menu')) && (await page.locator('#view-swatches .tone-sw').count()) === 6 && (await page.locator('#view-menu button[data-menu]').allTextContents()).join('|') === 'Pin|Rename|Copy|Move|Archive|Export|Save backup|Clear progress|Delete', (await page.locator('#view-menu button[data-menu]').allTextContents()).join('|'));
+    check('the popup does not cover the whole screen', (await page.locator('#view-menu').boundingBox()).width <= 320);
+    await page.tap('#view-more');
+    check('tapping ⋯ again closes it', !(await vis(page, '#view-menu')));
 
     // menu: rename, duplicate
     await page.tap('#view-more');
