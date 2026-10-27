@@ -36,7 +36,6 @@
       };
       app.openSheet = (name) => {
         pop.hidden = true;
-        legendPop.hidden = true;
         optMenu.hidden = true;
         current = name || current;
         $('sheet-title').textContent = TITLES[current] || '';
@@ -48,7 +47,6 @@
       };
       app.closeSheet = () => {
         pop.hidden = true;
-        legendPop.hidden = true;
         optMenu.hidden = true;
         sheet.classList.remove('open');
         $('sheet-scrim').hidden = true;
@@ -145,7 +143,6 @@
       /* ---------- Color button: a row pops up above the bar — picker first, then last used, then the palette ---------- */
       const closePop = () => {
         pop.hidden = true;
-        legendPop.hidden = true;
         syncNav();
       };
       app.closePop = closePop;
@@ -271,13 +268,17 @@
         });
         refreshPressed();
       };
-      $('dock-legend').addEventListener('click', () => {
-        if (!legendPop.hidden) return closePop();
-        app.closeSheet();
-        refreshCraft();
-        legendPop.hidden = false;
+      app.setLegend = (open) => {
+        if (open) {
+          app.closeSheet();
+          pop.hidden = true;
+          refreshCraft();
+        }
+        legendPop.hidden = !open;
         syncNav();
-      });
+      };
+      $('dock-legend').addEventListener('click', () => app.setLegend(legendPop.hidden));
+      $('legend-hide').addEventListener('click', () => app.setLegend(false));
       $('dock-color').addEventListener('click', () => {
         if (!pop.hidden) return closePop();
         app.closeSheet();
@@ -467,31 +468,27 @@
         const list = $('legend-list');
         list.textContent = '';
         legend.entries.forEach((e) => {
-          const li = document.createElement('li');
           const b = document.createElement('button');
           b.type = 'button';
           b.setAttribute('aria-pressed', String(renderer.filter === e.color));
           b.title = 'Spotlight ' + e.hex;
-          const s = document.createElement('span');
-          s.className = 'swatch';
-          s.style.background = e.hex;
-          s.style.color = U.textOn(e.color);
-          s.textContent = e.symbol;
-          const label = document.createElement('span');
-          label.textContent = '#' + e.index + ' ' + e.hex;
+          const sw = document.createElement('span');
+          sw.className = 'swatch';
+          sw.style.background = e.hex;
+          sw.style.color = U.textOn(e.color);
+          sw.textContent = e.symbol;
           const meta = document.createElement('span');
           meta.className = 'meta';
-          meta.textContent = e.count + ' stitches';
-          b.append(s, label, meta);
+          meta.textContent = String(e.count);
+          b.append(sw, meta);
           b.addEventListener('click', () => app.setFilter(renderer.filter === e.color ? null : e.color));
-          li.appendChild(b);
-          list.appendChild(li);
+          list.appendChild(b);
         });
         if (!legend.entries.length) {
-          const li = document.createElement('li');
-          li.className = 'hint';
-          li.textContent = 'No colors yet — draw something!';
-          list.appendChild(li);
+          const t = document.createElement('span');
+          t.className = 'hint';
+          t.textContent = 'No colors yet — draw something!';
+          list.appendChild(t);
         }
         $('btn-clear-filter').hidden = renderer.filter === null;
       };

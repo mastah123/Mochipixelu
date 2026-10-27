@@ -855,3 +855,17 @@ input[type="text"], input[type="number"], select { border: 1.5px solid var(--hai
 
 /* ===== 1.19.0: legend swatches stay visible when light ===== */
 .chips-scroll .swatch { border-color: color-mix(in srgb, var(--ink) 55%, transparent); box-shadow: inset 0 0 0 1px rgb(255 255 255 / .55); }
+
+/* ===== 1.20.0: editor — docked legend, one-line selected stitch, aligned buttons ===== */
+.legend-dock { border-top: 1px solid var(--hair); }
+.legend-dock .chips-scroll { max-height: 26vh; overflow: auto; flex-wrap: wrap; }
+@media (min-width: 900px), (orientation: landscape) and (max-height: 520px) and (max-width: 899px) {
+  .legend-dock { position: absolute; left: calc(100% + 10px); bottom: 0; width: 320px; max-width: 70vw; border: 0; border-radius: 18px; background: var(--card); box-shadow: 0 10px 30px rgb(var(--shadow) / .35); z-index: 31; }
+}
+@media (max-width: 899px) and (min-height: 521px) {
+  .tools { grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 2px; padding: 3px 6px 4px; }
+  .tool { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; min-height: 46px; padding: 2px; font-size: .66rem; }
+  .tool .ic { width: 20px; height: 20px; }
+  .tool .dot { width: 20px; height: 20px; }
+  .tool .tl { font-size: .66rem; line-height: 1.1; }
+}

@@ -7,7 +7,7 @@
   const D = M.Design;
   const EMPTY = U.EMPTY;
 
-  const TOOL_KEYS = { b: 'pencil', e: 'eraser', g: 'fill', i: 'picker', q: 'inspect', h: 'pan' };
+  const TOOL_KEYS = { b: 'pencil', e: 'eraser', g: 'fill', i: 'picker', h: 'pan' };
 
   M.Editor = {
     init(app) {
@@ -113,44 +113,34 @@
         return { v, done: !!d.done[i], i };
       };
 
+      /** The one-line "selected stitch" above the canvas: the cell under the finger / pointer, or the last one touched. */
       const updateInspector = () => {
-        const cell = app.selected || app.hover;
-        const sw = $('insp-swatch');
-        const title = $('insp-coords');
-        const detail = $('insp-detail');
-        $('insp-pick').disabled = !app.selected;
+        if (app.hover) app.lastCell = app.hover;
+        const cell = app.hover || app.lastCell;
+        const sw = $('edit-info-swatch');
+        const text = $('edit-info-text');
         if (!cell || !D.inBounds(store.design, cell.x, cell.y)) {
-          sw.className = 'swatch big empty';
-          sw.style.background = '';
-          title.textContent = 'No cell selected';
-          detail.textContent = 'Tap the canvas — use the Inspect tool to lock a cell.';
+          sw.hidden = true;
+          text.textContent = '';
           $('status-coords').textContent = '—';
           return;
         }
-        const { v } = cellInfo(cell);
+        const { v, done } = cellInfo(cell);
         const where = 'Column ' + (cell.x + 1) + ', Row ' + (cell.y + 1);
         $('status-coords').textContent = 'x ' + (cell.x + 1) + ' · y ' + (cell.y + 1);
-        title.textContent = where + (app.selected && app.selected === cell ? ' (selected)' : '');
         if (v === EMPTY) {
-          sw.className = 'swatch big empty';
-          sw.style.background = '';
-          detail.textContent = 'Empty — no stitch here.';
+          sw.hidden = true;
+          text.textContent = where + ' — empty';
         } else {
-          sw.className = 'swatch big';
+          sw.hidden = false;
+          sw.className = 'swatch';
           sw.style.background = U.toHex(v);
-          const [r, g, b] = U.rgb(v);
           const e = app.getLegend().byColor.get(v);
-          detail.textContent =
-            U.toHex(v) + ' · rgb(' + r + ', ' + g + ', ' + b + ')' + (e ? ' · legend #' + e.index + ' ' + e.symbol : '');
+          text.textContent = where + ' — ' + U.toHex(v) + (e ? ' · #' + e.index + ' ' + e.symbol : '');
         }
       };
       app.updateInspector = updateInspector;
 
-      $('insp-pick').addEventListener('click', () => pickFromCell(app.selected));
-      $('nav-up').addEventListener('click', () => moveSelection(0, -1));
-      $('nav-down').addEventListener('click', () => moveSelection(0, 1));
-      $('nav-left').addEventListener('click', () => moveSelection(-1, 0));
-      $('nav-right').addEventListener('click', () => moveSelection(1, 0));
 
       /* ---------- cell actions ---------- */
       const pickFromCell = (cell) => {
@@ -420,6 +410,8 @@
           dirty = false;
           app.selected = null;
           app.hover = null;
+          app.lastCell = null;
+          if (app.setLegend) app.setLegend(false);
           if (renderer.filter !== null) app.setFilter(null);
           app.closeSheet();
           if (app.refreshOptMenu) app.refreshOptMenu();

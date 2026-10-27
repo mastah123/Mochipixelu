@@ -85,6 +85,21 @@ const vis = (page, sel) => page.locator(sel).isVisible();
     await page.tap('#sheet-done'); await page.waitForTimeout(300);
     check('no Progress section in the editor', (await page.locator('#panel-craft, #btn-clear-progress, #progress-bar').count()) === 0 && (await page.locator('#opt-menu [data-open=craft]').count()) === 0);
     check('no Mark tool in the editor', (await page.locator('.tool[data-tool=mark]').count()) === 0 && (await page.locator('#insp-done, #btn-mark-all').count()) === 0);
+    check('no Inspect tool and no inspector strip in the editor', (await page.locator('.tool[data-tool=inspect], #inspector').count()) === 0);
+    {
+      const box = await page.locator('#canvas').boundingBox();
+      await page.touchscreen.tap(box.x + 6, box.y + 6);
+      await page.waitForTimeout(150);
+      check('selected stitch shows as one line above the canvas', await page.evaluate(() => { const i = document.getElementById('edit-info'); const c = document.getElementById('canvas').closest('.canvas-scroll').getBoundingClientRect(); return /Column \d+, Row \d+/.test(i.textContent) && i.getBoundingClientRect().bottom <= c.top + 1; }));
+      await page.tap('#btn-undo'); // that tap painted a cell — take it back
+      const tops = await page.evaluate(() => [...document.querySelectorAll('#tools > *')].map((b) => Math.round(b.getBoundingClientRect().top)));
+      check('dock buttons are aligned in one row', tops.length === 6 && new Set(tops).size === 1, JSON.stringify(tops));
+      await page.tap('#dock-legend');
+      const lay = await page.evaluate(() => { const l = document.getElementById('legend-pop').getBoundingClientRect(); const c = document.getElementById('canvas').closest('.canvas-scroll').getBoundingClientRect(); const d = document.querySelector('#screen-editor .dock').getBoundingClientRect(); return { legendTop: l.top, scrollBottom: c.bottom, dockBottom: d.bottom, legendBottom: l.bottom }; });
+      check('legend docks below the canvas without covering it', lay.legendTop >= lay.scrollBottom - 1 && lay.legendBottom <= lay.dockBottom + 1, JSON.stringify(lay));
+      await page.tap('#legend-hide');
+      check('legend Hide closes it', !(await vis(page, '#legend-pop')));
+    }
     check('no Move button in the bottom bar', (await page.locator('.dock [data-tool=pan]').count()) === 0);
     // pan / zoom / fit / full screen stay put on the canvas whatever opens over them
     const hudBox = async () => page.locator('#screen-editor .hud-br').boundingBox();
@@ -162,9 +177,9 @@ const vis = (page, sel) => page.locator(sel).isVisible();
     const lib = await page.evaluate(() => JSON.parse(localStorage.getItem('mochipixelu:library'))[0]);
     check('edits autosave into the library', lib.filled === 6, JSON.stringify(lib));
     await page.tap('#dock-legend');
-    check('Legend button pops up the legend above the bar', await vis(page, '#legend-pop') && (await page.locator('#legend-list button').count()) >= 1);
+    check('Legend button opens the docked legend', await vis(page, '#legend-pop') && (await page.locator('#legend-list button').count()) >= 1);
     const lb = await page.locator('#legend-pop').boundingBox(); const dk = await page.locator('.dock').boundingBox();
-    check('legend popup sits directly above the bottom bar', Math.abs(lb.y + lb.height - dk.y) < 2, JSON.stringify([lb, dk]));
+    check('legend is part of the bottom area (inside the dock)', lb.y >= dk.y - 1 && lb.y + lb.height <= dk.y + dk.height + 1, JSON.stringify([lb, dk]));
     await page.locator('#legend-list button').first().tap();
     check('tapping a legend color spotlights it', (await page.evaluate(() => mochipixelu.renderer.filter)) !== null);
     await page.tap('#btn-clear-filter');

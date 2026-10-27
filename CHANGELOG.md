@@ -10,6 +10,13 @@ Versions follow [Semantic Versioning](https://semver.org/): `MAJOR.MINOR.PATCH`.
 
 Examples are illustrative; the real versions are listed below. Documentation-only, test-only and refactoring changes do not automatically bump the version.
 
+## [1.20.0] — 2026-10-27 (finalized in the working tree; not tagged or published)
+
+### Changed
+- Editor: the Inspect tool and its strip (arrow pad, Use color) are gone. The stitch under the finger (or the last one touched) shows as one line above the canvas, like in the pattern view.
+- Editor: the legend is the pattern view's legend — color chips with symbol and count, tap to spotlight, Hide button — docked below the canvas (a floating card beside the rail on desktop and landscape phones) instead of a popup.
+- Editor: the six dock buttons sit in one aligned, equal row.
+
 ## [1.19.0] — 2026-10-26 (finalized in the working tree; not tagged or published)
 
 ### Fixed
