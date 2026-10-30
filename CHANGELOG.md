@@ -10,6 +10,12 @@ Versions follow [Semantic Versioning](https://semver.org/): `MAJOR.MINOR.PATCH`.
 
 Examples are illustrative; the real versions are listed below. Documentation-only, test-only and refactoring changes do not automatically bump the version.
 
+## [1.28.0]
+
+### Changed
+- Phone: the legend row is now as tall as the quick colors row (52px).
+- Phone: the legend (editor and pattern view) and the guide controls open over the bottom of the canvas, covering the Fit button, instead of pushing the canvas up and down.
+
 ## [1.27.0]
 
 ### Changed

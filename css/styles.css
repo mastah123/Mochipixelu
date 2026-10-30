@@ -908,3 +908,18 @@ input[type="text"], input[type="number"], select { border: 1.5px solid var(--hai
 .sym-row .swatch { width: 36px; height: 36px; border-radius: 10px; display: grid; place-items: center; font-weight: 700; flex: none; }
 .sym-row .sym-name { flex: 1; font-size: .85rem; }
 .sym-row select { min-height: 40px; font-size: 1rem; min-width: 64px; }
+
+/* ===== 1.28.0 (phone): popups cover the canvas instead of pushing it; legend row as tall as the quick colors ===== */
+@media (max-width: 899px) and (min-height: 521px) {
+  .pop, .legend-dock { height: 52px; box-sizing: border-box; padding: 4px 10px; display: flex; align-items: center; gap: 8px; }
+  .legend-dock { position: absolute; left: 0; right: 0; bottom: 100%; z-index: 4; background: var(--card); border: 0; border-top: 1px solid var(--hair); border-radius: 0; box-shadow: 0 -8px 18px rgb(var(--shadow) / .1); max-width: none; width: auto; }
+  #screen-editor[data-tone] .legend-dock, #screen-view[data-tone] .vstack > .vcard { background: color-mix(in srgb, var(--tone) 70%, var(--card)); }
+  .legend-dock .chips-scroll { max-height: none; height: 44px; }
+  #view-legend-pop { height: 52px; box-sizing: border-box; padding: 4px 10px; }
+  #view-legend { height: 44px; }
+  .vstack { position: absolute; left: 0; right: 0; bottom: 100%; z-index: 6; background: var(--card); box-shadow: 0 -8px 18px rgb(var(--shadow) / .1); }
+  .vstack > .vcard { background: var(--card); }
+  .vstack > .vcard[hidden] { display: none; }
+  .vstack:not(:has(.vcard:not([hidden]))) { display: none; }
+  .view-dock { z-index: 8; }
+}
