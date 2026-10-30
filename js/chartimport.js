@@ -111,14 +111,43 @@
         $('chart-rows').value = g.rows;
       };
       const find = (useBox) => {
-        const g = M.Chart.detectGrid(src, useBox ? { rect: box } : undefined);
+        let g = M.Chart.detectGrid(src, useBox ? { rect: box } : undefined);
+        let beads = false;
+        if (!g && useBox) { g = M.Chart.detectGrid(src, { rect: box, beads: true }); beads = !!g; }
         if (!g) {
           $('chart-hint').textContent = 'No regular grid found in this box. Move the corners to wrap only the squares, or type the columns and rows yourself.';
           return false;
         }
         apply(g);
-        $('chart-hint').textContent = 'Found a ' + g.cols + ' × ' + g.rows + ' grid. Drag the corners if the box is off, then check the preview.';
+        $('chart-hint').textContent = 'Found a ' + g.cols + ' × ' + g.rows + (beads ? ' bead' : '') + ' grid. Drag the corners if the box is off, then check the preview.';
         return true;
+      };
+
+      /* several patterns on one sheet: one button per pattern */
+      let regions = [];
+      const showRegions = () => {
+        const host = $('chart-regions');
+        host.textContent = '';
+        host.hidden = regions.length < 2;
+        if (regions.length < 2) return;
+        regions
+          .slice()
+          .sort((a, b) => Math.round(a.y / 40) - Math.round(b.y / 40) || a.x - b.x)
+          .forEach((r, i) => {
+            const b = document.createElement('button');
+            b.type = 'button';
+            b.className = 'btn small';
+            b.textContent = 'Pattern ' + (i + 1);
+            b.addEventListener('click', () => {
+              box = Object.assign({}, r);
+              find(true);
+              box = Object.assign({}, box);
+              redraw();
+              read();
+            });
+            host.appendChild(b);
+          });
+        $('chart-hint').textContent = 'Found ' + regions.length + ' patterns on this image. Pick one with the buttons below.';
       };
       $('chart-find').addEventListener('click', () => { find(true); redraw(); });
 
@@ -161,7 +190,7 @@
 
       ['chart-cols', 'chart-rows', 'chart-empty'].forEach((id) => $(id).addEventListener('input', redraw));
       $('chart-cancel').addEventListener('click', () => dlg.close());
-      dlg.addEventListener('close', () => { src = null; base = null; result = null; clearTimeout(timer); });
+      dlg.addEventListener('close', () => { regions = []; src = null; base = null; result = null; clearTimeout(timer); });
 
       /* ---------- open + import ---------- */
       app.openChartImport = async (file) => {
@@ -179,8 +208,19 @@
           $('chart-hint').textContent = 'Looking for the grid…';
           dlg.showModal();
           layout();
-          const ok = find(false);
-          if (!ok) { box = { x: 0, y: 0, w: src.width, h: src.height }; }
+          regions = [];
+          let ok = find(false);
+          if (!ok) {
+            box = { x: 0, y: 0, w: src.width, h: src.height };
+            regions = M.Chart.findRegions(src);
+            if (regions.length) {
+              box = Object.assign({}, regions[0]);
+              ok = find(true);
+              if (!ok) box = { x: 0, y: 0, w: src.width, h: src.height };
+              showRegions();
+            }
+          }
+          if (!regions.length) showRegions();
           layout();
           redraw();
           read();

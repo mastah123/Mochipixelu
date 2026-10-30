@@ -936,3 +936,5 @@ input[type="text"], input[type="number"], select { border: 1.5px solid var(--hai
 .chart-dialog .row.end { position: sticky; bottom: -14px; background: var(--card); padding: 10px 0 4px; margin-top: 4px; z-index: 2; }
 .chart-dialog { z-index: 40; }
 .chart-preview canvas { max-height: 16dvh; }
+.chart-regions { display: flex; flex-wrap: wrap; gap: 6px; }
+.chart-regions[hidden] { display: none; }

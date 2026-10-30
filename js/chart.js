@@ -137,11 +137,66 @@
       return off > 0 ? on / off : 99;
     };
     const confidence = Math.min(conf(ex, cx, px), conf(ey, cy, py));
-    if (confidence < 2) return null; // no regular grid lines (e.g. round beads)
+    if (confidence < 2 && !(opts && opts.beads)) return null; // no regular grid lines (round beads need opts.beads)
     return {
       x: ex.first, y: ey.first, cols: ex.count, rows: ey.count, cellW: px.p, cellH: py.p,
       confidence,
     };
+  };
+
+  /**
+   * Separate patterns on one image (e.g. several bead designs on a plain sheet): everything that differs from the
+   * background colour (the most common colour on the image border) is grouped into blobs. Returns rectangles
+   * {x,y,w,h} in image pixels, biggest first, or [] when there is no plain background.
+   */
+  C.findRegions = (src, opts) => {
+    const { data, width: W, height: H } = src;
+    const step = 2, w = Math.ceil(W / step), h = Math.ceil(H / step);
+    const px = (x, y) => { const i = (Math.min(H - 1, y * step) * W + Math.min(W - 1, x * step)) * 4; return [data[i], data[i + 1], data[i + 2]]; };
+    const votes = new Map();
+    const vote = (x, y) => { const c = px(x, y); const k = ((c[0] >> 3) << 10) | ((c[1] >> 3) << 5) | (c[2] >> 3); votes.set(k, (votes.get(k) || 0) + 1); };
+    for (let x = 0; x < w; x++) { vote(x, 0); vote(x, h - 1); }
+    for (let y = 0; y < h; y++) { vote(0, y); vote(w - 1, y); }
+    let bk = -1, bn = 0;
+    votes.forEach((n, k) => { if (n > bn) { bn = n; bk = k; } });
+    if (bn < 0.6 * (2 * (w + h))) return []; // the border is not one plain colour
+    const bg = [((bk >> 10) & 31) << 3, ((bk >> 5) & 31) << 3, (bk & 31) << 3];
+    const tol = (opts && opts.tolerance) || 36;
+    const mask = new Uint8Array(w * h);
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+      const c = px(x, y);
+      if (Math.abs(c[0] - bg[0]) + Math.abs(c[1] - bg[1]) + Math.abs(c[2] - bg[2]) > tol) mask[y * w + x] = 1;
+    }
+    // close small gaps (between beads, around text) so one pattern is one blob
+    const r = (opts && opts.gap) || 3;
+    const dil = new Uint8Array(w * h);
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+      if (!mask[y * w + x]) continue;
+      for (let dy = -r; dy <= r; dy++) for (let dx = -r; dx <= r; dx++) {
+        const nx = x + dx, ny = y + dy;
+        if (nx >= 0 && ny >= 0 && nx < w && ny < h) dil[ny * w + nx] = 1;
+      }
+    }
+    const seen = new Uint8Array(w * h);
+    const out = [];
+    const stack = [];
+    for (let s0 = 0; s0 < w * h; s0++) {
+      if (!dil[s0] || seen[s0]) continue;
+      let x0 = w, y0 = h, x1 = 0, y1 = 0, n = 0;
+      stack.push(s0); seen[s0] = 1;
+      while (stack.length) {
+        const q = stack.pop(); const qx = q % w, qy = (q - qx) / w;
+        n++; if (qx < x0) x0 = qx; if (qx > x1) x1 = qx; if (qy < y0) y0 = qy; if (qy > y1) y1 = qy;
+        if (qx > 0 && dil[q - 1] && !seen[q - 1]) { seen[q - 1] = 1; stack.push(q - 1); }
+        if (qx < w - 1 && dil[q + 1] && !seen[q + 1]) { seen[q + 1] = 1; stack.push(q + 1); }
+        if (qy > 0 && dil[q - w] && !seen[q - w]) { seen[q - w] = 1; stack.push(q - w); }
+        if (qy < h - 1 && dil[q + w] && !seen[q + w]) { seen[q + w] = 1; stack.push(q + w); }
+      }
+      const rx = Math.max(0, (x0 + r) * step), ry = Math.max(0, (y0 + r) * step);
+      const rw = Math.min(W, (x1 - r + 1) * step) - rx, rh = Math.min(H, (y1 - r + 1) * step) - ry; // undo the dilation
+      if (rw >= 24 && rh >= 24 && rw * rh >= 0.004 * W * H) out.push({ x: rx, y: ry, w: rw, h: rh });
+    }
+    return out.sort((a, b) => b.w * b.h - a.w * a.h);
   };
 
   /* ---------- Batch V: read the cells ---------- */
@@ -231,12 +286,28 @@
       let top = null;
       ring.forEach((k, c) => { if (top === null || k > ring.get(top)) top = c; });
       if (top !== null && ring.get(top) >= 0.4 * n && (isWhite(top) || isGrey(top))) emptyColors = [top];
+      // only the background around the pattern is empty: background-coloured cells that are enclosed by the
+      // design (an eye highlight, a white stitch) are real stitches
+      if (emptyColors.length) {
+        const outside = new Uint8Array(cols * rows);
+        const stack = [];
+        const push = (i, j) => { const k = j * cols + i; if (i >= 0 && j >= 0 && i < cols && j < rows && !outside[k] && emptyColors.indexOf(pixels[k]) >= 0) { outside[k] = 1; stack.push(k); } };
+        for (let i = 0; i < cols; i++) { push(i, 0); push(i, rows - 1); }
+        for (let j = 0; j < rows; j++) { push(0, j); push(cols - 1, j); }
+        while (stack.length) { const k = stack.pop(), i = k % cols, j = (k - i) / cols; push(i - 1, j); push(i + 1, j); push(i, j - 1); push(i, j + 1); }
+        for (let k = 0; k < pixels.length; k++) if (outside[k]) pixels[k] = -2;
+        for (let k = 0; k < pixels.length; k++) if (pixels[k] === -2) pixels[k] = -1;
+        return finish(pixels, cols, rows, top);
+      }
     }
     if (emptyColors.length) for (let i = 0; i < pixels.length; i++) if (emptyColors.indexOf(pixels[i]) >= 0) pixels[i] = -1;
+    return finish(pixels, cols, rows, emptyColors.length ? emptyColors[0] : null);
+  };
+  const finish = (pixels, cols, rows, empty) => {
     const counts = new Map();
     pixels.forEach((c) => c >= 0 && counts.set(c, (counts.get(c) || 0) + 1));
     const palette = Array.from(counts.keys()).sort((a, b) => counts.get(b) - counts.get(a)).map((color) => ({ color, count: counts.get(color) }));
-    return { cols, rows, pixels, palette, empty: emptyColors.length ? emptyColors[0] : null };
+    return { cols, rows, pixels, palette, empty };
   };
 
   M.Chart = C;

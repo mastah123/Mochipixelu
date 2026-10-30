@@ -516,12 +516,13 @@
     <label>Rows <input id="chart-rows" type="number" min="1" max="256" inputmode="numeric"></label>
     <label>Empty cells
       <select id="chart-empty">
-        <option value="auto">Auto (white / grey background)</option>
-        <option value="white">White is empty</option>
-        <option value="none">Nothing is empty</option>
+        <option value="auto">Auto (background around the pattern)</option>
+        <option value="white">Every white cell</option>
+        <option value="none">Nothing</option>
       </select>
     </label>
   </div>
+  <div class="row chart-regions" id="chart-regions" hidden></div>
   <div class="row"><button type="button" id="chart-find" class="btn small"><svg class="ic sm"><use href="#i-grid"/></svg>Find the grid in this box</button></div>
   <div class="chart-preview"><canvas id="chart-preview" aria-label="Preview of the imported pattern"></canvas><span id="chart-info" class="hint" aria-live="polite"></span></div>
   <div class="row end">

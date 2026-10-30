@@ -10,6 +10,15 @@ Versions follow [Semantic Versioning](https://semver.org/): `MAJOR.MINOR.PATCH`.
 
 Examples are illustrative; the real versions are listed below. Documentation-only, test-only and refactoring changes do not automatically bump the version.
 
+## [1.32.0]
+
+### Added
+- Chart import reads round-bead charts with no grid lines, and finds several patterns on one image: a sheet with N patterns shows "Pattern 1…N" buttons that move the box to each one. "Find the grid in this box" tries grid lines first, then beads.
+
+### Changed
+- "Empty cells: Auto" now empties only the background around the pattern. White cells enclosed by the design (an eye highlight, a white stitch) stay real stitches. "Every white cell" keeps the old behaviour; "Nothing" keeps all.
+- Not built: snapping colours to a chart's own colour key (the exact colours already come straight from the image).
+
 ## [1.31.0]
 
 ### Added

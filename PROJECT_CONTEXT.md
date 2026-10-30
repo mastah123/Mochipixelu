@@ -166,3 +166,6 @@ Decisions from the samples:
 
 ### Status 2026-10-30: Batches U, V, W built (1.29.0, 1.30.0, 1.31.0)
 Import chart is in the home + menu (js/chartimport.js, dialog #chart-dialog). Not done: an entry point in the editor, round beads, several patterns in one image, snapping to a colour key (Batch X). Known limit: with Empty cells = Auto, white cells inside a design become empty (the goldfish "Bright White" highlights); the user switches to "Nothing is empty".
+
+### Status 2026-10-30: Batch X built (1.32.0)
+Beads mode, several patterns per image (findRegions + Pattern buttons) and the enclosed-white rule are in. Colour-key snapping was deliberately not built (exact colours already come from the image). Open ideas: an editor entry point for chart import; photographed/skewed paper charts; symbol-only black-and-white charts.

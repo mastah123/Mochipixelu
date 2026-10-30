@@ -349,6 +349,46 @@
     const keep = CH.readCells(img, { x: 12, y: 12, cols: 16, rows: 12, cellW: 16, cellH: 16 }, { empty: 'none' });
     ok(keep.pixels[0] === 0xffffff, 'empty: none keeps white as a colour');
   });
+  test('reading cells: auto empties only the outside background; enclosed white cells stay stitches', () => {
+    const pix = (c) => c;
+    // 7x7: red ring of stitches around a white middle cell, white outside
+    const o = Object.assign({ W: 200, H: 200, cols: 7, rows: 7, cell: 20, ox: 10, oy: 10 }, dark, { c1: [255, 255, 255], c2: [255, 255, 255], c3: [255, 255, 255] });
+    const img = chart(o);
+    const paint = (i, j, c) => { for (let y = 10 + j * 20 + 3; y < 10 + j * 20 + 17; y++) for (let x = 10 + i * 20 + 3; x < 10 + i * 20 + 17; x++) { const k = (y * 200 + x) * 4; img.data[k] = c[0]; img.data[k + 1] = c[1]; img.data[k + 2] = c[2]; } };
+    for (let j = 2; j <= 4; j++) for (let i = 2; i <= 4; i++) paint(i, j, [220, 40, 40]);
+    paint(3, 3, [255, 255, 255]);
+    const g = { x: 10, y: 10, cols: 7, rows: 7, cellW: 20, cellH: 20 };
+    const out = CH.readCells(img, g);
+    eq(out.pixels[0], -1);
+    eq(out.pixels[3 * 7 + 3], 0xffffff, 'the enclosed white cell is a stitch');
+    eq(out.pixels[2 * 7 + 2], 0xdc2828);
+    const all = CH.readCells(img, g, { empty: 'white' });
+    eq(all.pixels[3 * 7 + 3], -1, 'White is empty still empties every white cell');
+  });
+  const beadSheet = () => { // light grey sheet with two round-bead patterns (no grid lines)
+    const W = 420, H = 220, data = new Uint8ClampedArray(W * H * 4).fill(240);
+    for (let i = 3; i < data.length; i += 4) data[i] = 255;
+    const bead = (cx, cy, r, c) => { for (let y = cy - r; y <= cy + r; y++) for (let x = cx - r; x <= cx + r; x++) if ((x - cx) ** 2 + (y - cy) ** 2 <= r * r) { const k = (y * W + x) * 4; data[k] = c[0]; data[k + 1] = c[1]; data[k + 2] = c[2]; } };
+    const cols = [[200, 40, 40], [40, 80, 200], [240, 200, 40], [30, 30, 30]];
+    const make = (ox, oy, n, m, seed) => { for (let j = 0; j < m; j++) for (let i = 0; i < n; i++) bead(ox + i * 14 + 7, oy + j * 14 + 7, 6, cols[(i * 3 + j * 5 + seed) % 4]); };
+    make(20, 20, 8, 10, 0);
+    make(220, 40, 10, 8, 1);
+    return { data, width: W, height: H };
+  };
+  test('several patterns on one sheet are found as separate regions', () => {
+    const regs = CH.findRegions(beadSheet());
+    eq(regs.length, 2);
+    ok(regs.some((r) => near(r.x, 20, 6) && near(r.w, 112, 8)) && regs.some((r) => near(r.x, 220, 6) && near(r.w, 140, 8)), JSON.stringify(regs));
+    eq(CH.findRegions({ data: new Uint8ClampedArray(100 * 100 * 4).fill(255), width: 100, height: 100 }).length, 0);
+  });
+  test('round beads without grid lines are read when beads mode is on', () => {
+    const sheet = beadSheet();
+    const r = CH.findRegions(sheet).find((q) => near(q.x, 20, 6));
+    const g = CH.detectGrid(sheet, { rect: r, beads: true });
+    ok(g && g.cols === 8 && g.rows === 10 && near(g.cellW, 14, 1), JSON.stringify(g));
+    const out = CH.readCells(sheet, g);
+    eq(out.palette.length, 4);
+  });
   test('reading cells: a chromatic background (purple) is a real colour, not empty', () => {
     const o = Object.assign({ W: 260, H: 200, cols: 12, rows: 9, cell: 18, ox: 10, oy: 10 }, dark, { c1: [180, 140, 220], c2: [180, 140, 220], c3: [250, 210, 120], line: [235, 230, 245] });
     const out = CH.readCells(chart(o), { x: 10, y: 10, cols: 12, rows: 9, cellW: 18, cellH: 18 });

@@ -555,6 +555,32 @@ const vis = (page, sel) => page.locator(sel).isVisible();
     check('Import makes a 12 x 10 pattern with the exact colors', imported.w === 12 && imported.h === 10 && imported.first === 0xff0000 && imported.last === 0x0000ff && imported.name === 'mychart', JSON.stringify(imported));
     await page.evaluate(() => { location.hash = '#/'; });
     await page.waitForTimeout(300);
+    // a sheet with two round-bead patterns and no grid lines
+    const beadUrl = await page.evaluate(() => {
+      const c = document.createElement('canvas'); c.width = 420; c.height = 220; const x = c.getContext('2d');
+      x.fillStyle = '#f0f0f0'; x.fillRect(0, 0, 420, 220);
+      const cols = ['#c82828', '#2850c8', '#f0c828', '#1e1e1e'];
+      const make = (ox, oy, n, m, seed) => { for (let j = 0; j < m; j++) for (let i = 0; i < n; i++) { x.fillStyle = cols[(i * 3 + j * 5 + seed) % 4]; x.beginPath(); x.arc(ox + i * 14 + 7, oy + j * 14 + 7, 6, 0, Math.PI * 2); x.fill(); } };
+      make(20, 20, 8, 10, 0); make(220, 40, 10, 8, 1);
+      return c.toDataURL('image/png');
+    });
+    await page.tap('#fab');
+    const [beadChooser] = await Promise.all([page.waitForEvent('filechooser'), page.tap('#fab-menu [data-home=chart]')]);
+    await beadChooser.setFiles({ name: 'beads.png', mimeType: 'image/png', buffer: Buffer.from(beadUrl.split(',')[1], 'base64') });
+    await page.waitForFunction(() => document.getElementById('chart-dialog').open);
+    await page.waitForTimeout(700);
+    check('a sheet with two bead patterns shows two Pattern buttons', (await page.locator('#chart-regions button').count()) === 2 && (await vis(page, '#chart-regions')));
+    const sz = async () => (await page.inputValue('#chart-cols')) + 'x' + (await page.inputValue('#chart-rows'));
+    const s1 = await sz();
+    check('the first pattern is read as a bead grid', s1 === '8x10' || s1 === '10x8', s1);
+    await page.screenshot({ path: SP + 'chart-beads.png' });
+    await page.locator('#chart-regions button').nth(1).tap();
+    await page.waitForTimeout(400);
+    const s2 = await sz();
+    check('the second button switches to the other pattern', (s2 === '8x10' || s2 === '10x8') && s2 !== s1, s1 + ' -> ' + s2);
+    check('the preview shows 4 bead colors', /4 colors/.test(await page.textContent('#chart-info')), await page.textContent('#chart-info'));
+    await page.tap('#chart-cancel');
+    await page.waitForTimeout(300);
     check('phone flow: no console/page errors', errors.length === 0, errors.join(' | '));
     await ctx.close();
   }
