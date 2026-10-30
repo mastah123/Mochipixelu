@@ -141,6 +141,10 @@
       });
 
       /* ---------- Color button: a row pops up above the bar — picker first, then last used, then the palette ---------- */
+      // after picking a color the drawing tool comes back (it let go when the color row opened)
+      const reselectTool = () => {
+        if (settings.tool === 'none' && app.lastTool) app.setTool(app.lastTool);
+      };
       const closePop = () => {
         pop.hidden = true;
         syncNav();
@@ -231,7 +235,10 @@
       });
       // closing any other way (Use color, tapping outside, Esc) keeps the color and files it under "last used"
       rgbDlg.addEventListener('close', () => {
-        if (!rgbCancelled) app.addRecent(settings.color);
+        if (!rgbCancelled) {
+          app.addRecent(settings.color);
+          reselectTool();
+        }
         rgbCancelled = false;
       });
 
@@ -263,6 +270,7 @@
             app.setColor(c);
             app.addRecent(c);
             fillPop();
+            reselectTool();
           });
           pop.appendChild(b);
         });
@@ -272,6 +280,7 @@
         if (open) {
           app.closeSheet();
           pop.hidden = true;
+          app.setTool('none'); // one button at a time: the drawing tool lets go
           refreshCraft();
         }
         legendPop.hidden = !open;
@@ -297,6 +306,8 @@
       $('dock-color').addEventListener('click', () => {
         if (!pop.hidden) return closePop();
         app.closeSheet();
+        app.setLegend(false);
+        app.setTool('none');
         fillPop();
         pop.hidden = false;
         syncNav();

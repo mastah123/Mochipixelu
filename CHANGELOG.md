@@ -10,6 +10,13 @@ Versions follow [Semantic Versioning](https://semver.org/): `MAJOR.MINOR.PATCH`.
 
 Examples are illustrative; the real versions are listed below. Documentation-only, test-only and refactoring changes do not automatically bump the version.
 
+## [1.24.0] — 2026-10-29 (finalized in the working tree; not tagged or published)
+
+### Changed
+- Editor: only one bottom button is open at a time. Opening Color or Legend releases the drawing tool (and closes the other row); choosing a tool closes both rows. Picking a color closes the row and brings the last drawing tool back, so you can keep drawing.
+- Pattern view: the guide controls are shorter (compact segmented control and stepper).
+- Pattern view: the Fit button moved from the top-right to the bottom-right of the canvas, like the editor's.
+
 ## [1.23.0] — 2026-10-29 (finalized in the working tree; not tagged or published)
 
 ### Fixed

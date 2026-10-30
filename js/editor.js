@@ -43,6 +43,12 @@
       app.setTool = (tool) => {
         if (settings.tool === 'inspect' && tool !== 'inspect') app.select(null); // the inspector goes away with its tool
         if (tool !== 'pan') previousTool = tool;
+        if (['pencil', 'eraser', 'fill', 'picker'].includes(tool)) app.lastTool = tool;
+        // one bottom button at a time: choosing a tool closes the legend and the color row
+        if (tool !== 'none' && app.closePop) {
+          app.closePop();
+          app.setLegend(false);
+        }
         settings.tool = tool;
         document.body.dataset.tool = tool;
         document.querySelectorAll('.tool[data-tool]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.tool === tool)));

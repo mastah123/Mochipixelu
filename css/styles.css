@@ -729,7 +729,6 @@ input[type="text"], input[type="number"], select { border: 1.5px solid var(--hai
 .view-meta { flex: none; padding: 4px 16px 2px; display: flex; align-items: center; gap: 10px; }
 .view-meta .progress { flex: 1; margin: 0; }
 .view-stage { flex: 1 1 0 !important; min-height: 0; min-width: 0; padding: 6px !important; border: 0 !important; background: transparent !important; }
-.hud-view { top: 8px; bottom: auto; right: 8px; }
 .view-dock { flex: none; position: relative; z-index: 3; background: var(--card); border-top: 1px solid var(--hair); }
 .vtools { display: grid; grid-template-columns: repeat(4, 1fr); gap: 2px; padding: 6px; max-width: 640px; margin: 0 auto; }
 .vtool {
@@ -877,3 +876,12 @@ input[type="text"], input[type="number"], select { border: 1.5px solid var(--hai
 .vtool { min-height: 46px; padding: 2px; gap: 2px; font-size: .66rem; line-height: 1.1; }
 .vtool .ic { width: 20px; height: 20px; }
 .legend-dock .chips-scroll[hidden], #view-legend[hidden] { display: none; }
+
+/* ===== 1.24.0: smaller guide controls ===== */
+#guide-controls { padding: 4px 12px; gap: 4px; margin-top: 0; }
+#guide-controls .seg { padding: 2px; gap: 2px; border-radius: 12px; }
+#guide-controls .seg button { min-height: 32px; font-size: .85rem; }
+#guide-controls .stepper { gap: 4px; flex-wrap: nowrap; }
+#guide-controls .stepper .btn.small { min-height: 34px; padding: 2px 10px; }
+#guide-controls .stepper .btn.icon-btn { width: 36px; padding: 0; }
+#guide-controls .stepper strong { min-width: 6em; font-size: .95rem; }

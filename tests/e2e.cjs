@@ -150,9 +150,26 @@ const vis = (page, sel) => page.locator(sel).isVisible();
     const second = await page.locator('#color-pop .sw').nth(1).getAttribute('data-color');
     check('last used color is the second swatch', String(rec[0]) === second, JSON.stringify([rec, second]));
     check('tapping a quick color selects it', await page.evaluate(() => mochipixelu.settings.color !== 0xe8737f || true));
+    {
+      // one bottom button at a time
+      await page.tap('.tool[data-tool=eraser]');
+      await page.tap('#dock-color');
+      check('opening Color releases the drawing tool', (await page.evaluate(() => mochipixelu.settings.tool)) === 'none' && (await page.locator('.tool[data-tool][aria-pressed=true]').count()) === 0);
+      await page.tap('#dock-legend');
+      check('opening Legend closes the color row and keeps no tool', !(await vis(page, '#color-pop')) && (await vis(page, '#legend-pop')) && (await page.evaluate(() => mochipixelu.settings.tool)) === 'none');
+      await page.tap('#dock-color');
+      check('opening Color closes the legend', !(await vis(page, '#legend-pop')) && (await vis(page, '#color-pop')));
+      await page.locator('#color-pop .sw[data-color]').first().tap();
+      check('picking a color closes the row and brings the last tool back', !(await vis(page, '#color-pop')) && (await page.evaluate(() => mochipixelu.settings.tool)) === 'eraser');
+      await page.tap('#dock-legend');
+      await page.tap('.tool[data-tool=pencil]');
+      check('choosing a tool closes the legend', !(await vis(page, '#legend-pop')) && (await page.evaluate(() => mochipixelu.settings.tool)) === 'pencil');
+      await page.tap('#dock-color'); await page.tap('#dock-color');
+    }
     await page.screenshot({ path: SP + 'editor-pop.png' });
     await page.tap('.tool[data-tool=pencil]');
     check('choosing a tool closes the pop-up', !(await vis(page, '#color-pop')));
+    await page.tap('.tool[data-tool=pencil]');
     check('tapping the active tool again deselects it', (await page.evaluate(() => mochipixelu.settings.tool)) === 'none' && (await page.locator('.tool[aria-pressed=true]').count()) === 0);
     const before = await page.evaluate(() => mochipixelu.store.design.pixels.filter((v) => v !== -1).length);
     const pc = await page.evaluate(() => { const b = mochipixelu.renderer.canvas.getBoundingClientRect(); return { x: b.left + b.width / 2, y: b.top + b.height / 2 }; });
