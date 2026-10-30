@@ -142,3 +142,24 @@ Batch R — legend row: (1) the legend is one sliding row like the quick colors:
 Batch S — legend editing: (3) a fixed ⋯ at the right end of the row; the chips slide, the ⋯ stays; ⋯ opens a pop-up to edit the legend: choose the symbol for each color (stored as an optional `symbols` field in the project file, format v1 stays readable) and reset to default.
 Batch T — image import: (8) no feathering: pixelate by taking the dominant (most frequent) exact color of each cell and only colors that exist in the image — no blending, no dithering, no anti-aliasing — so edges stay crisp.
 All mobile-first, adapting to desktop.
+
+## Queued feature (requested 2026-10-29 21:08, not built yet): import an already-made pixel pattern from an image
+Goal: read a finished chart image (screenshot or photo) back into a pattern, ignoring grid lines and row/column numbers. The owner will send sample images before the later batches are tuned. Work in batches; one per "Next". Mobile-first, adapting to desktop. Offline, vanilla JS, no new dependencies.
+Batch U — grid detection (logic + tests, no UI): find the pattern rectangle (drop margins with row/column numbers), detect cell size from the edge profile (autocorrelation; thick every-5th/10th lines tolerated), return {x, y, cols, rows, cellW, cellH}. Tested on generated synthetic grids (clean, JPEG-like noise, thick lines, numbered margins).
+Batch V — cell reading (logic + tests): sample the centre ~55% of each cell, take the most frequent exact colour (no blending, consistent with 1.27.0); ignore symbols drawn on a coloured cell; merge near-identical shades from compression noise with an adjustable tolerance; white/transparent threshold for empty cells.
+Batch W — import UI: "Import chart from image" on the home New dialog and in the editor; shows the detected grid as an overlay with draggable crop handles and typed columns/rows/cell size; live preview of the pattern before importing; imports as a new pattern.
+Batch X — tuning on the owner's samples: symbol-only (black and white) charts, skewed or photographed paper charts, fixes found with real samples.
+Limits to state when delivering: tested on synthetic images only until samples arrive; low-resolution or heavily compressed images may need the manual size override.
+
+### Sample charts received 2026-10-30 (6 images kept outside the project in /home/claude/samples, not in the zip: copyright/watermarks)
+1. Cherry blossom: screenshot of an editor on a dark checker background, thin dark grid, no border, no numbers; the shape is irregular, white cells are real colour, the outside is the checker (empty). A stray grey square sits in a corner.
+2. Purple/pink clouds, 26×26: light grid, row numbers on both sides (every second row) and column numbers on top and bottom; no thick lines.
+3. Totoro/leaf: black grid with heavier lines every 10 cells, outer border, no numbers; white background = empty.
+4. Perler bead art: six small round-bead patterns in one image, no grid lines, beads are circles and the black outline beads are part of the design. Needs bead (circle) detection and picking one of several patterns.
+5. Goldfish cross-stitch page: text, photo preview, a 15 × 11 pattern in a larger drawn grid with heavier lines every 5, numbers on top/left, a watermark text over the cells, a colour key table (symbol / colour / DMC / name) below.
+6. Stitch Fiddle chart 25×28: numbers on all four sides, heavier lines every 5 and 10, colour key with DMC names below.
+Decisions from the samples:
+- A crop step is essential (samples 4-6 are pages or sheets of several things); auto-detect only proposes the crop box and the user adjusts it.
+- Grid detection must tolerate thick lines every 5/10, light or dark lines, no outer border (cherry blossom), numbers in margins, and text/watermarks over cells (centre sampling + most-frequent colour already ignores them).
+- White: a toggle "treat white/checker as empty", default on when the outside of the shape is white or checker; preview shows the result.
+- Later (Batch X): round-bead mode (sample 4), several patterns in one image (pick one), snapping to the swatches of a colour key (samples 5-6).

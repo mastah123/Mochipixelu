@@ -10,6 +10,12 @@ Versions follow [Semantic Versioning](https://semver.org/): `MAJOR.MINOR.PATCH`.
 
 Examples are illustrative; the real versions are listed below. Documentation-only, test-only and refactoring changes do not automatically bump the version.
 
+## [1.29.0]
+
+### Added
+- Groundwork for importing finished charts from images (no screen yet): `js/chart.js` finds the grid in a chart image — cell size (sub-pixel), origin, columns and rows — tolerating heavier lines every 5/10 cells, light or dark lines, numbers in the margins, compression noise, and a user-given crop. Images without regular grid lines (round beads) return no grid.
+- 9 new logic tests. On the owner's six samples it reads four correctly without a crop (26×26, 25×28, 24×24, 21×21 grids), the cherry blossom with a crop, and rejects the bead image.
+
 ## [1.28.0]
 
 ### Changed

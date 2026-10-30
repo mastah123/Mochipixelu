@@ -5,11 +5,11 @@
   const isNode = typeof require !== 'undefined' && typeof module !== 'undefined';
   if (isNode) {
     const path = require('path');
-    ['utils', 'state', 'palette', 'pixelate', 'storage'].forEach((f) => require(path.join(__dirname, '..', 'js', f + '.js')));
+    ['utils', 'state', 'palette', 'pixelate', 'chart', 'storage'].forEach((f) => require(path.join(__dirname, '..', 'js', f + '.js')));
   }
   const root = isNode ? globalThis : window;
   const M = root.Mochi;
-  const { Utils: U, Design: D, Palette: Q, Pixelate: P, Storage: S } = M;
+  const { Utils: U, Design: D, Palette: Q, Pixelate: P, Storage: S, Chart: CH } = M;
 
   const results = [];
   const test = (name, fn) => {
@@ -231,6 +231,94 @@
     const many = D.create(20, 20);
     for (let i = 0; i < 400; i++) many.pixels[i] = i;
     eq(new Set(Q.legend(many).entries.map((e) => e.symbol)).size, 400, 'symbols stay unique even past the symbol set');
+  });
+
+  /* ----- chart grid detection ----- */
+  // deterministic noise so the tests never flake
+  const rng = (seed) => () => ((seed = (seed * 1664525 + 1013904223) >>> 0) / 4294967296);
+  /** Draw a chart: cols×rows cells of `cell` px at (ox,oy) in a W×H image. */
+  const chart = (o) => {
+    const r = rng(o.seed || 7);
+    const W = o.W, H = o.H, data = new Uint8ClampedArray(W * H * 4);
+    for (let i = 0; i < W * H; i++) { data[i * 4] = data[i * 4 + 1] = data[i * 4 + 2] = o.bg || 255; data[i * 4 + 3] = 255; }
+    const px = (x, y, c) => { if (x < 0 || y < 0 || x >= W || y >= H) return; const i = (y * W + x) * 4; data[i] = c[0]; data[i + 1] = c[1]; data[i + 2] = c[2]; };
+    const cells = [];
+    for (let j = 0; j < o.rows; j++) for (let i = 0; i < o.cols; i++) cells.push(r() < 0.5 ? o.c1 : r() < 0.5 ? o.c2 : o.c3);
+    const has = o.shape || (() => true);
+    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+      const gx = (x - o.ox) / o.cell, gy = (y - o.oy) / o.cell;
+      if (gx < 0 || gy < 0 || gx >= o.cols || gy >= o.rows) continue;
+      const i = Math.floor(gx), j = Math.floor(gy);
+      if (!has(i, j)) continue;
+      px(x, y, cells[j * o.cols + i]);
+    }
+    // grid lines (width lw), heavier every `major` cells
+    const lw = o.lw || 1;
+    for (let j = 0; j <= o.rows; j++) for (let i = 0; i <= o.cols; i++) {
+      const lx = Math.round(o.ox + i * o.cell), ly = Math.round(o.oy + j * o.cell);
+      const thick = o.major && i % o.major === 0 ? lw + 1 : lw;
+      const thickY = o.major && j % o.major === 0 ? lw + 1 : lw;
+      for (let y = Math.round(o.oy + j * o.cell); y < Math.round(o.oy + (j + 1) * o.cell); y++) if (has(Math.min(i, o.cols - 1), Math.min(j, o.rows - 1)) || has(Math.max(i - 1, 0), Math.min(j, o.rows - 1))) for (let t = 0; t < thick; t++) if (j < o.rows) px(lx + t, y, o.line);
+      for (let x = Math.round(o.ox + i * o.cell); x < Math.round(o.ox + (i + 1) * o.cell); x++) if (has(Math.min(i, o.cols - 1), Math.min(j, o.rows - 1)) || has(Math.min(i, o.cols - 1), Math.max(j - 1, 0))) for (let t = 0; t < thickY; t++) if (i < o.cols) px(x, ly + t, o.line);
+    }
+    // numbers in the margins: short bars that are not aligned with the grid lines
+    if (o.numbers) for (let i = 0; i < o.cols; i++) for (let k = 0; k < 6; k++) { px(Math.round(o.ox + i * o.cell + 3 + k), o.oy - 14, [30, 30, 30]); px(Math.round(o.ox + i * o.cell + 3 + k), o.oy - 13, [30, 30, 30]); px(Math.round(o.ox + i * o.cell + 3), o.oy - 14 - (k % 3), [30, 30, 30]); }
+    if (o.numbers) for (let j = 0; j < o.rows; j++) for (let k = 0; k < 6; k++) px(o.ox - 16 + k, Math.round(o.oy + j * o.cell + 5 + (k % 2) * 3), [30, 30, 30]);
+    if (o.noise) {
+      for (let i = 0; i < W * H * 4; i += 4) { const n = Math.round((r() - 0.5) * 2 * o.noise); for (let k = 0; k < 3; k++) data[i + k] = Math.max(0, Math.min(255, data[i + k] + n)); }
+    }
+    return { data, width: W, height: H };
+  };
+  const near = (a, b, tol) => Math.abs(a - b) <= tol;
+  const expectGrid = (g, o, tolPx) => {
+    ok(g !== null, 'a grid is found');
+    eq(g.cols, o.cols); eq(g.rows, o.rows);
+    ok(near(g.cellW, o.cell, 0.4) && near(g.cellH, o.cell, 0.4), 'cell size ' + g.cellW + ' / ' + g.cellH + ' vs ' + o.cell);
+    ok(near(g.x, o.ox, tolPx || 2) && near(g.y, o.oy, tolPx || 2), 'origin ' + g.x + ',' + g.y + ' vs ' + o.ox + ',' + o.oy);
+  };
+  const dark = { c1: [255, 255, 255], c2: [200, 60, 60], c3: [60, 60, 200], line: [30, 30, 30] };
+  test('grid detection: dark thin lines, whole image is the chart', () => {
+    const o = Object.assign({ W: 320, H: 260, cols: 20, rows: 16, cell: 15, ox: 10, oy: 10 }, dark);
+    expectGrid(CH.detectGrid(chart(o)), o);
+  });
+  test('grid detection: light lines on purple, numbers in the margins, odd origin', () => {
+    const o = { W: 420, H: 390, cols: 12, rows: 11, cell: 27, ox: 44, oy: 40, bg: 255, c1: [180, 140, 220], c2: [255, 170, 210], c3: [250, 210, 120], line: [235, 230, 245], numbers: true };
+    expectGrid(CH.detectGrid(chart(o)), o);
+  });
+  test('grid detection: heavier lines every 5 cells do not change the cell size', () => {
+    const o = Object.assign({ W: 400, H: 340, cols: 25, rows: 20, cell: 15, ox: 12, oy: 12, major: 5, lw: 1 }, dark);
+    expectGrid(CH.detectGrid(chart(o)), o);
+  });
+  test('grid detection: non-integer cell size', () => {
+    const o = Object.assign({ W: 360, H: 300, cols: 24, rows: 20, cell: 12.6, ox: 20, oy: 18 }, dark);
+    expectGrid(CH.detectGrid(chart(o)), o, 2.5);
+  });
+  test('grid detection: compression-like noise', () => {
+    const o = Object.assign({ W: 360, H: 300, cols: 22, rows: 18, cell: 15, ox: 14, oy: 14, noise: 14 }, dark);
+    expectGrid(CH.detectGrid(chart(o)), o);
+  });
+  test('grid detection: a crop from the user fixes sparse charts that have no lines in empty areas', () => {
+    // lines only around a plus-shaped blob, like a screenshot without an outer border
+    const shape = (i, j) => (i >= 6 && i <= 13 && j >= 2 && j <= 13) || (j >= 6 && j <= 9 && i >= 2 && i <= 17);
+    const o = Object.assign({ W: 360, H: 300, cols: 20, rows: 16, cell: 16, ox: 12, oy: 12, shape }, dark, { bg: 70 });
+    const img = chart(o);
+    const g = CH.detectGrid(img, { rect: { x: 0, y: 0, w: 360, h: 290 } });
+    ok(g !== null && near(g.cellW, 16, 0.4), 'cell size from the blob');
+    ok(g.cols >= 16 && g.cols <= 20 && g.rows >= 12 && g.rows <= 16, 'cols/rows of the blob area ' + g.cols + 'x' + g.rows);
+  });
+  test('grid detection: text and tables around the chart are ignored when a crop is given', () => {
+    const o = Object.assign({ W: 400, H: 340, cols: 14, rows: 12, cell: 18, ox: 120, oy: 40 }, dark);
+    const img = chart(o);
+    for (let y = 300; y < 330; y += 3) for (let x = 20; x < 380; x++) { const i = (y * 400 + x) * 4; img.data[i] = img.data[i + 1] = img.data[i + 2] = x % 7 < 3 ? 20 : 240; }
+    expectGrid(CH.detectGrid(img, { rect: { x: 100, y: 20, w: 290, h: 250 } }), o);
+  });
+  test('grid detection: flat pictures and noise have no grid', () => {
+    const flat = { data: new Uint8ClampedArray(200 * 200 * 4).fill(255), width: 200, height: 200 };
+    eq(CH.detectGrid(flat), null);
+    const r = rng(3), n = new Uint8ClampedArray(200 * 200 * 4);
+    for (let i = 0; i < n.length; i++) n[i] = i % 4 === 3 ? 255 : Math.floor(r() * 256);
+    eq(CH.detectGrid({ data: n, width: 200, height: 200 }), null);
+    eq(CH.detectGrid({ data: new Uint8ClampedArray(4 * 4 * 4), width: 4, height: 4 }), null);
   });
 
   /* ----- storage ----- */
