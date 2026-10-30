@@ -10,6 +10,15 @@ Versions follow [Semantic Versioning](https://semver.org/): `MAJOR.MINOR.PATCH`.
 
 Examples are illustrative; the real versions are listed below. Documentation-only, test-only and refactoring changes do not automatically bump the version.
 
+## [1.23.0] — 2026-10-29 (finalized in the working tree; not tagged or published)
+
+### Fixed
+- Pattern view: with no mode selected (after opening the legend or releasing a mode) a tap did nothing, so the stitch details could not be seen. A tap now always shows the stitch details; Guide and Tick still add their own action.
+- Editor: with no tool selected a tap (not a drag) now shows that stitch's details above the canvas and outlines it; a drag still pans.
+
+### Changed
+- The legend's button is now **Hide on canvas / Show on canvas** and controls the legend symbols drawn inside the canvas cells (editor and pattern view). The legend chips stay as they are. Symbols appear while the legend is open (cells at least 10 px wide), in the readable text color of each cell.
+
 ## [1.22.0] — 2026-10-27 (finalized in the working tree; not tagged or published)
 
 ### Changed

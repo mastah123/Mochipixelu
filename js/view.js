@@ -194,15 +194,20 @@
         applyGuide();
       };
       /* the Legend button opens the legend card (and releases the mode buttons); Hide / Show only folds the chips */
-      const setChips = (show) => {
-        $('view-legend').hidden = !show;
-        $('view-legend-hide').textContent = show ? 'Hide' : 'Show';
-        $('view-legend-hide').setAttribute('aria-expanded', String(show));
+      let symbolsOn = true;
+      const syncSymbols = () => {
+        const want = symbolsOn && !$('view-legend-pop').hidden;
+        $('view-legend-hide').textContent = symbolsOn ? 'Hide on canvas' : 'Show on canvas';
+        $('view-legend-hide').setAttribute('aria-pressed', String(symbolsOn));
+        if (renderer.showSymbols !== want) {
+          renderer.showSymbols = want;
+          if (design) renderer.draw();
+        }
       };
       const setLegend = (open) => {
         $('view-legend-pop').hidden = !open;
         $('view-dock-legend').setAttribute('aria-pressed', String(open));
-        if (open) setChips(true);
+        syncSymbols();
         requestAnimationFrame(() => vp.autoFit && vp.fit());
       };
       $('view-dock-legend').addEventListener('click', () => {
@@ -210,7 +215,10 @@
         if (open) setMode('none');
         setLegend(open);
       });
-      $('view-legend-hide').addEventListener('click', () => setChips($('view-legend').hidden));
+      $('view-legend-hide').addEventListener('click', () => {
+        symbolsOn = !symbolsOn;
+        syncSymbols();
+      });
       // one button at a time: picking a mode closes the legend, tapping the active mode releases it
       $('view-modes').addEventListener('click', (e) => {
         const b = e.target.closest('[data-mode]');
@@ -222,8 +230,12 @@
       /* ---------- taps on the pattern ---------- */
       let tap = null;
       const onTap = (cell) => {
-        if (mode === 'none') return;
         selected = cell;
+        if (mode === 'none') {
+          renderer.setSelected(cell); // no mode picked: a tap still shows the stitch details
+          showInfo();
+          return;
+        }
         renderer.setSelected(mode === 'look' || mode === 'tick' ? cell : null);
         if (mode === 'guide') {
           row = cell.y;

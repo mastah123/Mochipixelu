@@ -113,7 +113,7 @@
       /** The one-line "selected stitch" above the canvas: the cell under the finger / pointer, or the last one touched. */
       const updateInspector = () => {
         if (app.hover) app.lastCell = app.hover;
-        const cell = app.hover || app.lastCell;
+        const cell = app.hover || app.selected || app.lastCell;
         const sw = $('edit-info-swatch');
         const text = $('edit-info-text');
         if (!cell || !D.inBounds(store.design, cell.x, cell.y)) {
@@ -192,6 +192,8 @@
         const tool = settings.tool;
         if (tool === 'pan' || tool === 'none') {
           e.preventDefault();
+          const c0 = renderer.cellFromPoint(e.clientX, e.clientY);
+          tapSel = c0 && e.isPrimary !== false ? { id: e.pointerId, x: e.clientX, y: e.clientY, cell: c0 } : null;
           vp.startPan(e);
           return;
         }
@@ -224,7 +226,9 @@
         app.select(cell);
       });
 
+      let tapSel = null; // a tap (not a drag) with no tool selected shows that stitch's details
       canvas.addEventListener('pointermove', (e) => {
+        if (tapSel && e.pointerId === tapSel.id && Math.hypot(e.clientX - tapSel.x, e.clientY - tapSel.y) > 8) tapSel = null;
         if (vp.move(e)) return;
         const cell = renderer.cellFromPoint(e.clientX, e.clientY);
         if (cell) {
@@ -244,6 +248,11 @@
 
       const endStroke = (e) => {
         vp.up(e);
+        if (tapSel && e.pointerId === tapSel.id && e.type === 'pointerup') {
+          app.select(tapSel.cell);
+          app.lastCell = tapSel.cell;
+        }
+        tapSel = null;
         if (!stroke) return;
         if (canvas.hasPointerCapture && canvas.hasPointerCapture(e.pointerId)) canvas.releasePointerCapture(e.pointerId);
         if (stroke.changed) {
@@ -253,6 +262,7 @@
           store.dropCheckpoint();
         }
         stroke = null;
+        if (renderer.showSymbols) renderer.draw(); // new colors get their symbol
         updateInspector();
       };
       canvas.addEventListener('pointerup', endStroke);

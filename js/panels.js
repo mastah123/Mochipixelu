@@ -275,16 +275,25 @@
           refreshCraft();
         }
         legendPop.hidden = !open;
-        if (open) setChips(true);
+        syncSymbols();
         syncNav();
       };
-      const setChips = (show) => {
-        $('legend-list').hidden = !show;
-        $('legend-hide').textContent = show ? 'Hide' : 'Show';
-        $('legend-hide').setAttribute('aria-expanded', String(show));
+      /* "Hide / Show on canvas" draws or removes the legend symbols inside the cells */
+      let symbolsOn = true;
+      const syncSymbols = () => {
+        const want = symbolsOn && !legendPop.hidden;
+        $('legend-hide').textContent = symbolsOn ? 'Hide on canvas' : 'Show on canvas';
+        $('legend-hide').setAttribute('aria-pressed', String(symbolsOn));
+        if (renderer.showSymbols !== want) {
+          renderer.showSymbols = want;
+          renderer.draw();
+        }
       };
       $('dock-legend').addEventListener('click', () => app.setLegend(legendPop.hidden));
-      $('legend-hide').addEventListener('click', () => setChips($('legend-list').hidden));
+      $('legend-hide').addEventListener('click', () => {
+        symbolsOn = !symbolsOn;
+        syncSymbols();
+      });
       $('dock-color').addEventListener('click', () => {
         if (!pop.hidden) return closePop();
         app.closeSheet();

@@ -18,6 +18,8 @@
       this.cell = 16;
       this.grid = true;
       this.showDone = true;
+      this.showSymbols = false; // legend symbols drawn inside the cells
+      this.syms = null;
       this.filter = null; // color int to spotlight, or null
       this.selected = null; // {x,y}
       this.hover = null; // {x,y}
@@ -81,6 +83,7 @@
 
     draw() {
       const d = this.design;
+      this.syms = this.showSymbols ? M.Palette.legend(d).byColor : null;
       this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
       for (let y = 0; y < d.height; y++) for (let x = 0; x < d.width; x++) this.drawCell(x, y);
       this.drawFrame();
@@ -107,6 +110,17 @@
       if (v === EMPTY) ctx.fillStyle = (x + y) & 1 ? this.checkB : this.checkA;
       else ctx.fillStyle = U.toHex(v);
       ctx.fillRect(px, py, c, c);
+
+      if (this.syms && v !== EMPTY && c >= 10) {
+        const e = this.syms.get(v);
+        if (e) {
+          ctx.fillStyle = U.textOn(v);
+          ctx.font = '700 ' + Math.floor(c * 0.62) + 'px system-ui, sans-serif';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(e.symbol, px + c / 2, py + c / 2 + c * 0.04);
+        }
+      }
 
       if (this.filter !== null) {
         if (v !== this.filter) {
