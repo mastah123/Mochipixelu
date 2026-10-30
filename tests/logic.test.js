@@ -372,6 +372,11 @@
     const edge = CH.readCells(img, { x: 150, y: 120, cols: 5, rows: 5, cellW: 16, cellH: 16 });
     eq(edge.pixels.length, 25);
   });
+  test('grid detection: a crop drawn exactly on the outer grid lines keeps every column and row', () => {
+    const o = Object.assign({ W: 320, H: 260, cols: 20, rows: 16, cell: 15, ox: 10, oy: 10 }, dark);
+    const g = CH.detectGrid(chart(o), { rect: { x: 10, y: 10, w: 300, h: 240 } });
+    eq(g.cols, 20); eq(g.rows, 16);
+  });
   test('grid detection: flat pictures and noise have no grid', () => {
     const flat = { data: new Uint8ClampedArray(200 * 200 * 4).fill(255), width: 200, height: 200 };
     eq(CH.detectGrid(flat), null);

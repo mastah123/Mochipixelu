@@ -231,6 +231,7 @@
     <div id="fab-menu" class="fab-menu" hidden>
       <button class="btn fab-item" data-home="new"><svg class="ic sm"><use href="#i-newfile"/></svg>New canvas</button>
       <button class="btn fab-item" data-home="import"><svg class="ic sm"><use href="#i-image"/></svg>Import image</button>
+      <button class="btn fab-item" data-home="chart"><svg class="ic sm"><use href="#i-grid"/></svg>Import chart</button>
       <button class="btn fab-item" data-home="open"><svg class="ic sm"><use href="#i-upload"/></svg>Open file</button>
     </div>
     <button id="fab" class="fab" type="button" aria-label="Add a pattern" aria-expanded="false"><svg class="ic"><use href="#i-plus"/></svg><span class="fab-label">New pattern</span></button>
@@ -464,6 +465,7 @@
 
 <input id="file-input" type="file" accept="image/*" hidden>
 <input id="file-home-input" type="file" accept="image/*" hidden>
+<input id="file-chart-input" type="file" accept="image/*" hidden>
 <input id="file-project" type="file" accept=".json,.mochi,application/json" hidden>
 
 <!-- ===== dialogs ===== -->
@@ -503,6 +505,29 @@
       <button type="submit" id="text-ok" class="btn primary">Save</button>
     </div>
   </form>
+</dialog>
+
+<dialog id="chart-dialog" class="dialog chart-dialog">
+  <div class="dialog-head"><h2>Import a chart</h2></div>
+  <p class="hint" id="chart-hint">Drag the corners so the box wraps just the pattern squares (not the numbers), then check the preview.</p>
+  <div class="chart-stage" id="chart-stage"><canvas id="chart-canvas" aria-label="Chart image with the pattern area"></canvas></div>
+  <div class="row chart-controls">
+    <label>Columns <input id="chart-cols" type="number" min="1" max="256" inputmode="numeric"></label>
+    <label>Rows <input id="chart-rows" type="number" min="1" max="256" inputmode="numeric"></label>
+    <label>Empty cells
+      <select id="chart-empty">
+        <option value="auto">Auto (white / grey background)</option>
+        <option value="white">White is empty</option>
+        <option value="none">Nothing is empty</option>
+      </select>
+    </label>
+  </div>
+  <div class="row"><button type="button" id="chart-find" class="btn small"><svg class="ic sm"><use href="#i-grid"/></svg>Find the grid in this box</button></div>
+  <div class="chart-preview"><canvas id="chart-preview" aria-label="Preview of the imported pattern"></canvas><span id="chart-info" class="hint" aria-live="polite"></span></div>
+  <div class="row end">
+    <button type="button" id="chart-cancel" class="btn">Cancel</button>
+    <button type="button" id="chart-import" class="btn primary">Import</button>
+  </div>
 </dialog>
 
 <dialog id="symbols-dialog" class="dialog">
@@ -606,6 +631,7 @@
 <script src="js/actions.js"></script>
 <script src="js/editor.js"></script>
 <script src="js/panels.js"></script>
+<script src="js/chartimport.js"></script>
 <script src="js/home.js"></script>
 <script src="js/view.js"></script>
 <script src="js/main.js"></script>

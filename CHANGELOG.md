@@ -10,6 +10,15 @@ Versions follow [Semantic Versioning](https://semver.org/): `MAJOR.MINOR.PATCH`.
 
 Examples are illustrative; the real versions are listed below. Documentation-only, test-only and refactoring changes do not automatically bump the version.
 
+## [1.31.0]
+
+### Added
+- Import a chart: the + menu on the home page has "Import chart". Pick an image of a finished pattern (screenshot or photo); the app looks for the grid, shows the image with a draggable pattern box (corner handles, drag to move) and the grid lines over it, lets you type columns and rows or press "Find the grid in this box", shows a live preview with the number of colours and stitches, and imports it as a new pattern with the exact colours.
+- "Empty cells" choice: Auto (white/grey/checker background), White is empty, or Nothing is empty.
+
+### Changed
+- A crop box drawn exactly on the outer grid lines no longer loses the outermost column and row.
+
 ## [1.30.0]
 
 ### Added

@@ -516,6 +516,45 @@ const vis = (page, sel) => page.locator(sel).isVisible();
     await page.waitForTimeout(200);
     check('unknown project id falls back to home', (await page.evaluate(() => document.body.dataset.screen)) === 'home');
 
+    // import a chart image
+    const chartUrl = await page.evaluate(() => {
+      const c = document.createElement('canvas'); c.width = 280; c.height = 240; const x = c.getContext('2d');
+      x.fillStyle = '#fff'; x.fillRect(0, 0, 280, 240);
+      const pal = ['#ff0000', '#00aa00', '#0000ff', '#ffff00', '#ffffff'];
+      for (let j = 0; j < 10; j++) for (let i = 0; i < 12; i++) { x.fillStyle = (i === 0 && j === 0) ? '#ff0000' : (i === 11 && j === 9) ? '#0000ff' : pal[(i * 3 + j * 5) % 5]; x.fillRect(20 + i * 20, 20 + j * 20, 20, 20); }
+      x.strokeStyle = '#333'; x.lineWidth = 1; x.beginPath();
+      for (let i = 0; i <= 12; i++) { x.moveTo(20.5 + i * 20, 20); x.lineTo(20.5 + i * 20, 220); }
+      for (let j = 0; j <= 10; j++) { x.moveTo(20, 20.5 + j * 20); x.lineTo(260, 20.5 + j * 20); }
+      x.stroke(); x.fillStyle = '#000'; x.font = '10px sans-serif'; for (let i = 0; i < 12; i++) x.fillText(String(i + 1), 24 + i * 20, 14);
+      return c.toDataURL('image/png');
+    });
+    const chartPng = Buffer.from(chartUrl.split(',')[1], 'base64');
+    await page.tap('#fab');
+    check('the + menu has Import chart', await vis(page, '#fab-menu [data-home=chart]'));
+    const [chartChooser] = await Promise.all([page.waitForEvent('filechooser'), page.tap('#fab-menu [data-home=chart]')]);
+    await chartChooser.setFiles({ name: 'mychart.png', mimeType: 'image/png', buffer: chartPng });
+    await page.waitForFunction(() => document.getElementById('chart-dialog').open);
+    await page.waitForTimeout(500);
+    check('the chart dialog finds a 12 x 10 grid by itself', (await page.inputValue('#chart-cols')) === '12' && (await page.inputValue('#chart-rows')) === '10', (await page.inputValue('#chart-cols')) + 'x' + (await page.inputValue('#chart-rows')));
+    check('the preview reports cells and colors', /12 × 10 · 5 colors/.test(await page.textContent('#chart-info')) || /12 × 10 · 4 colors/.test(await page.textContent('#chart-info')), await page.textContent('#chart-info'));
+    await page.screenshot({ path: SP + 'chart-import.png' });
+    check('the dialog fits the phone without sideways scroll', await page.evaluate(() => { const d = document.getElementById('chart-dialog').getBoundingClientRect(); return d.left >= 0 && d.right <= innerWidth + 1; }));
+    // dragging the bottom-right corner changes the box; typing columns changes the grid
+    const cb = await page.locator('#chart-canvas').boundingBox();
+    const info0 = await page.textContent('#chart-info');
+    await page.fill('#chart-cols', '6');
+    await page.waitForTimeout(300);
+    check('typing columns re-reads the chart', /6 × 10/.test(await page.textContent('#chart-info')), await page.textContent('#chart-info'));
+    await page.tap('#chart-find');
+    await page.waitForTimeout(300);
+    check('Find the grid restores 12 columns', (await page.inputValue('#chart-cols')) === '12', (await page.inputValue('#chart-cols')) + ' / ' + (await page.textContent('#chart-hint')));
+    await page.tap('#chart-import');
+    await page.waitForFunction(() => location.hash.startsWith('#/e/'));
+    await page.waitForTimeout(500);
+    const imported = await page.evaluate(() => ({ w: mochipixelu.store.design.width, h: mochipixelu.store.design.height, first: mochipixelu.store.design.pixels[0], last: mochipixelu.store.design.pixels[119], name: mochipixelu.store.design.name }));
+    check('Import makes a 12 x 10 pattern with the exact colors', imported.w === 12 && imported.h === 10 && imported.first === 0xff0000 && imported.last === 0x0000ff && imported.name === 'mychart', JSON.stringify(imported));
+    await page.evaluate(() => { location.hash = '#/'; });
+    await page.waitForTimeout(300);
     check('phone flow: no console/page errors', errors.length === 0, errors.join(' | '));
     await ctx.close();
   }

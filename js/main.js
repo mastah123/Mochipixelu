@@ -109,6 +109,7 @@
     M.Dialogs.init(app);
     M.Editor.init(app);
     M.Panels.init(app);
+    M.ChartImport.init(app);
     M.Home.init(app);
     M.View.init(app);
 

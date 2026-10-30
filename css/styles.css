@@ -923,3 +923,16 @@ input[type="text"], input[type="number"], select { border: 1.5px solid var(--hai
   .vstack:not(:has(.vcard:not([hidden]))) { display: none; }
   .view-dock { z-index: 8; }
 }
+
+/* ===== 1.31.0: import a chart ===== */
+.chart-dialog { width: min(760px, 96vw); overflow: auto; }
+.chart-stage { display: grid; place-items: center; margin: 8px 0; background: var(--paper-2); border-radius: 12px; padding: 6px; }
+.chart-stage canvas { display: block; touch-action: none; max-width: 100%; border-radius: 6px; }
+.chart-controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end; }
+.chart-controls label { display: grid; gap: 4px; font-size: .85rem; font-weight: 700; }
+.chart-controls input[type="number"] { width: 84px; }
+.chart-preview { display: grid; gap: 4px; justify-items: start; margin: 10px 0; }
+.chart-preview canvas { image-rendering: pixelated; max-width: 100%; max-height: 22dvh; object-fit: contain; border-radius: 8px; border: 1px solid var(--hair); }
+.chart-dialog .row.end { position: sticky; bottom: -14px; background: var(--card); padding: 10px 0 4px; margin-top: 4px; z-index: 2; }
+.chart-dialog { z-index: 40; }
+.chart-preview canvas { max-height: 16dvh; }

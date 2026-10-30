@@ -163,3 +163,6 @@ Decisions from the samples:
 - Grid detection must tolerate thick lines every 5/10, light or dark lines, no outer border (cherry blossom), numbers in margins, and text/watermarks over cells (centre sampling + most-frequent colour already ignores them).
 - White: a toggle "treat white/checker as empty", default on when the outside of the shape is white or checker; preview shows the result.
 - Later (Batch X): round-bead mode (sample 4), several patterns in one image (pick one), snapping to the swatches of a colour key (samples 5-6).
+
+### Status 2026-10-30: Batches U, V, W built (1.29.0, 1.30.0, 1.31.0)
+Import chart is in the home + menu (js/chartimport.js, dialog #chart-dialog). Not done: an entry point in the editor, round beads, several patterns in one image, snapping to a colour key (Batch X). Known limit: with Empty cells = Auto, white cells inside a design become empty (the goldfish "Bright White" highlights); the user switches to "Nothing is empty".

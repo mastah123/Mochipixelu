@@ -554,6 +554,7 @@
             dlg.showModal();
             $('new-name').select();
           } else if (what === 'import') $('file-home-input').click();
+          else if (what === 'chart') $('file-chart-input').click();
           else if (what === 'open') $('file-project').click();
         })
       );

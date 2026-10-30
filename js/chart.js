@@ -110,6 +110,12 @@
     const rect = { x: Math.max(0, Math.round(r.x)), y: Math.max(0, Math.round(r.y)), w: 0, h: 0 };
     rect.w = Math.min(src.width - rect.x, Math.round(r.w));
     rect.h = Math.min(src.height - rect.y, Math.round(r.h));
+    if (opts && opts.rect) { // a crop drawn right on the outer grid lines would cut them off: look 3px beyond it
+      const px0 = Math.max(0, rect.x - 3), py0 = Math.max(0, rect.y - 3);
+      rect.w = Math.min(src.width - px0, rect.w + (rect.x - px0) + 3);
+      rect.h = Math.min(src.height - py0, rect.h + (rect.y - py0) + 3);
+      rect.x = px0; rect.y = py0;
+    }
     if (rect.w < 16 || rect.h < 16) return null;
     const { cx, cy } = profiles(src, rect);
     const px = period(cx, rect.x, rect.x + rect.w);
