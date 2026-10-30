@@ -267,6 +267,7 @@
       <div class="vstack">
         <div id="view-legend-pop" class="vcard" hidden>
           <div id="view-legend" class="chips-scroll"></div>
+        <button type="button" class="legend-more" id="view-legend-more" aria-label="Edit legend symbols"><svg class="ic"><use href="#i-more"/></svg></button>
         </div>
         <div id="guide-controls" class="vcard" hidden>
           <div class="seg" id="view-guides" role="group" aria-label="Guide style">
@@ -353,6 +354,7 @@
       <div id="color-pop" class="pop" hidden aria-label="Quick colors"></div>
       <div id="legend-pop" class="vcard legend-dock" hidden aria-label="Legend">
         <div id="legend-list" class="chips-scroll"></div>
+        <button type="button" class="legend-more" id="legend-more" aria-label="Edit legend symbols"><svg class="ic"><use href="#i-more"/></svg></button>
       </div>
       <nav class="tools" id="tools" aria-label="Tools">
         <button class="tool" data-tool="pencil" aria-pressed="true" title="Draw (B)"><svg class="ic"><use href="#i-pencil"/></svg><span class="tl">Draw</span></button>
@@ -501,6 +503,16 @@
       <button type="submit" id="text-ok" class="btn primary">Save</button>
     </div>
   </form>
+</dialog>
+
+<dialog id="symbols-dialog" class="dialog">
+  <div class="dialog-head"><h2>Legend symbols</h2></div>
+  <p class="hint">Pick the symbol for each color. Choosing one that another color uses swaps the two.</p>
+  <div id="symbols-list" class="symbols-list"></div>
+  <div class="row end">
+    <button id="symbols-reset" class="btn">Reset to default</button>
+    <button id="symbols-done" class="btn primary">Done</button>
+  </div>
 </dialog>
 
 <dialog id="confirm-dialog" class="dialog">

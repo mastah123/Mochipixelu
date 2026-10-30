@@ -29,13 +29,11 @@
     return d;
   };
 
-  D.clone = (d) => ({
-    name: d.name,
-    width: d.width,
-    height: d.height,
-    pixels: d.pixels.slice(),
-    done: d.done.slice(),
-  });
+  D.clone = (d) => {
+    const c = { name: d.name, width: d.width, height: d.height, pixels: d.pixels.slice(), done: d.done.slice() };
+    if (d.symbols) c.symbols = Object.assign({}, d.symbols);
+    return c;
+  };
 
   D.inBounds = (d, x, y) => x >= 0 && y >= 0 && x < d.width && y < d.height;
   D.index = (d, x, y) => y * d.width + x;
@@ -43,6 +41,7 @@
   /** Nearest-neighbour rescale of the existing pixels (keeps progress marks). */
   D.resample = (d, nw, nh) => {
     const out = D.create(nw, nh, EMPTY, d.name);
+    if (d.symbols) out.symbols = Object.assign({}, d.symbols);
     for (let y = 0; y < out.height; y++) {
       const sy = Math.min(d.height - 1, Math.floor(((y + 0.5) * d.height) / out.height));
       for (let x = 0; x < out.width; x++) {
@@ -59,6 +58,7 @@
   /** Crop or pad to a new size. ax/ay in [0,1] choose the anchor (0 = top-left, .5 = center). */
   D.resizeCanvas = (d, nw, nh, ax, ay) => {
     const out = D.create(nw, nh, EMPTY, d.name);
+    if (d.symbols) out.symbols = Object.assign({}, d.symbols);
     const ox = Math.round((out.width - d.width) * (ax || 0));
     const oy = Math.round((out.height - d.height) * (ay || 0));
     for (let y = 0; y < d.height; y++) {

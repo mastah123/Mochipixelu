@@ -504,6 +504,7 @@
       };
 
       app.ui.on('symbols', refreshCraft);
+      $('legend-more').addEventListener('click', () => app.openSymbols(store.design, () => { store.touch({ keepPristine: true }); renderer.draw(); }));
 
       /* ---------- EXPORT ---------- */
       app.exportOptions = () => ({

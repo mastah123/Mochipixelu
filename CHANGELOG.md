@@ -10,6 +10,13 @@ Versions follow [Semantic Versioning](https://semver.org/): `MAJOR.MINOR.PATCH`.
 
 Examples are illustrative; the real versions are listed below. Documentation-only, test-only and refactoring changes do not automatically bump the version.
 
+## [1.26.0]
+
+### Added
+- A fixed ⋯ button at the right end of the legend row (editor and pattern view); the chips slide, the button stays.
+- Legend symbol editor: pick a symbol per colour (picking one used by another colour swaps them) and reset to default.
+- Optional `symbols` field in the project file (format v1; files without it still open).
+
 ## [1.25.0]
 
 ### Changed

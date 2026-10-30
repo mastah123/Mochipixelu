@@ -230,6 +230,23 @@
     eq(Array.from(back.pixels).join(), Array.from(d.pixels).join());
     eq(Array.from(back.done).join(), '1,0,0,1,0,0');
   });
+  test('custom legend symbols override the defaults, round-trip, and are optional', () => {
+    const d = D.create(2, 1, U.EMPTY, 'Sym');
+    d.pixels.set([0xff0000, 0x00ff00]);
+    const base = Q.legend(d).entries[0];
+    d.symbols = { [U.toHex(base.color)]: 'Q', '#123456': 'Z' };
+    eq(Q.legend(d).byColor.get(base.color).symbol, 'Q');
+    const json = JSON.parse(JSON.stringify(S.serialize(d)));
+    eq(json.symbols[U.toHex(base.color)], 'Q');
+    eq(json.symbols['#123456'], undefined); // unused colors are not stored
+    const back = S.deserialize(json);
+    eq(Q.legend(back).byColor.get(base.color).symbol, 'Q');
+    const plain = S.serialize(D.create(1, 1, 5));
+    eq(plain.symbols, undefined);
+    eq(S.deserialize(plain).symbols, undefined);
+    const bad = S.deserialize(Object.assign({}, S.serialize(d), { symbols: { nope: 'x', '#ff0000': 'toolong' } }));
+    eq(bad.symbols, undefined);
+  });
   test('deserialize rejects damaged or foreign files', () => {
     throws(() => S.deserialize(null), /not a Mochipixelu/);
     throws(() => S.deserialize({ format: 'other' }), /not a Mochipixelu/);

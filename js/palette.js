@@ -136,7 +136,7 @@
         hex: U.toHex(color),
         count: counts.get(color),
         done: dones.get(color) || 0,
-        symbol: i < SYMBOLS.length ? SYMBOLS[i] : String(i + 1),
+        symbol: (design.symbols && design.symbols[U.toHex(color)]) || (i < SYMBOLS.length ? SYMBOLS[i] : String(i + 1)),
       };
       byColor.set(color, e);
       return e;

@@ -896,3 +896,15 @@ input[type="text"], input[type="number"], select { border: 1.5px solid var(--hai
 .chips-scroll .eye { width: 44px; height: 44px; padding: 0; border: 0; border-radius: 14px; background: var(--paper-2); display: grid; place-items: center; cursor: pointer; }
 .chips-scroll .eye[aria-pressed="true"] { background: var(--pill); }
 .chips-scroll .eye .ic { width: 22px; height: 22px; stroke-width: 1.7; }
+
+/* ===== 1.26.0: fixed more button + symbol editor ===== */
+.legend-dock, #view-legend-pop { display: flex; align-items: center; gap: 6px; }
+.legend-dock[hidden], #view-legend-pop[hidden] { display: none; }
+.legend-dock .chips-scroll, #view-legend-pop .chips-scroll { flex: 1 1 auto; min-width: 0; }
+.legend-more { flex: none; width: 44px; height: 44px; padding: 0; border: 0; border-radius: 14px; background: var(--paper-2); color: var(--ink); display: grid; place-items: center; cursor: pointer; }
+.legend-more .ic { width: 22px; height: 22px; }
+.symbols-list { display: grid; gap: 6px; max-height: 52dvh; overflow: auto; margin: 8px 0; }
+.sym-row { display: flex; align-items: center; gap: 10px; }
+.sym-row .swatch { width: 36px; height: 36px; border-radius: 10px; display: grid; place-items: center; font-weight: 700; flex: none; }
+.sym-row .sym-name { flex: 1; font-size: .85rem; }
+.sym-row select { min-height: 40px; font-size: 1rem; min-width: 64px; }

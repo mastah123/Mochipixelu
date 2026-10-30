@@ -53,6 +53,7 @@
 
       /* ---------- progress + legend ---------- */
       app.ui.on('symbols', () => design && refresh());
+      $('view-legend-more').addEventListener('click', () => design && app.openSymbols(design, () => { markDirty(); renderer.draw(); refresh(); }));
       const refresh = () => {
         const legend = M.Palette.legend(design);
         let done = 0;

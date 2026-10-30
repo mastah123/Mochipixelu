@@ -94,6 +94,61 @@
           input.select();
         });
 
+      /* ---------- legend symbols ---------- */
+      const symDlg = $('symbols-dialog');
+      const symList = $('symbols-list');
+      let symDesign = null;
+      let symChanged = null;
+      const symRender = () => {
+        const entries = M.Palette.legend(symDesign).entries;
+        symList.textContent = '';
+        entries.forEach((e) => {
+          const row = document.createElement('label');
+          row.className = 'sym-row';
+          const sw = document.createElement('span');
+          sw.className = 'swatch';
+          sw.style.background = e.hex;
+          sw.style.color = M.Utils.textOn(e.color);
+          sw.textContent = e.symbol;
+          const name = document.createElement('span');
+          name.className = 'sym-name';
+          name.textContent = e.hex + ' · ' + e.count;
+          const sel = document.createElement('select');
+          sel.setAttribute('aria-label', 'Symbol for ' + e.hex);
+          const opts = M.Palette.SYMBOLS.slice();
+          if (opts.indexOf(e.symbol) < 0) opts.unshift(e.symbol);
+          opts.forEach((s) => {
+            const o = document.createElement('option');
+            o.value = s;
+            o.textContent = s;
+            if (s === e.symbol) o.selected = true;
+            sel.appendChild(o);
+          });
+          sel.addEventListener('change', () => {
+            const map = symDesign.symbols || (symDesign.symbols = {});
+            const other = entries.find((x) => x !== e && x.symbol === sel.value);
+            if (other) map[other.hex] = e.symbol; // swap, so symbols stay unique
+            map[e.hex] = sel.value;
+            symChanged();
+            symRender();
+          });
+          row.append(sw, name, sel);
+          symList.appendChild(row);
+        });
+      };
+      app.openSymbols = (design, onChange) => {
+        symDesign = design;
+        symChanged = onChange;
+        symRender();
+        symDlg.showModal();
+      };
+      $('symbols-reset').addEventListener('click', () => {
+        delete symDesign.symbols;
+        symChanged();
+        symRender();
+      });
+      $('symbols-done').addEventListener('click', () => symDlg.close());
+
       // close dialogs when clicking the backdrop
       document.querySelectorAll('dialog').forEach((dlg) =>
         dlg.addEventListener('click', (e) => {

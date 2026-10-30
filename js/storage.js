@@ -37,7 +37,7 @@
       }
       if (design.done[i]) done.push(i);
     }
-    return {
+    const out = {
       format: FORMAT,
       version: FORMAT_VERSION,
       name: design.name,
@@ -47,6 +47,13 @@
       data,
       done,
     };
+    // optional: custom legend symbols, hex -> symbol (only for colors that exist)
+    if (design.symbols) {
+      const sy = {};
+      palette.forEach((hex) => { if (design.symbols[hex]) sy[hex] = design.symbols[hex]; });
+      if (Object.keys(sy).length) out.symbols = sy;
+    }
+    return out;
   };
 
   /** Validate + rebuild a design. Throws Error with a readable message on bad input. */
@@ -77,6 +84,15 @@
       for (const i of obj.done) {
         if (Number.isInteger(i) && i >= 0 && i < d.done.length && d.pixels[i] !== U.EMPTY) d.done[i] = 1;
       }
+    }
+    if (obj.symbols && typeof obj.symbols === 'object' && !Array.isArray(obj.symbols)) {
+      const sy = {};
+      Object.keys(obj.symbols).forEach((k) => {
+        const v = obj.symbols[k];
+        const c = U.fromHex(k);
+        if (c !== null && typeof v === 'string' && v.length >= 1 && v.length <= 2) sy[U.toHex(c)] = v;
+      });
+      if (Object.keys(sy).length) d.symbols = sy;
     }
     return d;
   };
