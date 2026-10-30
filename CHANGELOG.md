@@ -10,6 +10,13 @@ Versions follow [Semantic Versioning](https://semver.org/): `MAJOR.MINOR.PATCH`.
 
 Examples are illustrative; the real versions are listed below. Documentation-only, test-only and refactoring changes do not automatically bump the version.
 
+## [1.25.0]
+
+### Changed
+- Legend is one sliding row, like the quick colors, with an eye button first; the "Colors" label is gone.
+- The eye shows/hides the symbols on the canvas. Symbols now stay on whenever the eye is on, even with the legend closed. The eye state is remembered (default on). This reverses 1.23.0.
+- Tapping the active legend chip again clears the spotlight.
+
 ## [1.24.0] — 2026-10-29 (finalized in the working tree; not tagged or published)
 
 ### Changed

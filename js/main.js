@@ -54,6 +54,33 @@
     app.savePrefs = () => M.Storage.savePrefs({ color: app.settings.color, recent: app.settings.recent, theme: app.theme, home: app.homePrefs });
     ui.on('color', U.debounce(app.savePrefs, 400));
 
+    /* legend symbols drawn inside the cells: one switch for both screens, remembered on the device */
+    app.symbolsOn = () => app.homePrefs.symbols !== false;
+    renderer.showSymbols = app.symbolsOn();
+    app.setSymbols = (on) => {
+      app.homePrefs.symbols = !!on;
+      app.savePrefs();
+      [renderer, app.viewRenderer].forEach((r) => {
+        if (!r) return;
+        r.showSymbols = !!on;
+        if (r.design) r.draw();
+      });
+      ui.emit('symbols', !!on);
+    };
+    /** The eye button that starts every legend row. */
+    app.makeEye = () => {
+      const on = app.symbolsOn();
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'eye';
+      b.setAttribute('aria-pressed', String(on));
+      b.setAttribute('aria-label', on ? 'Hide symbols on the canvas' : 'Show symbols on the canvas');
+      b.title = b.getAttribute('aria-label');
+      b.innerHTML = '<svg class="ic"><use href="#' + (on ? 'i-eye' : 'i-eye-off') + '"/></svg>';
+      b.addEventListener('click', () => app.setSymbols(!app.symbolsOn()));
+      return b;
+    };
+
     /** The tone color (hex) a screen currently wears, or null for the plain look. */
     app.toneHex = (screenEl) => {
       if (!screenEl || !screenEl.dataset.tone) return null;

@@ -284,25 +284,9 @@
           refreshCraft();
         }
         legendPop.hidden = !open;
-        syncSymbols();
         syncNav();
       };
-      /* "Hide / Show on canvas" draws or removes the legend symbols inside the cells */
-      let symbolsOn = true;
-      const syncSymbols = () => {
-        const want = symbolsOn && !legendPop.hidden;
-        $('legend-hide').textContent = symbolsOn ? 'Hide on canvas' : 'Show on canvas';
-        $('legend-hide').setAttribute('aria-pressed', String(symbolsOn));
-        if (renderer.showSymbols !== want) {
-          renderer.showSymbols = want;
-          renderer.draw();
-        }
-      };
       $('dock-legend').addEventListener('click', () => app.setLegend(legendPop.hidden));
-      $('legend-hide').addEventListener('click', () => {
-        symbolsOn = !symbolsOn;
-        syncSymbols();
-      });
       $('dock-color').addEventListener('click', () => {
         if (!pop.hidden) return closePop();
         app.closeSheet();
@@ -493,6 +477,7 @@
         const legend = app.getLegend();
         const list = $('legend-list');
         list.textContent = '';
+        list.appendChild(app.makeEye());
         legend.entries.forEach((e) => {
           const b = document.createElement('button');
           b.type = 'button';
@@ -516,10 +501,9 @@
           t.textContent = 'No colors yet — draw something!';
           list.appendChild(t);
         }
-        $('btn-clear-filter').hidden = renderer.filter === null;
       };
 
-      $('btn-clear-filter').addEventListener('click', () => app.setFilter(null));
+      app.ui.on('symbols', refreshCraft);
 
       /* ---------- EXPORT ---------- */
       app.exportOptions = () => ({

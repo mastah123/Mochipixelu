@@ -97,13 +97,14 @@ const vis = (page, sel) => page.locator(sel).isVisible();
       await page.tap('#dock-legend');
       const lay = await page.evaluate(() => { const l = document.getElementById('legend-pop').getBoundingClientRect(); const c = document.getElementById('canvas').closest('.canvas-scroll').getBoundingClientRect(); const d = document.querySelector('#screen-editor .dock').getBoundingClientRect(); return { legendTop: l.top, scrollBottom: c.bottom, dockBottom: d.bottom, legendBottom: l.bottom }; });
       check('legend docks below the canvas without covering it', lay.legendTop >= lay.scrollBottom - 1 && lay.legendBottom <= lay.dockBottom + 1, JSON.stringify(lay));
-      check('opening the legend draws its symbols in the canvas cells', await page.evaluate(() => mochipixelu.renderer.showSymbols === true), JSON.stringify(await page.evaluate(() => [mochipixelu.renderer.showSymbols, document.getElementById('legend-pop').hidden, document.getElementById('legend-hide').textContent])));
-      await page.tap('#legend-hide');
-      check('Hide on canvas removes the symbols but keeps the legend', (await page.evaluate(() => mochipixelu.renderer.showSymbols)) === false && (await vis(page, '#legend-pop')) && (await vis(page, '#legend-list')) && (await page.textContent('#legend-hide')) === 'Show on canvas');
-      await page.tap('#legend-hide');
-      check('Show on canvas brings the symbols back', await page.evaluate(() => mochipixelu.renderer.showSymbols === true));
+      check('the legend row starts with an eye button and has no Colors label', (await page.locator('#legend-list > :first-child.eye').count()) === 1 && !/Colors/.test(await page.textContent('#legend-pop')));
+      check('symbols are drawn on the canvas while the eye is on', await page.evaluate(() => mochipixelu.renderer.showSymbols === true));
+      await page.tap('#legend-list .eye');
+      check('the eye hides the symbols but keeps the legend', (await page.evaluate(() => mochipixelu.renderer.showSymbols)) === false && (await vis(page, '#legend-pop')));
+      await page.tap('#legend-list .eye');
+      check('the eye shows the symbols again', await page.evaluate(() => mochipixelu.renderer.showSymbols === true));
       await page.tap('#dock-legend'); // close the legend again
-      check('the Legend button closes the legend', !(await vis(page, '#legend-pop')));
+      check('the Legend button closes the legend, the symbols stay on the canvas', !(await vis(page, '#legend-pop')) && (await page.evaluate(() => mochipixelu.renderer.showSymbols === true)));
     }
     check('no Move button in the bottom bar', (await page.locator('.dock [data-tool=pan]').count()) === 0);
     // pan / zoom / fit / full screen stay put on the canvas whatever opens over them
@@ -196,12 +197,12 @@ const vis = (page, sel) => page.locator(sel).isVisible();
     const lib = await page.evaluate(() => JSON.parse(localStorage.getItem('mochipixelu:library'))[0]);
     check('edits autosave into the library', lib.filled === 6, JSON.stringify(lib));
     await page.tap('#dock-legend');
-    check('Legend button opens the docked legend', await vis(page, '#legend-pop') && (await page.locator('#legend-list button').count()) >= 1);
+    check('Legend button opens the docked legend', await vis(page, '#legend-pop') && (await page.locator('#legend-list button:not(.eye)').count()) >= 1);
     const lb = await page.locator('#legend-pop').boundingBox(); const dk = await page.locator('.dock').boundingBox();
     check('legend is part of the bottom area (inside the dock)', lb.y >= dk.y - 1 && lb.y + lb.height <= dk.y + dk.height + 1, JSON.stringify([lb, dk]));
-    await page.locator('#legend-list button').first().tap();
+    await page.locator('#legend-list button:not(.eye)').first().tap();
     check('tapping a legend color spotlights it', (await page.evaluate(() => mochipixelu.renderer.filter)) !== null);
-    await page.tap('#btn-clear-filter');
+    await page.locator('#legend-list button:not(.eye)').first().tap();
     check('Show all colors clears the spotlight', (await page.evaluate(() => mochipixelu.renderer.filter)) === null);
     await page.tap('#dock-legend');
     check('Legend button closes it again', !(await vis(page, '#legend-pop')));
@@ -282,14 +283,15 @@ const vis = (page, sel) => page.locator(sel).isVisible();
     check('spotlighting a light color keeps it visible (outlined, others dimmed darker)', spot.edge < 80 && spot.centre > 220 && spot.empty < 180 && spot.neighbour < 200, JSON.stringify(spot));
 
     // spotlight chip
-    await page.tap('#view-dock-legend'); await page.tap('#view-legend button');
+    await page.tap('#view-dock-legend'); await page.tap('#view-legend button:not(.eye)');
     check('legend opens in the bottom area', await vis(page, '#view-legend-pop'));
     check('legend never overlaps the canvas', await page.evaluate(() => { const l = document.getElementById('view-legend-pop').getBoundingClientRect(); const c = document.getElementById('view-scroll').getBoundingClientRect(); return l.top >= c.bottom - 1; }));
-    check('opening the pattern legend draws its symbols in the cells', await page.evaluate(() => mochipixelu.viewRenderer.showSymbols === true));
-    check('Hide on canvas removes the symbols but keeps the legend', await (async () => { await page.tap('#view-legend-hide'); return (await page.evaluate(() => mochipixelu.viewRenderer.showSymbols)) === false && (await vis(page, '#view-legend-pop')) && (await vis(page, '#view-legend button')); })());
+    check('the pattern legend row starts with the eye', (await page.locator('#view-legend > :first-child.eye').count()) === 1);
+    await page.tap('#view-legend .eye');
+    check('the eye hides the symbols in the pattern view and keeps the legend', (await page.evaluate(() => mochipixelu.viewRenderer.showSymbols)) === false && (await vis(page, '#view-legend-pop')));
     check('opening the legend released the mode buttons', (await page.locator('#view-modes [data-mode][aria-pressed=true]').count()) === 0);
-    await page.tap('#view-legend-hide');
-    check('Show on canvas brings the symbols back', await page.evaluate(() => mochipixelu.viewRenderer.showSymbols === true));
+    await page.tap('#view-legend .eye');
+    check('the eye shows the symbols again', await page.evaluate(() => mochipixelu.viewRenderer.showSymbols === true));
     await page.tap('#view-modes [data-mode=guide]');
     check('picking a mode closes the legend and selects only that mode', !(await vis(page, '#view-legend-pop')) && (await page.locator('#view-modes [data-mode][aria-pressed=true]').count()) === 1);
     await page.tap('#view-modes [data-mode=guide]');

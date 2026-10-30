@@ -885,3 +885,14 @@ input[type="text"], input[type="number"], select { border: 1.5px solid var(--hai
 #guide-controls .stepper .btn.small { min-height: 34px; padding: 2px 10px; }
 #guide-controls .stepper .btn.icon-btn { width: 36px; padding: 0; }
 #guide-controls .stepper strong { min-width: 6em; font-size: .95rem; }
+
+/* ===== 1.25.0: one sliding legend row (eye first) ===== */
+.legend-dock, #view-legend-pop { padding: 6px 8px; }
+.legend-dock .chips-scroll, #view-legend, .vstack .chips-scroll {
+  flex-wrap: nowrap; max-height: none; overflow-x: auto; overflow-y: hidden; padding: 2px 2px 4px; gap: 6px; scrollbar-width: none; align-items: center;
+}
+.legend-dock .chips-scroll::-webkit-scrollbar, #view-legend::-webkit-scrollbar { display: none; }
+.chips-scroll > button { flex: none; }
+.chips-scroll .eye { width: 44px; height: 44px; padding: 0; border: 0; border-radius: 14px; background: var(--paper-2); display: grid; place-items: center; cursor: pointer; }
+.chips-scroll .eye[aria-pressed="true"] { background: var(--pill); }
+.chips-scroll .eye .ic { width: 22px; height: 22px; stroke-width: 1.7; }

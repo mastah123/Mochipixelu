@@ -21,6 +21,7 @@
       const scroller = $('view-scroll');
       const renderer = new M.Renderer(canvas);
       app.viewRenderer = renderer;
+      renderer.showSymbols = app.symbolsOn();
       let design = null;
       let id = null;
       let mode = 'look';
@@ -51,6 +52,7 @@
       root.addEventListener('pagehide', saveNow);
 
       /* ---------- progress + legend ---------- */
+      app.ui.on('symbols', () => design && refresh());
       const refresh = () => {
         const legend = M.Palette.legend(design);
         let done = 0;
@@ -63,6 +65,7 @@
 
         const host = $('view-legend');
         host.textContent = '';
+        host.appendChild(app.makeEye());
         legend.entries.forEach((e) => {
           const b = document.createElement('button');
           b.type = 'button';
@@ -194,30 +197,15 @@
         applyGuide();
       };
       /* the Legend button opens the legend card (and releases the mode buttons); Hide / Show only folds the chips */
-      let symbolsOn = true;
-      const syncSymbols = () => {
-        const want = symbolsOn && !$('view-legend-pop').hidden;
-        $('view-legend-hide').textContent = symbolsOn ? 'Hide on canvas' : 'Show on canvas';
-        $('view-legend-hide').setAttribute('aria-pressed', String(symbolsOn));
-        if (renderer.showSymbols !== want) {
-          renderer.showSymbols = want;
-          if (design) renderer.draw();
-        }
-      };
       const setLegend = (open) => {
         $('view-legend-pop').hidden = !open;
         $('view-dock-legend').setAttribute('aria-pressed', String(open));
-        syncSymbols();
         requestAnimationFrame(() => vp.autoFit && vp.fit());
       };
       $('view-dock-legend').addEventListener('click', () => {
         const open = $('view-legend-pop').hidden;
         if (open) setMode('none');
         setLegend(open);
-      });
-      $('view-legend-hide').addEventListener('click', () => {
-        symbolsOn = !symbolsOn;
-        syncSymbols();
       });
       // one button at a time: picking a mode closes the legend, tapping the active mode releases it
       $('view-modes').addEventListener('click', (e) => {

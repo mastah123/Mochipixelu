@@ -39,6 +39,10 @@
       app.fit = vp.fit;
       Object.defineProperty(app, 'autoFit', { get: () => vp.autoFit });
 
+      // symbols follow the colors: after edits settle, redraw so new colors get theirs
+      const redrawSymbols = U.debounce(() => renderer.showSymbols && app.route && app.route.name === 'editor' && renderer.draw(), 250);
+      store.on('change', redrawSymbols);
+
       /* ---------- tools ---------- */
       app.setTool = (tool) => {
         if (settings.tool === 'inspect' && tool !== 'inspect') app.select(null); // the inspector goes away with its tool
@@ -268,7 +272,6 @@
           store.dropCheckpoint();
         }
         stroke = null;
-        if (renderer.showSymbols) renderer.draw(); // new colors get their symbol
         updateInspector();
       };
       canvas.addEventListener('pointerup', endStroke);
