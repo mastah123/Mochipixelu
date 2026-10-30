@@ -138,5 +138,100 @@
     };
   };
 
+  /* ---------- Batch V: read the cells ---------- */
+
+  const dist = (a, b) => {
+    const dr = ((a >> 16) & 255) - ((b >> 16) & 255), dg = ((a >> 8) & 255) - ((b >> 8) & 255), db = (a & 255) - (b & 255);
+    return Math.sqrt(dr * dr + dg * dg + db * db);
+  };
+  const median = (arr) => { arr.sort((p, q) => p - q); return arr[arr.length >> 1]; };
+
+  /** The dominant colour of one cell's inner area, or null if it has no opaque pixels. Grid lines sit on the
+   *  cell border and symbols/text only cover part of the cell, so the most common colour is the cell's own. */
+  const cellColor = (src, x0, y0, x1, y1, inset) => {
+    const { data, width, height } = src;
+    const w = x1 - x0, h = y1 - y0;
+    const ax = Math.max(0, Math.round(x0 + w * inset)), bx = Math.min(width, Math.max(ax + 1, Math.round(x1 - w * inset)));
+    const ay = Math.max(0, Math.round(y0 + h * inset)), by = Math.min(height, Math.max(ay + 1, Math.round(y1 - h * inset)));
+    if (bx <= ax || by <= ay) return null;
+    const bins = new Map(); // coarse bin (4 bits per channel) -> pixels in it; noise stays inside a bin
+    for (let y = ay; y < by; y++) for (let x = ax; x < bx; x++) {
+      const i = (y * width + x) * 4;
+      if (data[i + 3] < 128) continue;
+      const key = ((data[i] >> 4) << 8) | ((data[i + 1] >> 4) << 4) | (data[i + 2] >> 4);
+      let b = bins.get(key);
+      if (!b) bins.set(key, (b = { r: [], g: [], b: [] }));
+      b.r.push(data[i]); b.g.push(data[i + 1]); b.b.push(data[i + 2]);
+    }
+    let best = null;
+    bins.forEach((b) => { if (!best || b.r.length > best.r.length) best = b; });
+    if (!best) return null;
+    // neighbouring bins can split one noisy colour in two: take the median of the winning bin (exact when clean)
+    return { color: (median(best.r) << 16) | (median(best.g) << 8) | median(best.b), share: best.r.length / ((bx - ax) * (by - ay)) };
+  };
+
+  const isWhite = (c) => ((c >> 16) & 255) >= 235 && ((c >> 8) & 255) >= 235 && (c & 255) >= 235;
+  const isGrey = (c) => {
+    const r = (c >> 16) & 255, g = (c >> 8) & 255, b = c & 255;
+    return Math.max(r, g, b) - Math.min(r, g, b) <= 20 && (r + g + b) / 3 > 40; // white, light or mid greys, checker; not black
+  };
+
+  /**
+   * Read a chart into cells using a grid from detectGrid (or one the user adjusted).
+   * opts: tolerance (colour distance that counts as the same colour, default 16),
+   *       empty: 'auto' | 'white' | 'none' | [colors]  (default 'auto'): which colour means "no stitch".
+   *         auto = the outer ring of the chart is mostly white or grey (or checker) -> that is the background.
+   * Returns { cols, rows, pixels: Int32Array (0xRRGGBB or -1), palette: [{color, count}], empty: color|null }.
+   */
+  C.readCells = (src, grid, opts) => {
+    opts = opts || {};
+    const tol = opts.tolerance !== undefined ? opts.tolerance : 16;
+    const cols = grid.cols, rows = grid.rows;
+    const raw = new Array(cols * rows);
+    for (let j = 0; j < rows; j++) for (let i = 0; i < cols; i++) {
+      const x0 = grid.x + i * grid.cellW, y0 = grid.y + j * grid.cellH;
+      const r = cellColor(src, x0, y0, x0 + grid.cellW, y0 + grid.cellH, opts.inset !== undefined ? opts.inset : 0.2);
+      raw[j * cols + i] = r ? r.color : -1;
+    }
+    // merge colours that only differ by compression noise: most frequent first, the first one within tolerance wins
+    const freq = new Map();
+    raw.forEach((c) => c >= 0 && freq.set(c, (freq.get(c) || 0) + 1));
+    const order = Array.from(freq.keys()).sort((a, b) => freq.get(b) - freq.get(a) || a - b);
+    const reps = [];
+    const map = new Map();
+    order.forEach((c) => {
+      let rep = null;
+      for (const r of reps) if (dist(c, r) <= tol) { rep = r; break; }
+      if (rep === null) reps.push((rep = c));
+      map.set(c, rep);
+    });
+    const pixels = new Int32Array(cols * rows);
+    for (let i = 0; i < pixels.length; i++) pixels[i] = raw[i] < 0 ? -1 : map.get(raw[i]);
+
+    // which colours mean "empty"?
+    let emptyColors = [];
+    let rule = opts.empty === undefined ? 'auto' : opts.empty;
+    if (Array.isArray(rule)) emptyColors = rule.map((c) => { const m = reps.find((r) => dist(r, c) <= tol); return m === undefined ? c : m; });
+    else if (rule === 'white') emptyColors = reps.filter(isWhite);
+    else if (rule === 'auto') {
+      const ring = new Map();
+      let n = 0;
+      for (let j = 0; j < rows; j++) for (let i = 0; i < cols; i++) {
+        if (i && j && i < cols - 1 && j < rows - 1) continue;
+        const c = pixels[j * cols + i];
+        n++;
+        if (c >= 0) ring.set(c, (ring.get(c) || 0) + 1);
+      }
+      let top = null;
+      ring.forEach((k, c) => { if (top === null || k > ring.get(top)) top = c; });
+      if (top !== null && ring.get(top) >= 0.4 * n && (isWhite(top) || isGrey(top))) emptyColors = [top];
+    }
+    if (emptyColors.length) for (let i = 0; i < pixels.length; i++) if (emptyColors.indexOf(pixels[i]) >= 0) pixels[i] = -1;
+    const counts = new Map();
+    pixels.forEach((c) => c >= 0 && counts.set(c, (counts.get(c) || 0) + 1));
+    const palette = Array.from(counts.keys()).sort((a, b) => counts.get(b) - counts.get(a)).map((color) => ({ color, count: counts.get(color) }));
+    return { cols, rows, pixels, palette, empty: emptyColors.length ? emptyColors[0] : null };
+  };
+
   M.Chart = C;
 })(typeof window !== 'undefined' ? window : globalThis);

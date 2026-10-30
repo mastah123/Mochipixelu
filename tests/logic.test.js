@@ -267,7 +267,11 @@
     if (o.noise) {
       for (let i = 0; i < W * H * 4; i += 4) { const n = Math.round((r() - 0.5) * 2 * o.noise); for (let k = 0; k < 3; k++) data[i + k] = Math.max(0, Math.min(255, data[i + k] + n)); }
     }
-    return { data, width: W, height: H };
+    if (o.symbols) for (let j = 0; j < o.rows; j++) for (let i = 0; i < o.cols; i++) { // a dark cross in the middle of every cell
+      const cx = Math.round(o.ox + (i + 0.5) * o.cell), cy = Math.round(o.oy + (j + 0.5) * o.cell), k = Math.floor(o.cell * 0.2);
+      for (let t = -k; t <= k; t++) { px(cx + t, cy, [20, 20, 20]); px(cx, cy + t, [20, 20, 20]); }
+    }
+    return { data, width: W, height: H, cells };
   };
   const near = (a, b, tol) => Math.abs(a - b) <= tol;
   const expectGrid = (g, o, tolPx) => {
@@ -311,6 +315,62 @@
     const img = chart(o);
     for (let y = 300; y < 330; y += 3) for (let x = 20; x < 380; x++) { const i = (y * 400 + x) * 4; img.data[i] = img.data[i + 1] = img.data[i + 2] = x % 7 < 3 ? 20 : 240; }
     expectGrid(CH.detectGrid(img, { rect: { x: 100, y: 20, w: 290, h: 250 } }), o);
+  });
+  const readBack = (o, opts) => {
+    const img = chart(o);
+    const g = CH.detectGrid(img);
+    return { img, g, out: CH.readCells(img, g, opts) };
+  };
+  test('reading cells: exact colours come back cell by cell (clean image)', () => {
+    const o = Object.assign({ W: 300, H: 240, cols: 16, rows: 12, cell: 16, ox: 12, oy: 12 }, dark, { c1: [200, 120, 40], c2: [30, 120, 60], c3: [90, 40, 160] });
+    const { img, out } = readBack(o, { empty: 'none' });
+    eq(out.cols, 16); eq(out.rows, 12);
+    for (let i = 0; i < img.cells.length; i++) eq(out.pixels[i], U.pack(...img.cells[i]));
+    eq(out.palette.length, 3);
+  });
+  test('reading cells: noise is merged back to a few colours, symbols and lines are ignored', () => {
+    const o = Object.assign({ W: 300, H: 240, cols: 16, rows: 12, cell: 18, ox: 10, oy: 10, noise: 12, symbols: true }, dark, { c1: [200, 120, 40], c2: [30, 120, 60], c3: [90, 40, 160] });
+    const { img, out } = readBack(o, { empty: 'none' });
+    eq(out.palette.length, 3, 'palette ' + out.palette.length);
+    let bad = 0;
+    for (let i = 0; i < img.cells.length; i++) if (!(U.pack(...img.cells[i]) === out.pixels[i] || Math.hypot(...[0, 1, 2].map((k) => ((out.pixels[i] >> (16 - 8 * k)) & 255) - img.cells[i][k])) < 14)) bad++;
+    eq(bad, 0);
+  });
+  test('reading cells: white background becomes empty (auto), real colours stay', () => {
+    const shape = (i, j) => i >= 4 && i <= 11 && j >= 3 && j <= 8;
+    const o = Object.assign({ W: 300, H: 240, cols: 16, rows: 12, cell: 16, ox: 12, oy: 12, shape }, dark, { c1: [220, 60, 120], c2: [250, 150, 190], c3: [255, 255, 255] });
+    const img = chart(o);
+    const out = CH.readCells(img, { x: 12, y: 12, cols: 16, rows: 12, cellW: 16, cellH: 16 });
+    eq(out.pixels[0], -1); eq(out.pixels[11 * 16 + 15], -1);
+    let kept = 0, expected = 0;
+    for (let j = 3; j <= 8; j++) for (let i = 4; i <= 11; i++) { const c = img.cells[j * 16 + i]; if (c[1] !== 255) { expected++; if (out.pixels[j * 16 + i] === U.pack(c[0], c[1], c[2])) kept++; } }
+    ok(expected > 10 && kept === expected, 'coloured cells kept ' + kept + '/' + expected);
+    eq(out.empty, 0xffffff);
+    const keep = CH.readCells(img, { x: 12, y: 12, cols: 16, rows: 12, cellW: 16, cellH: 16 }, { empty: 'none' });
+    ok(keep.pixels[0] === 0xffffff, 'empty: none keeps white as a colour');
+  });
+  test('reading cells: a chromatic background (purple) is a real colour, not empty', () => {
+    const o = Object.assign({ W: 260, H: 200, cols: 12, rows: 9, cell: 18, ox: 10, oy: 10 }, dark, { c1: [180, 140, 220], c2: [180, 140, 220], c3: [250, 210, 120], line: [235, 230, 245] });
+    const out = CH.readCells(chart(o), { x: 10, y: 10, cols: 12, rows: 9, cellW: 18, cellH: 18 });
+    eq(out.empty, null);
+    ok(out.pixels.every((c) => c !== -1));
+  });
+  test('reading cells: a dark checker outside the shape is empty (screenshot of an editor)', () => {
+    const shape = (i, j) => (i - 7.5) * (i - 7.5) + (j - 6) * (j - 6) < 18;
+    const o = Object.assign({ W: 300, H: 240, cols: 16, rows: 12, cell: 16, ox: 12, oy: 12, shape, bg: 74 }, dark, { c1: [255, 255, 255], c2: [250, 150, 190], c3: [220, 60, 120] });
+    const img = chart(o);
+    for (let y = 0; y < 240; y++) for (let x = 0; x < 300; x++) { const i = (y * 300 + x) * 4; if (img.data[i] === 74) img.data[i] = img.data[i + 1] = img.data[i + 2] = ((x >> 3) + (y >> 3)) % 2 ? 78 : 64; }
+    const out = CH.readCells(img, { x: 12, y: 12, cols: 16, rows: 12, cellW: 16, cellH: 16 });
+    eq(out.pixels[0], -1);
+    ok(out.palette.length <= 3, 'palette ' + out.palette.length);
+  });
+  test('reading cells: explicit empty colours and out-of-range grids are safe', () => {
+    const o = Object.assign({ W: 200, H: 160, cols: 10, rows: 8, cell: 16, ox: 8, oy: 8 }, dark, { c1: [255, 0, 0], c2: [0, 0, 255], c3: [0, 255, 0] });
+    const img = chart(o);
+    const out = CH.readCells(img, { x: 8, y: 8, cols: 10, rows: 8, cellW: 16, cellH: 16 }, { empty: [0xff0000] });
+    ok(out.pixels.every((c) => c !== 0xff0000));
+    const edge = CH.readCells(img, { x: 150, y: 120, cols: 5, rows: 5, cellW: 16, cellH: 16 });
+    eq(edge.pixels.length, 25);
   });
   test('grid detection: flat pictures and noise have no grid', () => {
     const flat = { data: new Uint8ClampedArray(200 * 200 * 4).fill(255), width: 200, height: 200 };

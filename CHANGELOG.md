@@ -10,6 +10,12 @@ Versions follow [Semantic Versioning](https://semver.org/): `MAJOR.MINOR.PATCH`.
 
 Examples are illustrative; the real versions are listed below. Documentation-only, test-only and refactoring changes do not automatically bump the version.
 
+## [1.30.0]
+
+### Added
+- Groundwork for chart import, part 2 (no screen yet): `Chart.readCells` reads every cell of a detected grid. It takes the dominant colour of the cell's inner area (grid lines and symbols are ignored), merges colours that only differ by compression noise, and can treat the background as empty (`auto`: a white/grey/checker outer ring; chromatic backgrounds such as purple stay real colours; or `white`, `none`, or an explicit colour list).
+- 6 more logic tests. On the owner's samples the colours come out as in the charts' own keys (the Stitch Fiddle sample gives exactly its 8 colours).
+
 ## [1.29.0]
 
 ### Added
