@@ -22,6 +22,7 @@
           c.width = sw;
           c.height = sh;
           const ctx = c.getContext('2d', { willReadFrequently: true });
+          ctx.imageSmoothingEnabled = false; // no blending when a big image is scaled down
           ctx.drawImage(img, 0, 0, sw, sh);
           resolve({ data: ctx.getImageData(0, 0, sw, sh).data, width: sw, height: sh, name: file.name });
         };

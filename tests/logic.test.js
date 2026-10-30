@@ -157,7 +157,7 @@
   });
 
   /* ----- pixelate ----- */
-  test('pixelate changes real grid size and averages areas', () => {
+  test('pixelate changes real grid size and takes exact colors', () => {
     // 4x4 source: left half red, right half blue
     const src = rgba(4, 4, (x) => (x < 2 ? [255, 0, 0] : [0, 0, 255]));
     const g2 = P.pixelate(src, 2, 2);
@@ -165,11 +165,25 @@
     eq(g2[0], 0xff0000); eq(g2[1], 0x0000ff);
     const g1 = P.pixelate(src, 1, 1);
     eq(g1.length, 1);
-    const [r, , b] = U.rgb(g1[0]);
-    ok(Math.abs(r - 128) <= 1 && Math.abs(b - 128) <= 1, 'blend of red+blue');
+    ok(g1[0] === 0xff0000 || g1[0] === 0x0000ff, 'one cell takes an existing color, never a blend');
+    const av = P.pixelate(src, 1, 1, { mode: 'average' });
+    const [r, , b] = U.rgb(av[0]);
+    ok(Math.abs(r - 128) <= 1 && Math.abs(b - 128) <= 1, 'average mode still blends');
     const g8 = P.pixelate(src, 8, 8);
     eq(g8.length, 64);
     eq(g8[0], 0xff0000); eq(g8[7], 0x0000ff);
+  });
+  test('import has no feathering: dominant color wins, only source colors appear, quantize never blends', () => {
+    // 6x1: 4 red-ish pixels, 2 blue; one 6->1 cell must be the most frequent exact color
+    const src = rgba(6, 1, (x) => (x < 4 ? [250, 10, 10] : [10, 10, 250]));
+    eq(P.pixelate(src, 1, 1)[0], U.pack(250, 10, 10));
+    const noisy = rgba(8, 8, (x, y) => [(x * 37 + y * 11) % 256, (x * 91) % 256, (y * 53) % 256]);
+    const have = new Set();
+    for (let i = 0; i < 64; i++) have.add(U.pack(noisy.data[i * 4], noisy.data[i * 4 + 1], noisy.data[i * 4 + 2]));
+    const g = P.pixelate(noisy, 3, 3);
+    ok(Array.from(g).every((c) => have.has(c)), 'every cell color exists in the source');
+    const q = Q.quantize(P.pixelate(noisy, 8, 8), 4);
+    ok(Array.from(q).every((c) => have.has(c)), 'quantize only uses existing colors');
   });
   test('pixelate handles non-integer ratios without dropping area', () => {
     const src = rgba(5, 3, () => [10, 200, 30]);

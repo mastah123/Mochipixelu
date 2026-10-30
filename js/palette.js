@@ -80,14 +80,10 @@
     }
 
     const palette = boxes.map((box) => {
-      let n = 0, r = 0, g = 0, b = 0;
-      for (const e of box) {
-        n += e.n;
-        r += e.r * e.n;
-        g += e.g * e.n;
-        b += e.b * e.n;
-      }
-      return U.pack(Math.round(r / n), Math.round(g / n), Math.round(b / n));
+      // the most frequent color that really exists in the box (never a blend)
+      let top = box[0];
+      for (const e of box) if (e.n > top.n || (e.n === top.n && e.c < top.c)) top = e;
+      return top.c;
     });
 
     const map = new Map();

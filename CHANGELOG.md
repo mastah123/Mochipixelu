@@ -10,6 +10,12 @@ Versions follow [Semantic Versioning](https://semver.org/): `MAJOR.MINOR.PATCH`.
 
 Examples are illustrative; the real versions are listed below. Documentation-only, test-only and refactoring changes do not automatically bump the version.
 
+## [1.27.0]
+
+### Changed
+- Image import has no feathering: each cell takes the dominant (most frequent) exact colour of the area it covers, so only colours that exist in the image are used (no blending, dithering or anti-aliasing).
+- The colour limit now keeps the most frequent real colour of each group instead of an average; large images are scaled down without smoothing.
+
 ## [1.26.0]
 
 ### Added
