@@ -108,6 +108,28 @@
   ).split('');
   Q.SYMBOLS = SYMBOLS;
 
+  /** Friendly colour names: the nearest of a small craft-style list (weighted RGB distance). */
+  const NAMES = [
+    ['White', 0xffffff], ['Ivory', 0xfffff0], ['Cream', 0xfdf3dc], ['Light grey', 0xd3d3d3], ['Grey', 0x8c8c8c], ['Charcoal', 0x444444], ['Black', 0x111111],
+    ['Red', 0xe02020], ['Crimson', 0xb01030], ['Burgundy', 0x7a1230], ['Maroon', 0x5a1a1a], ['Coral', 0xff7f6e], ['Salmon', 0xfa9a85], ['Blush pink', 0xf6a5b4], ['Pink', 0xff9ec4],
+    ['Hot pink', 0xff4fa0], ['Magenta', 0xd81b8c], ['Rose', 0xd9577a], ['Light pink', 0xffd1dc], ['Orange', 0xff8c1a], ['Peach', 0xffc9a0], ['Apricot', 0xf7b778], ['Gold', 0xe6b422],
+    ['Yellow', 0xffe135], ['Light yellow', 0xfff3a0], ['Mustard', 0xd1a21a], ['Lime', 0xa6d60f], ['Light green', 0xa8e08c], ['Green', 0x3cb44b], ['Forest green', 0x1f6b3a], ['Olive', 0x7a7a1a],
+    ['Mint', 0xb2f0d0], ['Teal', 0x138a8a], ['Turquoise', 0x30d5c8], ['Aqua', 0x7fe5f0], ['Sky blue', 0x87ceeb], ['Light blue', 0xb5d8f5], ['Blue', 0x2f6fb5], ['Royal blue', 0x2040c0],
+    ['Navy', 0x14305a], ['Indigo', 0x3a2a8a], ['Violet', 0x8a4fd0], ['Purple', 0x7b2fa0], ['Lavender', 0xc9b6ec], ['Lilac', 0xe0c4ee], ['Plum', 0x6a2a5a], ['Brown', 0x7a4a2a],
+    ['Tan', 0xc89c6a], ['Beige', 0xe8d8b8], ['Chocolate', 0x4a2a1a], ['Terracotta', 0xc8623c],
+  ];
+  Q.colorName = (color) => {
+    const r = (color >> 16) & 255, g = (color >> 8) & 255, b = color & 255;
+    let best = NAMES[0][0], bd = Infinity;
+    for (const [n, c] of NAMES) {
+      const dr = r - ((c >> 16) & 255), dg = g - ((c >> 8) & 255), db = b - (c & 255);
+      const rm = (r + ((c >> 16) & 255)) / 2; // redmean: closer to how colours look
+      const d = (2 + rm / 256) * dr * dr + 4 * dg * dg + (2 + (255 - rm) / 256) * db * db;
+      if (d < bd) { bd = d; best = n; }
+    }
+    return best;
+  };
+
   /**
    * Legend: one entry per used color, most-used first, each with a stable symbol and number.
    * Returns { entries: [{index, color, hex, count, done, symbol}], filled, total, byColor: Map }.

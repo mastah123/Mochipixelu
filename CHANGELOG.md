@@ -10,6 +10,17 @@ Versions follow [Semantic Versioning](https://semver.org/): `MAJOR.MINOR.PATCH`.
 
 Examples are illustrative; the real versions are listed below. Documentation-only, test-only and refactoring changes do not automatically bump the version.
 
+## [1.34.0]
+
+### Changed
+- Pattern view redesigned after the owner's mockup: header with a pattern tile, the name and "size · colors", the stitch count ("4 / 6") and the ⋯ button; a slim progress bar; the selected stitch as "Row 3 • Stitch 2 • Blush pink" with a colour swatch; the pattern on a rounded lavender panel with a map pin above the selected stitch; a rounded guide card; bottom bar Look / Guide / Tick / Legend with the active one as a pill.
+- Guide card: Row / Column / Both and "Row done" on top; ‹ Row 3 of 14 › with a green "Mark stitch done" button (marks the selected stitch, or the first open stitch of the row, and moves to the next) and Undo; below, the three most-used colours with done / total and their names, and an "All colors" button that opens the legend.
+- Edit moved into the ⋯ menu ("Edit pattern") so the header stays clean.
+- Colour names (Blush pink, Navy, Mint, …) come from a built-in list of about 50 craft colours.
+
+### Added
+- Undo for ticks made in the pattern view (tick mode, Mark stitch done, Row done), up to 100 steps per visit.
+
 ## [1.33.0]
 
 ### Added

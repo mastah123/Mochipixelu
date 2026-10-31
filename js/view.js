@@ -22,6 +22,7 @@
       const renderer = new M.Renderer(canvas);
       app.viewRenderer = renderer;
       renderer.showSymbols = app.symbolsOn();
+      renderer.pin = true;
       let design = null;
       let id = null;
       let mode = 'look';
@@ -54,6 +55,33 @@
       /* ---------- progress + legend ---------- */
       app.ui.on('symbols', () => design && refresh());
       $('view-legend-more').addEventListener('click', () => design && app.openSymbols(design, () => { markDirty(); renderer.draw(); refresh(); }));
+      /* the three most used colours with their progress, and a shortcut to the whole legend (guide card) */
+      const paintColors = (legend) => {
+        const host = $('guide-colors');
+        host.textContent = '';
+        legend.entries.slice(0, 3).forEach((e) => {
+          const item = document.createElement('div');
+          item.className = 'gc-item';
+          const sw = document.createElement('span');
+          sw.className = 'gc-sw';
+          sw.style.background = e.hex;
+          const t = document.createElement('span');
+          t.className = 'gc-text';
+          const n = document.createElement('strong');
+          n.textContent = e.done + ' / ' + e.count;
+          const nm = document.createElement('span');
+          nm.textContent = M.Palette.colorName(e.color);
+          t.append(n, nm);
+          item.append(sw, t);
+          host.appendChild(item);
+        });
+        const all = document.createElement('button');
+        all.type = 'button';
+        all.className = 'btn small soft gc-all';
+        all.innerHTML = '<svg class="ic sm"><use href="#i-palette"/></svg><span class="full">All colors</span><span class="short">All</span><svg class="ic sm chev"><use href="#i-chev"/></svg>';
+        all.addEventListener('click', () => { setMode('none'); setLegend(true); });
+        host.appendChild(all);
+      };
       const refresh = () => {
         const legend = M.Palette.legend(design);
         let done = 0;
@@ -61,8 +89,11 @@
         const p = legend.filled ? Math.round((done / legend.filled) * 100) : 0;
         $('view-progress-bar').style.width = p + '%';
         $('view-progress').setAttribute('aria-valuenow', String(p));
-        $('view-progress-text').textContent = done + ' of ' + legend.filled + ' stitches done (' + p + '%)';
-        $('view-size').textContent = design.width + ' × ' + design.height + ' · ' + legend.entries.length + ' colors';
+        $('view-progress-text').textContent = done + ' / ' + legend.filled;
+        $('view-progress-text').title = 'stitches done';
+        $('view-progress').title = p + '% done';
+        $('view-size').textContent = design.width + ' × ' + design.height + ' · ' + legend.entries.length + (legend.entries.length === 1 ? ' color' : ' colors');
+        paintColors(legend);
 
         const host = $('view-legend');
         host.textContent = '';
@@ -96,24 +127,49 @@
           sw.className = 'swatch empty';
           sw.style.background = '';
           $('view-info-text').textContent = '';
+          $('view-info').removeAttribute('title');
           sw.hidden = true;
+          updateStitchBtn();
           return;
         }
         sw.hidden = false;
         const i = selected.y * design.width + selected.x;
         const v = design.pixels[i];
-        const where = 'Column ' + (selected.x + 1) + ', Row ' + (selected.y + 1);
+        const where = 'Row ' + (selected.y + 1) + ' \u2022 Stitch ' + (selected.x + 1) + ' \u2022 ';
         if (v === EMPTY) {
           sw.className = 'swatch empty';
           sw.style.background = '';
-          $('view-info-text').textContent = where + ' — empty';
+          $('view-info-text').textContent = where + 'empty';
+          $('view-info').removeAttribute('title');
         } else {
           sw.className = 'swatch';
           sw.style.background = U.toHex(v);
           const e = M.Palette.legend(design).byColor.get(v);
-          $('view-info-text').textContent = where + ' — ' + U.toHex(v) + (e ? ' · #' + e.index + ' ' + e.symbol : '') + ' · ' + (design.done[i] ? 'done ✓' : 'to do');
+          $('view-info-text').textContent = where + M.Palette.colorName(v) + (design.done[i] ? ' \u2022 done \u2713' : '');
+          $('view-info').title = U.toHex(v) + (e ? ' \u00b7 #' + e.index + ' ' + e.symbol : '') + ' \u00b7 ' + (design.done[i] ? 'done' : 'to do');
         }
+        updateStitchBtn();
       };
+
+      /* ---------- undo for ticks ---------- */
+      const hist = [];
+      const remember = (idxs) => {
+        hist.push(idxs.map((i) => [i, design.done[i]]));
+        if (hist.length > 100) hist.shift();
+        $('guide-undo').disabled = false;
+      };
+      const undo = () => {
+        const last = hist.pop();
+        $('guide-undo').disabled = !hist.length;
+        if (!last) return app.toast('Nothing to undo.');
+        last.forEach(([i, v]) => (design.done[i] = v));
+        renderer.draw();
+        markDirty();
+        refresh();
+        showInfo();
+        applyGuide();
+      };
+      $('guide-undo').addEventListener('click', undo);
 
       /* ---------- guide ---------- */
       const lineCells = (isRow, n) => {
@@ -136,13 +192,17 @@
         col = U.clamp(col, 0, design.width - 1);
         renderer.setGuide({ row: kind === 'col' ? null : row, col: kind === 'row' ? null : col });
         $('guide-label').textContent = kind === 'row' ? 'Row ' + (row + 1) + ' of ' + design.height : kind === 'col' ? 'Column ' + (col + 1) + ' of ' + design.width : 'Row ' + (row + 1) + ' · Col ' + (col + 1);
-        $('guide-done-label').textContent = (kind === 'col' ? 'Column' : 'Row') + (lineDone() ? ' undo' : ' done');
+        $('guide-done-label').textContent = (kind === 'col' ? 'Column' : 'Row') + (lineDone() ? ' not done' : ' done');
+        updateStitchBtn();
         document.querySelectorAll('#view-guides [data-guide]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.guide === kind)));
       };
 
       const step = (dir) => {
         if (kind === 'col') col += dir;
         else row += dir;
+        selected = null;
+        renderer.setSelected(null);
+        showInfo();
         applyGuide();
         revealGuide();
       };
@@ -167,6 +227,7 @@
         const cells = lineCells(isRow, n);
         if (!cells.length) return app.toast('Nothing to stitch in this ' + (isRow ? 'row' : 'column') + '.');
         const wasDone = cells.every((i) => design.done[i]);
+        remember(cells);
         cells.forEach((i) => (design.done[i] = wasDone ? 0 : 1));
         renderer.draw();
         markDirty();
@@ -181,6 +242,55 @@
         applyGuide();
       };
 
+      /* Mark stitch done: the selected stitch, or the first open stitch of the guide line; then move to the next one */
+      const lineFirstOpen = () => {
+        const isRow = kind !== 'col';
+        const cells = lineCells(isRow, isRow ? row : col).filter((i) => !design.done[i]);
+        return cells.length ? cells[0] : -1;
+      };
+      const target = () => {
+        if (selected && design.pixels[selected.y * design.width + selected.x] !== EMPTY) return selected.y * design.width + selected.x;
+        const f = lineFirstOpen();
+        return f;
+      };
+      function updateStitchBtn() {
+        const b = $('guide-stitch-label');
+        if (!b) return;
+        const t = target();
+        const undone = t >= 0 && design.done[t];
+        b.textContent = undone ? 'Mark not done' : 'Mark stitch done';
+        b.dataset.short = undone ? 'Not done' : 'Stitch done';
+      }
+      const markStitch = () => {
+        const t = target();
+        if (t < 0) return app.toast('Nothing left to stitch in this ' + (kind === 'col' ? 'column' : 'row') + '.');
+        remember([t]);
+        const wasDone = design.done[t];
+        design.done[t] = wasDone ? 0 : 1;
+        const x = t % design.width, y = (t - x) / design.width;
+        renderer.drawCell(x, y);
+        markDirty();
+        refresh();
+        if (!wasDone) {
+          // move on to the next open stitch of the guide line
+          const isRow = kind !== 'col';
+          const n = lineCells(isRow, isRow ? row : col).filter((i) => !design.done[i]);
+          if (n.length) {
+            const nx = n[0] % design.width, ny = (n[0] - nx) / design.width;
+            selected = { x: nx, y: ny };
+            renderer.setSelected(selected);
+          } else {
+            app.toast((isRow ? 'Row ' + (row + 1) : 'Column ' + (col + 1)) + ' complete \u2713');
+            if (isRow) row = Math.min(design.height - 1, row + 1); else col = Math.min(design.width - 1, col + 1);
+            selected = null;
+            renderer.setSelected(null);
+          }
+        }
+        showInfo();
+        applyGuide();
+        revealGuide();
+      };
+      $('guide-stitch').addEventListener('click', markStitch);
       $('guide-prev').addEventListener('click', () => step(-1));
       $('guide-next').addEventListener('click', () => step(1));
       $('guide-done').addEventListener('click', markLine);
@@ -225,7 +335,7 @@
           showInfo();
           return;
         }
-        renderer.setSelected(mode === 'look' || mode === 'tick' ? cell : null);
+        renderer.setSelected(cell);
         if (mode === 'guide') {
           row = cell.y;
           col = cell.x;
@@ -234,6 +344,7 @@
           const i = cell.y * design.width + cell.x;
           if (design.pixels[i] === EMPTY) app.toast('Empty cells have no stitch to tick.');
           else {
+            remember([i]);
             design.done[i] = design.done[i] ? 0 : 1;
             renderer.drawCell(cell.x, cell.y);
             markDirty();
@@ -276,10 +387,10 @@
         saveNow();
         M.Router.go('#/');
       });
-      $('view-edit').addEventListener('click', () => {
+      const goEdit = () => {
         saveNow();
         M.Router.go('#/e/' + id);
-      });
+      };
       const menu = $('view-menu');
       const closeMenu = () => {
         menu.hidden = true;
@@ -331,6 +442,7 @@
         const what = b.dataset.menu;
         saveNow();
         const cur = M.Storage.library.get(id) || {};
+        if (what === 'edit') return goEdit();
         if (what === 'pin') {
           M.Storage.library.setMeta(id, { pinned: !cur.pinned });
           app.toast(cur.pinned ? 'Unpinned' : 'Pinned to the top');
@@ -398,6 +510,8 @@
           selected = null;
           row = 0;
           col = 0;
+          hist.length = 0;
+          $('guide-undo').disabled = true;
           renderer.filter = null;
           renderer.selected = null;
           renderer.guide = null;

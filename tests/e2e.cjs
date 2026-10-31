@@ -239,7 +239,7 @@ const vis = (page, sel) => page.locator(sel).isVisible();
     check('no size chip over the pattern canvas', (await page.locator('#view-chip').count()) === 0);
     check('selected stitch shows below the progress bar', await page.evaluate(() => { const a = document.getElementById('view-progress').getBoundingClientRect(); const b = document.getElementById('view-info').getBoundingClientRect(); const c = document.getElementById('view-scroll').getBoundingClientRect(); return b.top >= a.bottom - 1 && b.bottom <= c.top + 1; }));
     check('no dotted backgrounds', await page.evaluate(() => [...document.querySelectorAll('.mat, .canvas-scroll')].every((n) => getComputedStyle(n).backgroundImage === 'none')));
-    check('look mode shows stitch info', /Column 3, Row 3/.test(await page.textContent('#view-info-text')), await page.textContent('#view-info-text'));
+    check('look mode shows stitch info', /Row 3 • Stitch 3 • \w/.test(await page.textContent('#view-info-text')), await page.textContent('#view-info-text'));
 
     // guide mode
     await page.tap('[data-mode=guide]');
@@ -263,7 +263,27 @@ const vis = (page, sel) => page.locator(sel).isVisible();
     await page.waitForTimeout(800);
     done = await page.evaluate(() => JSON.parse(localStorage.getItem('mochipixelu:library'))[0].done);
     check('tick mode ticks a stitch', done === 4, done);
-    check('progress text updates', /4 of 6/.test(await page.textContent('#view-progress-text')), await page.textContent('#view-progress-text'));
+    check('progress text updates', /^4 \/ 6$/.test(await page.textContent('#view-progress-text')), await page.textContent('#view-progress-text'));
+
+    // new guide card: mark the selected stitch, undo, colour summary
+    check('the header shows the stitch count', /^4 \/ 6$/.test(await page.textContent('#view-progress-text')));
+    await page.tap('[data-mode=guide]');
+    const open1 = await page.evaluate(() => { const d = mochipixelu.viewRenderer.design; for (let i = 0; i < d.pixels.length; i++) if (d.pixels[i] !== -1 && !d.done[i]) return [i % d.width, Math.floor(i / d.width)]; return null; });
+    p = await vcell(open1[0], open1[1]); await page.touchscreen.tap(p.x, p.y);
+    check('the selected stitch line reads Row • Stitch • colour name', new RegExp('^Row ' + (open1[1] + 1) + ' • Stitch ' + (open1[0] + 1) + ' • [A-Z]').test(await page.textContent('#view-info-text')), await page.textContent('#view-info-text'));
+    check('the guide card names the colors with their progress', (await page.locator('#guide-colors .gc-item').count()) >= 1 && /\d+ \/ \d+/.test(await page.textContent('#guide-colors')));
+    await page.tap('#guide-stitch');
+    await page.waitForTimeout(200);
+    check('Mark stitch done ticks the selected stitch', /^5 \/ 6$/.test(await page.textContent('#view-progress-text')), await page.textContent('#view-progress-text'));
+    check('Undo is available after a tick', !(await page.locator('#guide-undo').isDisabled()));
+    await page.tap('#guide-undo');
+    await page.waitForTimeout(200);
+    check('Undo takes the tick back', /^4 \/ 6$/.test(await page.textContent('#view-progress-text')), await page.textContent('#view-progress-text'));
+    await page.tap('#guide-colors .gc-all');
+    check('All colors opens the legend', await vis(page, '#view-legend-pop') && !(await vis(page, '#guide-controls')));
+    await page.tap('#view-dock-legend');
+    await page.tap('[data-mode=tick]');
+    check('the pin is drawn above the selected stitch', await page.evaluate(() => { const r = mochipixelu.viewRenderer; return r.pin === true; }));
 
     // export options also live in the pattern view's ⋯ menu; clear progress moved here
     await page.tap('#view-more'); await page.tap('[data-menu=export]');
@@ -324,7 +344,7 @@ const vis = (page, sel) => page.locator(sel).isVisible();
     check('tapping the active mode releases it', (await page.locator('#view-modes [aria-pressed=true]').count()) === 0 && !(await vis(page, '#guide-controls')));
     {
       const q0 = await vcell(6, 6); await page.touchscreen.tap(q0.x, q0.y);
-      check('with no mode selected a tap still shows the stitch details', /Column 7, Row 7/.test(await page.textContent('#view-info-text')), await page.textContent('#view-info-text'));
+      check('with no mode selected a tap still shows the stitch details', /Row 7 • Stitch 7/.test(await page.textContent('#view-info-text')), await page.textContent('#view-info-text'));
     }
     await page.tap('#view-modes [data-mode=look]');
     check('bottom bar buttons are as tall as the editor ones, and no helper labels are shown', await page.evaluate(() => { const h = document.querySelector('#view-modes .vtool').getBoundingClientRect().height; return h >= 44 && h <= 50 && !document.getElementById('mode-hint') && !/tap to spotlight|Tap the pattern/i.test(document.getElementById('screen-view').textContent); }));
@@ -344,7 +364,7 @@ const vis = (page, sel) => page.locator(sel).isVisible();
 
     // the ⋯ menu is a popup with the full list
     await page.tap('#view-more');
-    check('pattern ⋯ menu is a popup with theme swatches and the full option list', (await vis(page, '#view-menu')) && (await page.locator('#view-swatches .tone-sw').count()) === 6 && (await page.locator('#view-menu button[data-menu]').allTextContents()).join('|') === 'Pin|Rename|Copy|Move|Archive|Export|Save backup|Clear progress|Delete', (await page.locator('#view-menu button[data-menu]').allTextContents()).join('|'));
+    check('pattern ⋯ menu is a popup with theme swatches and the full option list', (await vis(page, '#view-menu')) && (await page.locator('#view-swatches .tone-sw').count()) === 6 && (await page.locator('#view-menu button[data-menu]').allTextContents()).join('|') === 'Edit pattern|Pin|Rename|Copy|Move|Archive|Export|Save backup|Clear progress|Delete', (await page.locator('#view-menu button[data-menu]').allTextContents()).join('|'));
     check('the popup does not cover the whole screen', (await page.locator('#view-menu').boundingBox()).width <= 320);
     await page.tap('#view-more');
     check('tapping ⋯ again closes it', !(await vis(page, '#view-menu')));
@@ -375,7 +395,8 @@ const vis = (page, sel) => page.locator(sel).isVisible();
     // open from card, edit button, delete
     await page.locator('#home-grid .card').first().tap();
     await screenIs(page, 'view');
-    await page.tap('#view-edit');
+    await page.tap('#view-more');
+    await page.tap('#view-menu [data-menu=edit]');
     await screenIs(page, 'editor');
     check('Edit opens the editor for the same pattern', (await page.evaluate(() => mochipixelu.store.design.name)) === 'Big Heart1');
     await page.tap('#btn-back');
@@ -509,7 +530,7 @@ const vis = (page, sel) => page.locator(sel).isVisible();
     await page.waitForTimeout(800);
     await page.reload();
     await page.waitForFunction(() => window.mochipixelu);
-    check('reload stays on the editor route', (await page.evaluate(() => document.body.dataset.screen)) === 'editor');
+    check('reload stays on the editor route', await screenIs(page, 'editor'));
 
     // deleted/unknown route falls back home
     await page.evaluate(() => { location.hash = '#/p/doesnotexist'; });

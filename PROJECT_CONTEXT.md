@@ -172,3 +172,6 @@ Beads mode, several patterns per image (findRegions + Pattern buttons) and the e
 
 ### Status 2026-10-31: 1.33.0
 Symbol charts (Chart.readSymbols, "Read as" select) and "Find several patterns" added; grid pitch refit fixed drift. Symbol reading is tested on generated charts only: ask the owner for a real symbol chart. The owner's multi-artwork image did not get picked up in 1.32.0 (the sheet search only ran when no grid was found) — fixed by the button, but the image itself has not been seen.
+
+### Status 2026-10-31: 1.34.0 pattern view redesign
+Built from the owner's mockup. Decisions: Edit is in the ⋯ menu; tick undo lives in the guide card; the guide card overlays the canvas on phones. Not yet done: apply the same look (header, cards, pill bottom bar, colour names) to the editor and the home page ("adapt all the clean look and the icons").

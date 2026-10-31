@@ -22,6 +22,7 @@
       this.syms = null;
       this.filter = null; // color int to spotlight, or null
       this.selected = null; // {x,y}
+      this.pin = false; // draw a map pin above the selected cell (pattern view)
       this.hover = null; // {x,y}
       this.guide = null; // {row, col} (either may be null) — highlights a stitching row / column
     }
@@ -185,8 +186,27 @@
 
       const sel = this.selected;
       const hov = this.hover;
+      if (this.pin && sel && sel.x === x && sel.y === y + 1 && c >= 10) this.drawPin(px, py); // the pin sits in the cell above the selection
       if (sel && sel.x === x && sel.y === y) this.outline(px, py, '#1d1a2b', '#ffffff', 2);
       else if (hov && hov.x === x && hov.y === y) this.outline(px, py, 'rgba(43,32,25,.7)', 'rgba(255,255,255,.7)', 1);
+    }
+
+    /** A small map pin in the lower half of the cell whose top-left is (px, py), pointing at the cell below it. */
+    drawPin(px, py) {
+      const c = this.cell, ctx = this.ctx;
+      const cx = px + c / 2, r = Math.max(3.5, c * 0.21), cy = py + c * 0.52;
+      ctx.fillStyle = '#7c5cd6';
+      ctx.beginPath();
+      ctx.arc(cx, cy, r, 0, Math.PI * 2);
+      ctx.moveTo(cx - r * 0.85, cy + r * 0.55);
+      ctx.lineTo(cx, py + c - 1);
+      ctx.lineTo(cx + r * 0.85, cy + r * 0.55);
+      ctx.closePath();
+      ctx.fill();
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.arc(cx, cy, r * 0.38, 0, Math.PI * 2);
+      ctx.fill();
     }
 
     outline(px, py, dark, light, w) {
@@ -217,8 +237,13 @@
     setSelected(cellOrNull) {
       const old = this.selected;
       this.selected = cellOrNull;
-      if (old) this.drawCell(old.x, old.y);
-      if (cellOrNull) this.drawCell(cellOrNull.x, cellOrNull.y);
+      const touch = (cell) => {
+        if (!cell) return;
+        this.drawCell(cell.x, cell.y);
+        if (this.pin && cell.y > 0) this.drawCell(cell.x, cell.y - 1);
+      };
+      touch(old);
+      touch(cellOrNull);
     }
 
     setHover(cellOrNull) {

@@ -240,18 +240,18 @@
 
 <!-- ============================ PROJECT VIEW ============================ -->
 <section id="screen-view" class="screen" hidden>
-  <header class="topbar">
+  <header class="topbar view-top">
     <button id="view-back" class="btn icon-btn" aria-label="Back to my patterns"><svg class="ic"><use href="#i-back"/></svg></button>
-    <h2 id="view-title" class="view-title">Pattern</h2>
-    <button id="view-edit" class="btn primary"><svg class="ic sm"><use href="#i-pencil"/></svg>Edit</button>
+    <span class="view-badge" aria-hidden="true"><svg class="ic mascot" viewBox="0 0 40 36"><use href="#i-mochi"/></svg></span>
+    <div class="view-heading">
+      <h2 id="view-title" class="view-title">Pattern</h2>
+      <span id="view-size" class="view-sub"></span>
+    </div>
+    <span id="view-progress-text" class="view-count" aria-live="polite"></span>
     <button id="view-more" class="btn icon-btn" aria-label="More actions"><svg class="ic"><use href="#i-more"/></svg></button>
   </header>
   <main class="view-main">
-    <div class="view-meta">
-      <span id="view-size" class="meta-line"></span>
-      <div class="progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="view-progress"><div id="view-progress-bar"></div></div>
-      <span id="view-progress-text" class="meta-line"></span>
-    </div>
+    <div class="progress" role="progressbar" aria-label="Stitching progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="view-progress"><div id="view-progress-bar"></div></div>
     <div class="view-selected" id="view-info" aria-live="polite">
       <span id="view-info-swatch" class="swatch empty" hidden></span>
       <span id="view-info-text"></span>
@@ -268,20 +268,25 @@
       <div class="vstack">
         <div id="view-legend-pop" class="vcard" hidden>
           <div id="view-legend" class="chips-scroll"></div>
-        <button type="button" class="legend-more" id="view-legend-more" aria-label="Edit legend symbols"><svg class="ic"><use href="#i-more"/></svg></button>
+          <button type="button" class="legend-more" id="view-legend-more" aria-label="Edit legend symbols"><svg class="ic"><use href="#i-more"/></svg></button>
         </div>
-        <div id="guide-controls" class="vcard" hidden>
-          <div class="seg" id="view-guides" role="group" aria-label="Guide style">
-            <button data-guide="row" aria-pressed="true">Row</button>
-            <button data-guide="col" aria-pressed="false">Column</button>
-            <button data-guide="cross" aria-pressed="false">Both</button>
+        <div id="guide-controls" class="vcard guide-card" hidden>
+          <div class="guide-top">
+            <div class="seg" id="view-guides" role="group" aria-label="Guide style">
+              <button data-guide="row" aria-pressed="true">Row</button>
+              <button data-guide="col" aria-pressed="false">Column</button>
+              <button data-guide="cross" aria-pressed="false">Both</button>
+            </div>
+            <button id="guide-done" class="btn small soft"><svg class="ic sm"><use href="#i-list"/></svg><span id="guide-done-label">Row done</span></button>
           </div>
-          <div class="stepper">
-            <button id="guide-prev" class="btn small icon-btn" aria-label="Previous"><svg class="ic sm"><use href="#i-chev"/></svg></button>
-            <strong id="guide-label">Row 1</strong>
-            <button id="guide-next" class="btn small icon-btn" aria-label="Next"><svg class="ic sm"><use href="#i-chev"/></svg></button>
-            <button id="guide-done" class="btn small"><svg class="ic sm"><use href="#i-mark"/></svg><span id="guide-done-label">Mark row done</span></button>
+          <div class="guide-main">
+            <button id="guide-prev" class="soft-btn" aria-label="Previous"><svg class="ic"><use href="#i-chev"/></svg></button>
+            <strong id="guide-label">Row 1 of 1</strong>
+            <button id="guide-next" class="soft-btn" aria-label="Next"><svg class="ic"><use href="#i-chev"/></svg></button>
+            <button id="guide-stitch" class="btn go"><svg class="ic"><use href="#i-mark"/></svg><span id="guide-stitch-label">Mark stitch done</span></button>
+            <button id="guide-undo" class="soft-btn undo" aria-label="Undo the last tick" disabled><svg class="ic"><use href="#i-undo"/></svg><span>Undo</span></button>
           </div>
+          <div class="guide-colors" id="guide-colors"></div>
         </div>
       </div>
       <nav class="vtools" id="view-modes" role="group" aria-label="Tap mode">
@@ -566,6 +571,7 @@
 <div id="view-menu" class="ctx-menu opt-menu view-menu" role="menu" hidden>
   <div class="theme-row"><span class="theme-label">Theme</span><div class="swatches" id="view-swatches"></div></div>
   <hr>
+  <button data-menu="edit"><svg class="ic"><use href="#i-design"/></svg>Edit pattern</button>
   <button data-menu="pin"><svg class="ic"><use href="#i-pin"/></svg><span>Pin</span></button>
   <button data-menu="rename"><svg class="ic"><use href="#i-pencil"/></svg>Rename</button>
   <button data-menu="duplicate"><svg class="ic"><use href="#i-copy"/></svg>Copy</button>
