@@ -98,7 +98,30 @@
       }
     }
     if (bestA < 0 || bestB <= bestA) return null;
-    return { first: pos[bestA], count: bestB - bestA, pos, s, a: bestA, b: bestB };
+    // sub-pixel refit: the comb search only knows the pitch to ~0.1px, which drifts a whole column over a big chart.
+    // Find each strong line's real position (centroid around the expected one) and fit pos = a + p*k by least squares.
+    const pts = [];
+    for (let i = bestA; i <= bestB; i++) {
+      if (s[i] < 0.5 * top) continue;
+      const c = Math.round(pos[i]);
+      let sw = 0, sx = 0;
+      for (let k = c - 2; k <= c + 2; k++) if (k >= 0 && k < arr.length) { sw += arr[k]; sx += arr[k] * k; }
+      if (sw > 0) pts.push([i - bestA, sx / sw]);
+    }
+    if (pts.length >= 4) {
+      let n = 0, sk = 0, sp = 0, skk = 0, skp = 0;
+      pts.forEach(([k, x]) => { n++; sk += k; sp += x; skk += k * k; skp += k * x; });
+      const den = n * skk - sk * sk;
+      if (den > 0) {
+        const slope = (n * skp - sk * sp) / den;
+        const icpt = (sp - slope * sk) / n;
+        if (Math.abs(slope - per.p) < 0.06 * per.p) {
+          const first = icpt;
+          return { first, count: bestB - bestA, pos, s, a: bestA, b: bestB, p: slope };
+        }
+      }
+    }
+    return { first: pos[bestA], count: bestB - bestA, pos, s, a: bestA, b: bestB, p: per.p };
   };
 
   /**
@@ -139,7 +162,7 @@
     const confidence = Math.min(conf(ex, cx, px), conf(ey, cy, py));
     if (confidence < 2 && !(opts && opts.beads)) return null; // no regular grid lines (round beads need opts.beads)
     return {
-      x: ex.first, y: ey.first, cols: ex.count, rows: ey.count, cellW: px.p, cellH: py.p,
+      x: ex.first, y: ey.first, cols: ex.count, rows: ey.count, cellW: ex.p, cellH: ey.p,
       confidence,
     };
   };
@@ -154,21 +177,21 @@
     const step = 2, w = Math.ceil(W / step), h = Math.ceil(H / step);
     const px = (x, y) => { const i = (Math.min(H - 1, y * step) * W + Math.min(W - 1, x * step)) * 4; return [data[i], data[i + 1], data[i + 2]]; };
     const votes = new Map();
-    const vote = (x, y) => { const c = px(x, y); const k = ((c[0] >> 3) << 10) | ((c[1] >> 3) << 5) | (c[2] >> 3); votes.set(k, (votes.get(k) || 0) + 1); };
+    const vote = (x, y) => { const c = px(x, y); const k = ((c[0] >> 4) << 8) | ((c[1] >> 4) << 4) | (c[2] >> 4); votes.set(k, (votes.get(k) || 0) + 1); };
     for (let x = 0; x < w; x++) { vote(x, 0); vote(x, h - 1); }
     for (let y = 0; y < h; y++) { vote(0, y); vote(w - 1, y); }
     let bk = -1, bn = 0;
     votes.forEach((n, k) => { if (n > bn) { bn = n; bk = k; } });
-    if (bn < 0.6 * (2 * (w + h))) return []; // the border is not one plain colour
-    const bg = [((bk >> 10) & 31) << 3, ((bk >> 5) & 31) << 3, (bk & 31) << 3];
-    const tol = (opts && opts.tolerance) || 36;
+    if (bn < 0.5 * (2 * (w + h))) return []; // the border is not one plain colour
+    const bg = [(((bk >> 8) & 15) << 4) + 8, (((bk >> 4) & 15) << 4) + 8, ((bk & 15) << 4) + 8];
+    const tol = (opts && opts.tolerance) || 48;
     const mask = new Uint8Array(w * h);
     for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
       const c = px(x, y);
       if (Math.abs(c[0] - bg[0]) + Math.abs(c[1] - bg[1]) + Math.abs(c[2] - bg[2]) > tol) mask[y * w + x] = 1;
     }
     // close small gaps (between beads, around text) so one pattern is one blob
-    const r = (opts && opts.gap) || 3;
+    const r = (opts && opts.gap) || Math.max(3, Math.round(Math.max(W, H) / 220));
     const dil = new Uint8Array(w * h);
     for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
       if (!mask[y * w + x]) continue;
@@ -197,6 +220,19 @@
       if (rw >= 24 && rh >= 24 && rw * rh >= 0.004 * W * H) out.push({ x: rx, y: ry, w: rw, h: rh });
     }
     return out.sort((a, b) => b.w * b.h - a.w * a.h);
+  };
+
+  /**
+   * Find every separate chart on an image and check that each really holds a grid (lines or beads), so text,
+   * photos and tables on a page are not offered as patterns. Returns [{ rect, grid }], biggest first.
+   */
+  C.findPatterns = (src) => {
+    const out = [];
+    C.findRegions(src).forEach((rect) => {
+      const g = C.detectGrid(src, { rect }) || C.detectGrid(src, { rect, beads: true });
+      if (g && g.cols >= 3 && g.rows >= 3 && g.cols <= 256 && g.rows <= 256) out.push({ rect, grid: g });
+    });
+    return out;
   };
 
   /* ---------- Batch V: read the cells ---------- */
@@ -308,6 +344,112 @@
     pixels.forEach((c) => c >= 0 && counts.set(c, (counts.get(c) || 0) + 1));
     const palette = Array.from(counts.keys()).sort((a, b) => counts.get(b) - counts.get(a)).map((color) => ({ color, count: counts.get(color) }));
     return { cols, rows, pixels, palette, empty };
+  };
+
+  /* ---------- Batch Y: symbol charts (symbols on a plain background, no colours) ---------- */
+
+  const GLYPH = 10; // glyph fingerprints are GLYPH × GLYPH ink maps
+  const SYMBOL_COLORS = [0xe4572e, 0x2e86ab, 0x4caf50, 0xf2b705, 0x8e44ad, 0x17bebb, 0xd81b60, 0x6d4c41, 0x7cb342, 0x3949ab, 0xff8f00, 0x00897b, 0xc0ca33, 0x5e35b1, 0xf06292, 0x455a64, 0x26c6da, 0x9ccc65, 0xab47bc, 0xffa726, 0x8d6e63, 0x42a5f5, 0xec407a, 0x78909c];
+
+  /** How much each point of a cell's inner area differs from the background colour, as a GLYPH×GLYPH map (0..1). */
+  const inkMap = (src, x0, y0, x1, y1, bg, inset) => {
+    const { data, width, height } = src;
+    const w = x1 - x0, h = y1 - y0;
+    const ax = x0 + w * inset, bx = x1 - w * inset, ay = y0 + h * inset, by = y1 - h * inset;
+    const sum = new Float64Array(GLYPH * GLYPH), cnt = new Float64Array(GLYPH * GLYPH);
+    const br = (bg >> 16) & 255, bgc = (bg >> 8) & 255, bb = bg & 255;
+    for (let y = Math.max(0, Math.floor(ay)); y < Math.min(height, Math.ceil(by)); y++) {
+      const gy = Math.min(GLYPH - 1, Math.max(0, Math.floor(((y + 0.5 - ay) / (by - ay)) * GLYPH)));
+      for (let x = Math.max(0, Math.floor(ax)); x < Math.min(width, Math.ceil(bx)); x++) {
+        const gx = Math.min(GLYPH - 1, Math.max(0, Math.floor(((x + 0.5 - ax) / (bx - ax)) * GLYPH)));
+        const i = (y * width + x) * 4;
+        const d = (Math.abs(data[i] - br) + Math.abs(data[i + 1] - bgc) + Math.abs(data[i + 2] - bb)) / 765;
+        sum[gy * GLYPH + gx] += d;
+        cnt[gy * GLYPH + gx]++;
+      }
+    }
+    const m = new Float64Array(GLYPH * GLYPH);
+    for (let k = 0; k < m.length; k++) m[k] = cnt[k] ? sum[k] / cnt[k] : 0;
+    return m;
+  };
+
+  /**
+   * Read a chart whose cells are symbols on a plain background (e.g. black-and-white cross-stitch charts).
+   * Cells with the same symbol shape are grouped; every group gets its own colour; blank cells are empty.
+   * opts: threshold (how different two symbols must look to be different, default 0.05), inset (default 0.18).
+   * Returns the same shape as readCells plus { mode: 'symbols', symbols: number of different symbols }.
+   */
+  C.readSymbols = (src, grid, opts) => {
+    opts = opts || {};
+    const thr = opts.threshold !== undefined ? opts.threshold : 0.05;
+    const inset = opts.inset !== undefined ? opts.inset : 0.18;
+    const cols = grid.cols, rows = grid.rows;
+    // background = the colour most cells have
+    const base = C.readCells(src, grid, { empty: 'none', inset });
+    const bg = base.palette.length ? base.palette[0].color : 0xffffff;
+    const maps = new Array(cols * rows);
+    const ink = new Float64Array(cols * rows);
+    for (let j = 0; j < rows; j++) for (let i = 0; i < cols; i++) {
+      const x0 = grid.x + i * grid.cellW, y0 = grid.y + j * grid.cellH;
+      const m = inkMap(src, x0, y0, x0 + grid.cellW, y0 + grid.cellH, bg, inset);
+      let t = 0;
+      for (let k = 0; k < m.length; k++) t += m[k];
+      maps[j * cols + i] = m;
+      ink[j * cols + i] = t / m.length;
+    }
+    // blank cells have (almost) no ink; the rest are grouped by shape (greedy, running mean)
+    const groups = [];
+    const label = new Int32Array(cols * rows).fill(-1);
+    for (let n = 0; n < maps.length; n++) {
+      if (ink[n] < (opts.blank !== undefined ? opts.blank : 0.03)) continue;
+      let best = -1, bd = Infinity;
+      for (let g = 0; g < groups.length; g++) {
+        let d = 0;
+        const c = groups[g].mean;
+        for (let k = 0; k < c.length; k++) d += Math.abs(c[k] - maps[n][k]);
+        d /= c.length;
+        if (d < bd) { bd = d; best = g; }
+      }
+      if (best >= 0 && bd <= thr) {
+        const g = groups[best];
+        g.n++;
+        for (let k = 0; k < g.mean.length; k++) g.mean[k] += (maps[n][k] - g.mean[k]) / g.n;
+        label[n] = best;
+      } else {
+        groups.push({ mean: Float64Array.from(maps[n]), n: 1 });
+        label[n] = groups.length - 1;
+      }
+    }
+    // biggest group first gets the first colour
+    const order = groups.map((g, i) => i).sort((a, b) => groups[b].n - groups[a].n || a - b);
+    const color = new Map();
+    order.forEach((g, rank) => color.set(g, SYMBOL_COLORS[rank % SYMBOL_COLORS.length]));
+    const pixels = new Int32Array(cols * rows);
+    for (let n = 0; n < pixels.length; n++) pixels[n] = label[n] < 0 ? -1 : color.get(label[n]);
+    const r = finish(pixels, cols, rows, null);
+    r.mode = 'symbols';
+    r.symbols = groups.length;
+    return r;
+  };
+
+  /**
+   * Read a chart as colours or as symbols. opts.mode: 'auto' (default) | 'colors' | 'symbols'; other opts go to the readers.
+   * Auto switches to symbols when the cells are (nearly) all one colour but many of them carry marks.
+   */
+  C.read = (src, grid, opts) => {
+    opts = opts || {};
+    const mode = opts.mode || 'auto';
+    if (mode === 'symbols') return C.readSymbols(src, grid, opts);
+    if (mode === 'colors') { const r = C.readCells(src, grid, opts); r.mode = 'colors'; return r; }
+    const probe = C.readCells(src, grid, { empty: 'none', inset: 0.18 });
+    if (probe.palette.length <= 2) {
+      const s = C.readSymbols(src, grid, opts);
+      const marked = s.pixels.reduce((n, v) => n + (v >= 0 ? 1 : 0), 0);
+      if (marked >= 0.1 * s.pixels.length && s.symbols >= 2) return s;
+    }
+    const r = C.readCells(src, grid, opts);
+    r.mode = 'colors';
+    return r;
   };
 
   M.Chart = C;

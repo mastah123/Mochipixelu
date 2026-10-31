@@ -92,10 +92,10 @@
       const read = () => {
         if (!src) return;
         const g = grid();
-        result = M.Chart.readCells(src, g, { empty: $('chart-empty').value });
+        result = M.Chart.read(src, g, { empty: $('chart-empty').value, mode: $('chart-mode').value });
         const used = result.palette.length;
         const filled = result.pixels.reduce((n, v) => n + (v >= 0 ? 1 : 0), 0);
-        $('chart-info').textContent = g.cols + ' × ' + g.rows + ' · ' + used + ' colors · ' + filled + ' stitches';
+        $('chart-info').textContent = g.cols + ' × ' + g.rows + ' · ' + (result.mode === 'symbols' ? result.symbols + ' symbols (each becomes a color)' : used + ' colors') + ' · ' + filled + ' stitches';
         $('chart-import').disabled = !filled;
         drawPreview();
       };
@@ -125,6 +125,7 @@
 
       /* several patterns on one sheet: one button per pattern */
       let regions = [];
+      let patterns = [];
       const showRegions = () => {
         const host = $('chart-regions');
         host.textContent = '';
@@ -140,7 +141,8 @@
             b.textContent = 'Pattern ' + (i + 1);
             b.addEventListener('click', () => {
               box = Object.assign({}, r);
-              find(true);
+              const hit = patterns.find((q) => q.rect === r);
+              if (hit) apply(hit.grid); else find(true);
               box = Object.assign({}, box);
               redraw();
               read();
@@ -149,7 +151,37 @@
           });
         $('chart-hint').textContent = 'Found ' + regions.length + ' patterns on this image. Pick one with the buttons below.';
       };
+      /** Look for several separate charts first; otherwise one grid (whole image, or inside the box). */
+      const findAll = () => {
+        if (find(false)) {
+          // a page can hold text, tables or photos that look like grids, so several patterns are only suggested
+          patterns = M.Chart.findPatterns(src);
+          regions = [];
+          showRegions();
+          if (patterns.length >= 2) $('chart-hint').textContent += ' This image may hold several patterns: press “Find several patterns”.';
+          return true;
+        }
+        patterns = M.Chart.findPatterns(src);
+        regions = patterns.map((p) => p.rect);
+        if (patterns.length) {
+          apply(patterns[0].grid);
+          showRegions();
+          return true;
+        }
+        showRegions();
+        return false;
+      };
       $('chart-find').addEventListener('click', () => { find(true); redraw(); });
+      $('chart-patterns').addEventListener('click', () => {
+        const before = box;
+        patterns = M.Chart.findPatterns(src);
+        regions = patterns.map((p) => p.rect);
+        showRegions();
+        if (patterns.length >= 2) { apply(patterns[0].grid); }
+        else $('chart-hint').textContent = patterns.length === 1 ? 'Only one pattern found on this image.' : 'No separate patterns found. They need a plain background around them and a gap between them.';
+        if (patterns.length < 2) box = before;
+        redraw();
+      });
 
       /* ---------- dragging the box ---------- */
       const toImg = (e) => {
@@ -188,7 +220,7 @@
       cv.addEventListener('pointerup', endDrag);
       cv.addEventListener('pointercancel', endDrag);
 
-      ['chart-cols', 'chart-rows', 'chart-empty'].forEach((id) => $(id).addEventListener('input', redraw));
+      ['chart-cols', 'chart-rows', 'chart-empty', 'chart-mode'].forEach((id) => $(id).addEventListener('input', redraw));
       $('chart-cancel').addEventListener('click', () => dlg.close());
       dlg.addEventListener('close', () => { regions = []; src = null; base = null; result = null; clearTimeout(timer); });
 
@@ -205,22 +237,13 @@
           $('chart-cols').value = 16;
           $('chart-rows').value = 16;
           $('chart-empty').value = 'auto';
+          $('chart-mode').value = 'auto';
           $('chart-hint').textContent = 'Looking for the grid…';
           dlg.showModal();
           layout();
           regions = [];
-          let ok = find(false);
-          if (!ok) {
-            box = { x: 0, y: 0, w: src.width, h: src.height };
-            regions = M.Chart.findRegions(src);
-            if (regions.length) {
-              box = Object.assign({}, regions[0]);
-              ok = find(true);
-              if (!ok) box = { x: 0, y: 0, w: src.width, h: src.height };
-              showRegions();
-            }
-          }
-          if (!regions.length) showRegions();
+          const ok = findAll();
+          if (!ok) box = { x: 0, y: 0, w: src.width, h: src.height };
           layout();
           redraw();
           read();

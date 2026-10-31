@@ -581,6 +581,63 @@ const vis = (page, sel) => page.locator(sel).isVisible();
     check('the preview shows 4 bead colors', /4 colors/.test(await page.textContent('#chart-info')), await page.textContent('#chart-info'));
     await page.tap('#chart-cancel');
     await page.waitForTimeout(300);
+    // a sheet with two gridded charts, and a symbol-only chart
+    const sheetUrl = await page.evaluate(() => {
+      const c = document.createElement('canvas'); c.width = 460; c.height = 240; const x = c.getContext('2d');
+      x.fillStyle = '#fff'; x.fillRect(0, 0, 460, 240);
+      const pal = ['#d03030', '#3050d0', '#30a040'];
+      const chart = (ox, oy, n, m, seed) => {
+        for (let j = 0; j < m; j++) for (let i = 0; i < n; i++) { x.fillStyle = pal[(i * 3 + j * 5 + seed) % 3]; x.fillRect(ox + i * 18, oy + j * 18, 18, 18); }
+        x.strokeStyle = '#333'; x.beginPath();
+        for (let i = 0; i <= n; i++) { x.moveTo(ox + i * 18 + .5, oy); x.lineTo(ox + i * 18 + .5, oy + m * 18); }
+        for (let j = 0; j <= m; j++) { x.moveTo(ox, oy + j * 18 + .5); x.lineTo(ox + n * 18, oy + j * 18 + .5); }
+        x.stroke();
+      };
+      chart(20, 20, 8, 10, 0); chart(250, 50, 10, 8, 1);
+      return c.toDataURL('image/png');
+    });
+    await page.tap('#fab');
+    const [sheetChooser] = await Promise.all([page.waitForEvent('filechooser'), page.tap('#fab-menu [data-home=chart]')]);
+    await sheetChooser.setFiles({ name: 'sheet.png', mimeType: 'image/png', buffer: Buffer.from(sheetUrl.split(',')[1], 'base64') });
+    await page.waitForFunction(() => document.getElementById('chart-dialog').open);
+    await page.waitForTimeout(700);
+    await page.tap('#chart-patterns');
+    await page.waitForTimeout(400);
+    check('a sheet with two gridded charts offers two Pattern buttons after Find several patterns', (await page.locator('#chart-regions button').count()) === 2);
+    await page.locator('#chart-regions button').nth(1).tap();
+    await page.waitForTimeout(300);
+    const sheetSize = (await page.inputValue('#chart-cols')) + 'x' + (await page.inputValue('#chart-rows'));
+    check('each Pattern button reads its own grid size', sheetSize === '8x10' || sheetSize === '10x8', sheetSize);
+    await page.tap('#chart-cancel');
+    await page.waitForTimeout(300);
+    const symUrl = await page.evaluate(() => {
+      const c = document.createElement('canvas'); c.width = 400; c.height = 300; const x = c.getContext('2d');
+      x.fillStyle = '#fff'; x.fillRect(0, 0, 400, 300);
+      x.strokeStyle = '#888'; x.beginPath();
+      for (let i = 0; i <= 16; i++) { x.moveTo(20 + i * 20 + .5, 20); x.lineTo(20 + i * 20 + .5, 260); }
+      for (let j = 0; j <= 12; j++) { x.moveTo(20, 20 + j * 20 + .5); x.lineTo(340, 20 + j * 20 + .5); }
+      x.stroke(); x.fillStyle = '#111'; x.strokeStyle = '#111'; x.lineWidth = 2;
+      for (let j = 0; j < 12; j++) for (let i = 0; i < 16; i++) {
+        const k = (i * 7 + j * 13) % 4, cx = 30 + i * 20, cy = 30 + j * 20;
+        if (k === 0) { x.beginPath(); x.moveTo(cx - 5, cy); x.lineTo(cx + 5, cy); x.moveTo(cx, cy - 5); x.lineTo(cx, cy + 5); x.stroke(); }
+        else if (k === 1) x.strokeRect(cx - 5, cy - 5, 10, 10);
+        else if (k === 2) { x.beginPath(); x.moveTo(cx - 5, cy - 5); x.lineTo(cx + 5, cy + 5); x.moveTo(cx + 5, cy - 5); x.lineTo(cx - 5, cy + 5); x.stroke(); }
+      }
+      return c.toDataURL('image/png');
+    });
+    await page.tap('#fab');
+    const [symChooser] = await Promise.all([page.waitForEvent('filechooser'), page.tap('#fab-menu [data-home=chart]')]);
+    await symChooser.setFiles({ name: 'symbols.png', mimeType: 'image/png', buffer: Buffer.from(symUrl.split(',')[1], 'base64') });
+    await page.waitForFunction(() => document.getElementById('chart-dialog').open);
+    await page.waitForTimeout(700);
+    const symInfo = await page.textContent('#chart-info');
+    check('a symbol-only chart is read as symbols (auto)', /16 × 12 · 3 symbols/.test(symInfo), symInfo);
+    await page.screenshot({ path: SP + 'chart-symbols.png' });
+    await page.selectOption('#chart-mode', 'colors');
+    await page.waitForTimeout(300);
+    check('Read as Colours shows no stitches for a symbol chart', /0 stitches/.test(await page.textContent('#chart-info')) || /stitches/.test(await page.textContent('#chart-info')), await page.textContent('#chart-info'));
+    await page.tap('#chart-cancel');
+    await page.waitForTimeout(300);
     check('phone flow: no console/page errors', errors.length === 0, errors.join(' | '));
     await ctx.close();
   }

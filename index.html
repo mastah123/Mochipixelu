@@ -514,6 +514,13 @@
   <div class="row chart-controls">
     <label>Columns <input id="chart-cols" type="number" min="1" max="256" inputmode="numeric"></label>
     <label>Rows <input id="chart-rows" type="number" min="1" max="256" inputmode="numeric"></label>
+    <label>Read as
+      <select id="chart-mode">
+        <option value="auto">Auto</option>
+        <option value="colors">Colours</option>
+        <option value="symbols">Symbols</option>
+      </select>
+    </label>
     <label>Empty cells
       <select id="chart-empty">
         <option value="auto">Auto (background around the pattern)</option>
@@ -523,6 +530,7 @@
     </label>
   </div>
   <div class="row chart-regions" id="chart-regions" hidden></div>
+  <div class="row"><button type="button" id="chart-patterns" class="btn small"><svg class="ic sm"><use href="#i-grid"/></svg>Find several patterns</button></div>
   <div class="row"><button type="button" id="chart-find" class="btn small"><svg class="ic sm"><use href="#i-grid"/></svg>Find the grid in this box</button></div>
   <div class="chart-preview"><canvas id="chart-preview" aria-label="Preview of the imported pattern"></canvas><span id="chart-info" class="hint" aria-live="polite"></span></div>
   <div class="row end">

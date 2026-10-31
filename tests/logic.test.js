@@ -381,6 +381,21 @@
     ok(regs.some((r) => near(r.x, 20, 6) && near(r.w, 112, 8)) && regs.some((r) => near(r.x, 220, 6) && near(r.w, 140, 8)), JSON.stringify(regs));
     eq(CH.findRegions({ data: new Uint8ClampedArray(100 * 100 * 4).fill(255), width: 100, height: 100 }).length, 0);
   });
+  test('several charts with grid lines on one sheet are found, text blocks are not', () => {
+    const a = Object.assign({ W: 460, H: 240, cols: 8, rows: 10, cell: 18, ox: 20, oy: 20 }, dark);
+    const b = Object.assign({}, a, { cols: 10, rows: 8, ox: 250, oy: 50, seed: 3 });
+    const img = chart(a), img2 = chart(b);
+    for (let i = 0; i < img.data.length; i += 4) if (!(img2.data[i] === 255 && img2.data[i + 1] === 255 && img2.data[i + 2] === 255)) { img.data[i] = img2.data[i]; img.data[i + 1] = img2.data[i + 1]; img.data[i + 2] = img2.data[i + 2]; }
+    for (let y = 218; y < 236; y += 3) for (let x = 20; x < 200; x++) { const k = (y * 460 + x) * 4; img.data[k] = img.data[k + 1] = img.data[k + 2] = x % 7 < 3 ? 10 : 250; } // a block of text
+    const found = CH.findPatterns(img);
+    eq(found.length, 2, JSON.stringify(found.map((f) => f.rect)));
+    const dims = found.map((f) => f.grid.cols + 'x' + f.grid.rows).sort().join();
+    eq(dims, '10x8,8x10');
+  });
+  test('beads sheet: findPatterns validates each blob', () => {
+    const f = CH.findPatterns(beadSheet());
+    eq(f.length, 2);
+  });
   test('round beads without grid lines are read when beads mode is on', () => {
     const sheet = beadSheet();
     const r = CH.findRegions(sheet).find((q) => near(q.x, 20, 6));
@@ -388,6 +403,71 @@
     ok(g && g.cols === 8 && g.rows === 10 && near(g.cellW, 14, 1), JSON.stringify(g));
     const out = CH.readCells(sheet, g);
     eq(out.palette.length, 4);
+  });
+  /* ----- symbol charts ----- */
+  const GLYPHS = [
+    ['...#...', '...#...', '...#...', '#######', '...#...', '...#...', '...#...'], // plus
+    ['#######', '#.....#', '#.....#', '#.....#', '#.....#', '#.....#', '#######'], // square outline
+    ['#.....#', '.#...#.', '..#.#..', '...#...', '..#.#..', '.#...#.', '#.....#'], // x
+    ['.......', '.......', '..###..', '..###..', '..###..', '.......', '.......'], // dot
+    ['...#...', '..###..', '..###..', '.#####.', '.#####.', '#######', '#######'], // triangle
+    ['#......', '.#.....', '..#....', '...#...', '....#..', '.....#.', '......#'], // diagonal
+  ];
+  /** Draw dark glyphs into an existing chart image: glyph(i, j) -> index or -1. */
+  const stampGlyphs = (img, o, glyph) => {
+    for (let j = 0; j < o.rows; j++) for (let i = 0; i < o.cols; i++) {
+      const gi = glyph(i, j);
+      if (gi < 0) continue;
+      const g = GLYPHS[gi], pad = o.cell * 0.2, size = o.cell - 2 * pad;
+      for (let y = 0; y < size; y++) for (let x = 0; x < size; x++) {
+        if (g[Math.floor((y / size) * 7)][Math.floor((x / size) * 7)] !== '#') continue;
+        const px = Math.round(o.ox + i * o.cell + pad + x), py = Math.round(o.oy + j * o.cell + pad + y), k = (py * img.width + px) * 4;
+        img.data[k] = img.data[k + 1] = img.data[k + 2] = 20;
+      }
+    }
+  };
+  const symbolChart = (extra) => {
+    const o = Object.assign({ W: 400, H: 340, cols: 20, rows: 16, cell: 18, ox: 14, oy: 14, major: 5 }, dark, { c1: [255, 255, 255], c2: [255, 255, 255], c3: [255, 255, 255], line: [120, 120, 120] }, extra);
+    const img = chart(o);
+    const kind = (i, j) => ((i * 7 + j * 13 + ((i * j) % 5)) % 9); // 0..8: 6 glyphs + 3 blanks
+    const glyph = (i, j) => (kind(i, j) < 6 ? kind(i, j) : -1);
+    stampGlyphs(img, o, glyph);
+    return { o, img, glyph, grid: { x: o.ox, y: o.oy, cols: o.cols, rows: o.rows, cellW: o.cell, cellH: o.cell } };
+  };
+  const sameGroups = (out, o, glyph) => { // every glyph has exactly one colour, different glyphs differ, blanks are empty
+    const seen = new Map();
+    let bad = 0;
+    for (let j = 0; j < o.rows; j++) for (let i = 0; i < o.cols; i++) {
+      const g = glyph(i, j), v = out.pixels[j * o.cols + i];
+      if (g < 0) { if (v !== -1) bad++; continue; }
+      if (v === -1) { bad++; continue; }
+      if (!seen.has(g)) seen.set(g, v); else if (seen.get(g) !== v) bad++;
+    }
+    const colors = Array.from(seen.values());
+    return { bad, distinct: new Set(colors).size, glyphs: seen.size };
+  };
+  test('symbol charts: each symbol shape becomes its own colour, blanks are empty (clean)', () => {
+    const { o, img, glyph, grid } = symbolChart();
+    const out = CH.readSymbols(img, grid);
+    const r = sameGroups(out, o, glyph);
+    eq(r.bad, 0); eq(r.glyphs, 6); eq(r.distinct, 6); eq(out.symbols, 6); eq(out.mode, 'symbols');
+  });
+  test('symbol charts: noise and heavier lines do not split or merge symbols', () => {
+    const { o, img, glyph, grid } = symbolChart({ noise: 20, seed: 9 });
+    const r = sameGroups(CH.readSymbols(img, grid), o, glyph);
+    eq(r.bad, 0); eq(r.distinct, 6);
+  });
+  test('symbol charts: read() picks symbols for an all-white chart and colours for a coloured one', () => {
+    const { img, grid } = symbolChart();
+    eq(CH.read(img, grid).mode, 'symbols');
+    const o = Object.assign({ W: 300, H: 240, cols: 16, rows: 12, cell: 16, ox: 12, oy: 12 }, dark, { c1: [200, 120, 40], c2: [30, 120, 60], c3: [90, 40, 160] });
+    eq(CH.read(chart(o), { x: 12, y: 12, cols: 16, rows: 12, cellW: 16, cellH: 16 }).mode, 'colors');
+    eq(CH.read(img, grid, { mode: 'colors' }).mode, 'colors');
+  });
+  test('symbol charts: an empty white chart gives no stitches (no invented symbols)', () => {
+    const o = Object.assign({ W: 300, H: 240, cols: 16, rows: 12, cell: 16, ox: 12, oy: 12 }, dark, { c1: [255, 255, 255], c2: [255, 255, 255], c3: [255, 255, 255] });
+    const out = CH.read(chart(o), { x: 12, y: 12, cols: 16, rows: 12, cellW: 16, cellH: 16 });
+    ok(out.pixels.every((v) => v === -1));
   });
   test('reading cells: a chromatic background (purple) is a real colour, not empty', () => {
     const o = Object.assign({ W: 260, H: 200, cols: 12, rows: 9, cell: 18, ox: 10, oy: 10 }, dark, { c1: [180, 140, 220], c2: [180, 140, 220], c3: [250, 210, 120], line: [235, 230, 245] });

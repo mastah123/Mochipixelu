@@ -169,3 +169,6 @@ Import chart is in the home + menu (js/chartimport.js, dialog #chart-dialog). No
 
 ### Status 2026-10-30: Batch X built (1.32.0)
 Beads mode, several patterns per image (findRegions + Pattern buttons) and the enclosed-white rule are in. Colour-key snapping was deliberately not built (exact colours already come from the image). Open ideas: an editor entry point for chart import; photographed/skewed paper charts; symbol-only black-and-white charts.
+
+### Status 2026-10-31: 1.33.0
+Symbol charts (Chart.readSymbols, "Read as" select) and "Find several patterns" added; grid pitch refit fixed drift. Symbol reading is tested on generated charts only: ask the owner for a real symbol chart. The owner's multi-artwork image did not get picked up in 1.32.0 (the sheet search only ran when no grid was found) — fixed by the button, but the image itself has not been seen.

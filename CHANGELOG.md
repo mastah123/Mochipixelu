@@ -10,6 +10,19 @@ Versions follow [Semantic Versioning](https://semver.org/): `MAJOR.MINOR.PATCH`.
 
 Examples are illustrative; the real versions are listed below. Documentation-only, test-only and refactoring changes do not automatically bump the version.
 
+## [1.33.0]
+
+### Added
+- Symbol charts: black-and-white charts where each cell holds a symbol on a plain background can be imported. Cells with the same symbol shape are grouped, each group becomes its own colour (a few colours are then yours to change in the editor), blank cells stay empty. New "Read as" choice in the import dialog: Auto (symbols when the cells are all one colour but carry marks), Colours, Symbols.
+- "Find several patterns" button in the import dialog. It finds every separate chart on the image and keeps only those that really hold a grid (text, photos and tables are skipped).
+
+### Fixed
+- Grid pitch is now fitted to sub-pixel accuracy (least squares through the real line positions); large charts no longer drift by a column and cells are read at the right place.
+- Several patterns on one image were only looked for when no grid was found at all, so a sheet of gridded charts was never split. They are now found with the button, and the dialog hints at it when it sees more than one pattern.
+
+### Changed
+- Background detection for several patterns tolerates slight colour variation; the gap that keeps two patterns apart scales with the image size.
+
 ## [1.32.0]
 
 ### Added
